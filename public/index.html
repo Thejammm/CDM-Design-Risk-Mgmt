@@ -9550,9 +9550,13 @@ function resetReportFilters() {
      localStorage before the app starts.
      ════════════════════════════════════════════════════════════ -->
 <style>
+  /* The sign-in control sits at the right-hand end of the tab button row
+     (relocated into .tabs by the wrapper script) so it no longer floats
+     over the letterhead date box. */
+  .tabs { position: relative; }
   .auth-fab {
-    position: fixed; top: 14px; right: 14px;
-    z-index: 9999;
+    position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+    z-index: 50;
     padding: 8px 14px;
     background: var(--brand-accent, #51a6a9);
     color: #fff;
@@ -9571,7 +9575,7 @@ function resetReportFilters() {
   }
   .auth-fab:hover { background: var(--brand-accent-dark, #408a8d); }
   .auth-fab:active { transform: scale(.97); }
-  @media (max-width: 640px) { .auth-fab { font-size: 11.5px; padding: 6px 10px; top: 8px; right: 8px; max-width: 180px; } }
+  @media (max-width: 640px) { .auth-fab { font-size: 11.5px; padding: 6px 10px; right: 8px; max-width: 150px; } }
   @media print { .auth-fab, #authModalOverlay { display: none !important; } }
 
   #authModalOverlay {
@@ -9619,6 +9623,11 @@ function resetReportFilters() {
     <form id="authForm" autocomplete="on">
       <label>Email <input type="email" id="authEmail" required autocomplete="username" autofocus></label>
       <label>Password <input type="password" id="authPassword" required autocomplete="current-password"></label>
+      <label>Project
+        <input type="text" id="authProject" list="authProjectList" placeholder="e.g. Acme HQ – New Build" autocomplete="off">
+        <datalist id="authProjectList"></datalist>
+      </label>
+      <p class="auth-blurb" style="margin:-4px 0 0; font-size:12px;">Type a project name to work on. A new name starts a fresh register; an existing name reopens it.</p>
       <div class="auth-error" id="authError" hidden></div>
       <div class="auth-actions">
         <button type="button" id="authCancelBtn">Cancel</button>
@@ -9634,6 +9643,14 @@ function resetReportFilters() {
   const Auth = (() => {
     let _user = null;
     let _syncInFlight = null;
+    const DEFAULT_PROJECT = 'Default Project';
+    let _project = null;
+    try { _project = localStorage.getItem('ahsActiveProject') || null; } catch(_){}
+    function project(){ return _project || DEFAULT_PROJECT; }
+    function setProject(p){
+      _project = (p || '').toString().trim() || DEFAULT_PROJECT;
+      try { localStorage.setItem('ahsActiveProject', _project); } catch(_){}
+    }
     async function _api(path, opts){
       opts = opts || {};
       const res = await fetch(path, {
@@ -9650,9 +9667,11 @@ function resetReportFilters() {
       try { const { user } = await _api('/api/auth/me'); _user = user; return user; }
       catch(e){ _user = null; return null; }
     }
-    async function login(email, password){
+    async function login(email, password, proj){
       const { user } = await _api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: email, password: password }) });
-      _user = user; return user;
+      _user = user;
+      if(proj !== undefined) setProject(proj);
+      return user;
     }
     async function logout(){ try { await _api('/api/auth/logout', { method: 'POST' }); } catch(e){} _user = null; }
     function user(){ return _user; }
@@ -9662,7 +9681,10 @@ function resetReportFilters() {
       if(!_user) return null;
       const tid = tenantId();
       if(!tid) return null;
-      try { const r = await _api('/api/state?tenantId=' + encodeURIComponent(tid)); return r.state || null; }
+      try {
+        const r = await _api('/api/state?tenantId=' + encodeURIComponent(tid) + '&project=' + encodeURIComponent(project()));
+        return r.state || null;
+      }
       catch(e){ console.warn('Auth.loadFromServer:', e.message); return null; }
     }
     async function saveToServer(state){
@@ -9670,12 +9692,19 @@ function resetReportFilters() {
       const tid = tenantId();
       if(!tid) return false;
       if(_syncInFlight){ try { await _syncInFlight; } catch(_){} }
-      _syncInFlight = _api('/api/state', { method: 'POST', body: JSON.stringify({ tenantId: tid, state: state }) });
+      _syncInFlight = _api('/api/state', { method: 'POST', body: JSON.stringify({ tenantId: tid, project: project(), state: state }) });
       try { await _syncInFlight; return true; }
       catch(e){ console.warn('Auth.saveToServer:', e.message); return false; }
       finally { _syncInFlight = null; }
     }
-    return { refresh: refresh, login: login, logout: logout, user: user, isSignedIn: isSignedIn, tenantId: tenantId, loadFromServer: loadFromServer, saveToServer: saveToServer };
+    async function listProjects(){
+      if(!_user) return [];
+      const tid = tenantId();
+      if(!tid) return [];
+      try { const r = await _api('/api/state/projects?tenantId=' + encodeURIComponent(tid)); return r.projects || []; }
+      catch(e){ return []; }
+    }
+    return { refresh: refresh, login: login, logout: logout, user: user, isSignedIn: isSignedIn, tenantId: tenantId, project: project, setProject: setProject, loadFromServer: loadFromServer, saveToServer: saveToServer, listProjects: listProjects };
   })();
   window.AHSAuth = Auth;
 
@@ -9684,7 +9713,35 @@ function resetReportFilters() {
   const form    = document.getElementById('authForm');
   const errBox  = document.getElementById('authError');
   const submitBtn = document.getElementById('authSubmitBtn');
-  function openAuthModal(){ errBox.hidden = true; overlay.classList.add('is-open'); setTimeout(function(){ document.getElementById('authEmail').focus(); }, 30); }
+  const projInput = document.getElementById('authProject');
+
+  // Remember the project names a given email has used on this browser, so the
+  // Project box can offer them as a dropdown the next time they sign in.
+  function _knownKey(email){ return 'ahsKnownProjects::' + (email||'').trim().toLowerCase(); }
+  function _rememberProject(email, proj){
+    try {
+      const k = _knownKey(email);
+      const arr = JSON.parse(localStorage.getItem(k) || '[]').filter(function(p){ return p !== proj; });
+      arr.unshift(proj);
+      localStorage.setItem(k, JSON.stringify(arr.slice(0, 20)));
+    } catch(_){}
+  }
+  function _populateProjectList(){
+    try {
+      const dl = document.getElementById('authProjectList');
+      if(!dl) return;
+      const arr = JSON.parse(localStorage.getItem(_knownKey(document.getElementById('authEmail').value)) || '[]');
+      dl.innerHTML = arr.map(function(p){ return '<option value="' + p.replace(/"/g,'&quot;') + '">'; }).join('');
+    } catch(_){}
+  }
+  function openAuthModal(){
+    errBox.hidden = true;
+    if(projInput && Auth.project() && Auth.project() !== 'Default Project') projInput.value = Auth.project();
+    _populateProjectList();
+    overlay.classList.add('is-open');
+    setTimeout(function(){ document.getElementById('authEmail').focus(); }, 30);
+  }
+  document.getElementById('authEmail').addEventListener('input', _populateProjectList);
   function closeAuthModal(){ overlay.classList.remove('is-open'); }
   overlay.addEventListener('click', function(e){ if(e.target === overlay) closeAuthModal(); });
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && overlay.classList.contains('is-open')) closeAuthModal(); });
@@ -9694,7 +9751,11 @@ function resetReportFilters() {
     errBox.hidden = true;
     submitBtn.disabled = true; submitBtn.textContent = 'Signing in…';
     try {
-      await Auth.login(document.getElementById('authEmail').value.trim(), document.getElementById('authPassword').value);
+      const emailVal = document.getElementById('authEmail').value.trim();
+      const projVal  = (projInput.value || '').trim() || 'Default Project';
+      await Auth.login(emailVal, document.getElementById('authPassword').value, projVal);
+      _rememberProject(emailVal, projVal);
+      sessionStorage.removeItem('ahsHydrated');
       closeAuthModal();
       window.location.reload();
     } catch(err){
@@ -9705,13 +9766,19 @@ function resetReportFilters() {
     }
   });
 
-  // Floating sign-in / sign-out button
+  // Sign-in / sign-out button — relocated into the right-hand end of the tab
+  // button row so it no longer floats over the letterhead date box.
   const fab = document.getElementById('authFab');
+  (function _placeFab(){
+    const tabsBar = document.querySelector('.tabs');
+    if(tabsBar && fab && fab.parentElement !== tabsBar){ tabsBar.appendChild(fab); }
+  })();
   function renderFab(){
     if(Auth.isSignedIn()){
       const u = Auth.user();
       const tenantLabel = u.tenantName ? ' · ' + u.tenantName : (u.role === 'consultant' ? ' · consultant' : '');
-      fab.innerHTML = '👤 ' + (u.email || u.name || 'Signed in') + tenantLabel + ' · Sign out';
+      const projLabel = ' · 📁 ' + Auth.project();
+      fab.innerHTML = '👤 ' + (u.email || u.name || 'Signed in') + tenantLabel + projLabel + ' · Sign out';
       fab.onclick = async function(){ await Auth.logout(); window.location.reload(); };
     } else {
       fab.textContent = '🔐 Sign in';
@@ -9725,7 +9792,7 @@ function resetReportFilters() {
   function _scheduleSync(){
     if(!Auth.isSignedIn()) return;
     clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(_doSync, 1500);
+    _syncTimer = setTimeout(_doSync, 1000); // autosave ~1s after typing pauses
   }
   function _readJson(k){ try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch(_){ return null; } }
   function _doSync(){
@@ -9753,19 +9820,35 @@ function resetReportFilters() {
     const user = await Auth.refresh();
     renderFab();
     if(user){
-      const serverState = await Auth.loadFromServer();
+      const activeProject = Auth.project();
+      const localProject  = (function(){ try { return localStorage.getItem('ahsLocalProject'); } catch(_){ return null; } })();
+      const switching     = localProject !== activeProject;
+      const serverState   = await Auth.loadFromServer();
+      let mutated = false;
       if(serverState && (serverState.data || serverState.locks || serverState.brand)){
+        // Hydrate localStorage from this project's saved server state
         try {
           if(typeof STORAGE_KEY !== 'undefined' && serverState.data)  localStorage.setItem(STORAGE_KEY,  JSON.stringify(serverState.data));
           if(typeof LOCKS_KEY   !== 'undefined' && serverState.locks) localStorage.setItem(LOCKS_KEY,    JSON.stringify(serverState.locks));
           if(typeof BRAND_KEY   !== 'undefined' && serverState.brand) localStorage.setItem(BRAND_KEY,    JSON.stringify(serverState.brand));
         } catch(_){}
-        // sessionStorage flag prevents an infinite reload loop
-        if(!sessionStorage.getItem('ahsHydrated')){
-          sessionStorage.setItem('ahsHydrated', '1');
-          window.location.reload();
-          return;
-        }
+        mutated = true;
+      } else if(switching){
+        // Switched to a project with no saved data yet — start from a blank
+        // register so the previous project's rows don't carry over. (Brand /
+        // client logo is intentionally kept so it persists across projects.)
+        try {
+          if(typeof STORAGE_KEY !== 'undefined') localStorage.removeItem(STORAGE_KEY);
+          if(typeof LOCKS_KEY   !== 'undefined') localStorage.removeItem(LOCKS_KEY);
+        } catch(_){}
+        mutated = true;
+      }
+      try { localStorage.setItem('ahsLocalProject', activeProject); } catch(_){}
+      // sessionStorage flag prevents an infinite reload loop
+      if(mutated && !sessionStorage.getItem('ahsHydrated')){
+        sessionStorage.setItem('ahsHydrated', '1');
+        window.location.reload();
+        return;
       }
       sessionStorage.removeItem('ahsHydrated');
     }
