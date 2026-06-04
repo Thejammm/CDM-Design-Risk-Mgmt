@@ -9550,12 +9550,15 @@ function resetReportFilters() {
      localStorage before the app starts.
      ════════════════════════════════════════════════════════════ -->
 <style>
-  /* The sign-in control sits at the right-hand end of the tab button row
-     (relocated into .tabs by the wrapper script) so it no longer floats
-     over the letterhead date box. */
+  /* The sign-in (and consultant Admin) controls sit at the right-hand end of
+     the tab button row, relocated into .tabs by the wrapper script, so they no
+     longer float over the letterhead date box. */
   .tabs { position: relative; }
-  .auth-fab {
+  .auth-bar {
     position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+    z-index: 50; display: flex; gap: 8px; align-items: center;
+  }
+  .auth-fab {
     z-index: 50;
     padding: 8px 14px;
     background: var(--brand-accent, #51a6a9);
@@ -9575,8 +9578,10 @@ function resetReportFilters() {
   }
   .auth-fab:hover { background: var(--brand-accent-dark, #408a8d); }
   .auth-fab:active { transform: scale(.97); }
-  @media (max-width: 640px) { .auth-fab { font-size: 11.5px; padding: 6px 10px; right: 8px; max-width: 150px; } }
-  @media print { .auth-fab, #authModalOverlay { display: none !important; } }
+  .auth-fab.admin { background: #475569; max-width: none; }
+  .auth-fab.admin:hover { background: #334155; }
+  @media (max-width: 640px) { .auth-bar { right: 8px; } .auth-fab { font-size: 11.5px; padding: 6px 10px; max-width: 140px; } }
+  @media print { .auth-bar, .auth-fab, #authModalOverlay, #adminModalOverlay { display: none !important; } }
 
   #authModalOverlay {
     position: fixed; inset: 0;
@@ -9612,9 +9617,86 @@ function resetReportFilters() {
   .auth-modal button[type="submit"] { background: var(--brand-accent, #51a6a9); border-color: var(--brand-accent, #51a6a9); color: #fff; }
   .auth-modal button[type="submit"]:hover { background: var(--brand-accent-dark, #408a8d); border-color: var(--brand-accent-dark, #408a8d); }
   .auth-modal button[disabled] { opacity: .55; cursor: not-allowed; }
+
+  /* ── Consultant admin panel ── */
+  #adminModalOverlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, .55);
+    z-index: 10000; display: none; align-items: center; justify-content: center; padding: 16px;
+  }
+  #adminModalOverlay.is-open { display: flex; }
+  .admin-modal {
+    background: #fff; border-radius: 14px; box-shadow: 0 12px 48px rgba(0,0,0,.22);
+    max-width: 620px; width: 100%; max-height: 88vh; overflow-y: auto;
+    padding: 22px 24px 20px; font-family: inherit; color: #344054;
+  }
+  .admin-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .admin-head h3 { margin: 0; font-size: 18px; color: #1f2937; }
+  .admin-x { border: none; background: #f2f4f7; border-radius: 8px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; color: #475569; }
+  .admin-x:hover { background: #e4e7ec; }
+  .admin-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid #eef0f3; }
+  .admin-section:first-of-type { border-top: none; }
+  .admin-section h4 { margin: 0 0 10px; font-size: 14px; color: #1f2937; }
+  .admin-row { display: flex; gap: 8px; }
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+  .admin-grid select { grid-column: 1 / -1; }
+  .admin-modal input, .admin-modal select {
+    padding: 9px 12px; border: 1.5px solid #d0d5dd; border-radius: 8px;
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s; width: 100%;
+  }
+  .admin-modal input:focus, .admin-modal select:focus { border-color: var(--brand-accent, #51a6a9); }
+  .admin-modal form button { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1.5px solid var(--brand-accent, #51a6a9); background: var(--brand-accent, #51a6a9); color: #fff; white-space: nowrap; }
+  .admin-modal form button:hover { background: var(--brand-accent-dark, #408a8d); border-color: var(--brand-accent-dark, #408a8d); }
+  .admin-hint { font-size: 12px; color: #6b7280; line-height: 1.5; margin: 8px 0 0; }
+  .admin-error { font-size: 12.5px; padding: 9px 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; color: #b91c1c; margin-top: 12px; }
+  .admin-error.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
+  .admin-list { display: flex; flex-direction: column; gap: 8px; }
+  .admin-user { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid #eef0f3; border-radius: 8px; font-size: 13px; }
+  .admin-user-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .admin-user-actions button { padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1.5px solid #d0d5dd; background: #fff; color: #344054; }
+  .admin-user-actions button:hover { background: #f2f4f7; }
+  .admin-user-actions button.admin-danger { border-color: #fca5a5; color: #b91c1c; }
+  .admin-user-actions button.admin-danger:hover { background: #fee2e2; }
+  @media (max-width: 560px) { .admin-grid { grid-template-columns: 1fr; } .admin-user { flex-direction: column; align-items: stretch; } }
 </style>
 
+<button class="auth-fab admin no-print" id="adminFab" type="button" title="Manage clients and logins" style="display:none;">⚙️ Admin</button>
 <button class="auth-fab no-print" id="authFab" type="button" title="Sign in to sync to the server">🔐 Sign in</button>
+
+<!-- Consultant-only: manage client companies + their logins -->
+<div id="adminModalOverlay" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
+  <div class="admin-modal">
+    <div class="admin-head">
+      <h3 id="adminModalTitle">Client admin</h3>
+      <button type="button" id="adminCloseBtn" class="admin-x" aria-label="Close">✕</button>
+    </div>
+    <p class="admin-hint">Add a client company, then create a login for them. They sign in with that email and password, then type a project name to start work — they create their own projects.</p>
+
+    <section class="admin-section">
+      <h4>1 · Add a client company</h4>
+      <form id="adminTenantForm" class="admin-row" autocomplete="off">
+        <input type="text" id="adminTenantName" placeholder="Client company name (e.g. Acme Builders Ltd)" required>
+        <button type="submit">Add client</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h4>2 · Create a login for a client</h4>
+      <form id="adminUserForm" class="admin-grid" autocomplete="off">
+        <select id="adminUserTenant" required></select>
+        <input type="email" id="adminUserEmail" placeholder="Their email address" required>
+        <input type="text" id="adminUserPassword" placeholder="Temporary password (8+ chars)" required>
+        <button type="submit">Create login</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h4>Existing client logins</h4>
+      <div id="adminUserList" class="admin-list">Loading…</div>
+    </section>
+
+    <div class="admin-error" id="adminError" hidden></div>
+  </div>
+</div>
 
 <div id="authModalOverlay" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
   <div class="auth-modal">
@@ -9766,14 +9848,21 @@ function resetReportFilters() {
     }
   });
 
-  // Sign-in / sign-out button — relocated into the right-hand end of the tab
-  // button row so it no longer floats over the letterhead date box.
-  const fab = document.getElementById('authFab');
-  (function _placeFab(){
+  // Sign-in / sign-out + consultant Admin buttons — relocated into a bar at the
+  // right-hand end of the tab button row so they don't float over the date box.
+  const fab      = document.getElementById('authFab');
+  const adminFab = document.getElementById('adminFab');
+  (function _placeBar(){
     const tabsBar = document.querySelector('.tabs');
-    if(tabsBar && fab && fab.parentElement !== tabsBar){ tabsBar.appendChild(fab); }
+    if(!tabsBar) return;
+    let bar = document.getElementById('ahsAuthBar');
+    if(!bar){ bar = document.createElement('div'); bar.id = 'ahsAuthBar'; bar.className = 'auth-bar no-print'; tabsBar.appendChild(bar); }
+    if(adminFab && adminFab.parentElement !== bar) bar.appendChild(adminFab);
+    if(fab && fab.parentElement !== bar) bar.appendChild(fab);
   })();
   function renderFab(){
+    const isConsultant = Auth.isSignedIn() && Auth.user() && Auth.user().role === 'consultant';
+    if(adminFab) adminFab.style.display = isConsultant ? '' : 'none';
     if(Auth.isSignedIn()){
       const u = Auth.user();
       const tenantLabel = u.tenantName ? ' · ' + u.tenantName : (u.role === 'consultant' ? ' · consultant' : '');
@@ -9786,6 +9875,115 @@ function resetReportFilters() {
     }
   }
   renderFab();
+
+  // ── Consultant-only admin panel: manage clients (tenants) + their logins ──
+  const adminOverlay = document.getElementById('adminModalOverlay');
+  const adminErr     = document.getElementById('adminError');
+  let _tenants = [];
+  async function adminApi(path, opts){
+    opts = opts || {};
+    const res = await fetch(path, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      method: opts.method || 'GET',
+      body: opts.body
+    });
+    const body = await res.json().catch(() => ({}));
+    if(!res.ok){ const e = new Error(body.error || ('HTTP ' + res.status)); e.body = body; throw e; }
+    return body;
+  }
+  function adminNotice(msg, ok){ adminErr.textContent = msg; adminErr.classList.toggle('ok', !!ok); adminErr.hidden = false; }
+  function adminClear(){ adminErr.hidden = true; adminErr.classList.remove('ok'); }
+  function _esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function _fmtDate(d){ if(!d) return 'never'; try { return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch(_){ return '—'; } }
+  function renderTenantDropdown(){
+    const sel = document.getElementById('adminUserTenant');
+    if(!sel) return;
+    sel.innerHTML = _tenants.length
+      ? _tenants.map(function(t){ return '<option value="' + _esc(t.id) + '">' + _esc(t.name) + '</option>'; }).join('')
+      : '<option value="">— add a client first —</option>';
+  }
+  function renderUserList(users){
+    const box = document.getElementById('adminUserList');
+    if(!box) return;
+    const clients = (users || []).filter(function(u){ return u.role === 'client_user'; });
+    if(!clients.length){ box.innerHTML = '<p class="admin-hint">No client logins yet.</p>'; return; }
+    box.innerHTML = clients.map(function(u){
+      return '<div class="admin-user">'
+        + '<div><strong>' + _esc(u.email) + '</strong><br>'
+        + '<span class="admin-hint">' + _esc(u.tenant_name || u.tenant_id || '—') + ' · last login ' + _fmtDate(u.last_login_at) + '</span></div>'
+        + '<div class="admin-user-actions">'
+        + '<button type="button" data-act="reset" data-id="' + _esc(u.id) + '">Reset password</button>'
+        + '<button type="button" data-act="delete" data-id="' + _esc(u.id) + '" class="admin-danger">Delete</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  async function loadAdminData(){
+    adminClear();
+    try {
+      const [tRes, uRes] = await Promise.all([ adminApi('/api/admin/tenants'), adminApi('/api/admin/users') ]);
+      _tenants = tRes.tenants || [];
+      renderTenantDropdown();
+      renderUserList(uRes.users || []);
+    } catch(e){ adminNotice('Could not load admin data: ' + ((e.body && e.body.error) || e.message), false); }
+  }
+  function openAdmin(){ adminClear(); adminOverlay.classList.add('is-open'); loadAdminData(); }
+  function closeAdmin(){ adminOverlay.classList.remove('is-open'); }
+  if(adminFab) adminFab.addEventListener('click', openAdmin);
+  document.getElementById('adminCloseBtn').addEventListener('click', closeAdmin);
+  adminOverlay.addEventListener('click', function(e){ if(e.target === adminOverlay) closeAdmin(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && adminOverlay.classList.contains('is-open')) closeAdmin(); });
+
+  document.getElementById('adminTenantForm').addEventListener('submit', async function(e){
+    e.preventDefault(); adminClear();
+    const name = document.getElementById('adminTenantName').value.trim();
+    if(!name) return;
+    try {
+      await adminApi('/api/admin/tenants', { method: 'POST', body: JSON.stringify({ name: name }) });
+      document.getElementById('adminTenantName').value = '';
+      await loadAdminData();
+      adminNotice('Client added.', true);
+    } catch(e2){
+      adminNotice((e2.body && e2.body.error === 'tenant_id_exists') ? 'A client with that name already exists.' : ('Could not add client: ' + ((e2.body && e2.body.error) || e2.message)), false);
+    }
+  });
+
+  document.getElementById('adminUserForm').addEventListener('submit', async function(e){
+    e.preventDefault(); adminClear();
+    const tenantId = document.getElementById('adminUserTenant').value;
+    const email    = document.getElementById('adminUserEmail').value.trim();
+    const password = document.getElementById('adminUserPassword').value;
+    if(!tenantId){ adminNotice('Add a client first, then create their login.', false); return; }
+    if(password.length < 8){ adminNotice('Password must be at least 8 characters.', false); return; }
+    try {
+      await adminApi('/api/admin/users', { method: 'POST', body: JSON.stringify({ email: email, password: password, role: 'client_user', tenantId: tenantId }) });
+      document.getElementById('adminUserEmail').value = '';
+      document.getElementById('adminUserPassword').value = '';
+      await loadAdminData();
+      adminNotice('Login created for ' + email + '. Give them the email + password you set.', true);
+    } catch(e2){
+      adminNotice((e2.body && e2.body.error === 'email_exists') ? 'That email already has a login.' : ('Could not create login: ' + ((e2.body && e2.body.error) || e2.message)), false);
+    }
+  });
+
+  document.getElementById('adminUserList').addEventListener('click', async function(e){
+    const btn = e.target.closest('button[data-act]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-id');
+    const act = btn.getAttribute('data-act');
+    adminClear();
+    if(act === 'reset'){
+      const pw = window.prompt('Enter a new password for this login (at least 8 characters):');
+      if(pw == null) return;
+      if(pw.length < 8){ adminNotice('Password must be at least 8 characters.', false); return; }
+      try { await adminApi('/api/admin/users/' + encodeURIComponent(id) + '/reset-password', { method: 'POST', body: JSON.stringify({ password: pw }) }); adminNotice('Password updated.', true); }
+      catch(e2){ adminNotice('Could not reset password: ' + ((e2.body && e2.body.error) || e2.message), false); }
+    } else if(act === 'delete'){
+      if(!window.confirm('Delete this login? Their saved projects stay on the server, but they will no longer be able to sign in.')) return;
+      try { await adminApi('/api/admin/users/' + encodeURIComponent(id), { method: 'DELETE' }); await loadAdminData(); adminNotice('Login deleted.', true); }
+      catch(e2){ adminNotice('Could not delete: ' + ((e2.body && e2.body.error) || e2.message), false); }
+    }
+  });
 
   // Wrap the app's existing save functions to ALSO sync to server, debounced
   let _syncTimer = null;
