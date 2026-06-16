@@ -10188,6 +10188,12 @@ function resetReportFilters() {
       <div id="adminUserList" class="admin-list">Loading…</div>
     </section>
 
+    <section class="admin-section">
+      <h4>Existing client companies</h4>
+      <div id="adminTenantList" class="admin-list">Loading…</div>
+      <p class="admin-hint">Deleting a company permanently removes the company, <strong>all its logins, and all its saved projects</strong> — e.g. for non-payment / offboarding. This cannot be undone.</p>
+    </section>
+
     <div class="admin-error" id="adminError" hidden></div>
   </div>
 </div>
@@ -10374,6 +10380,7 @@ function resetReportFilters() {
   const adminOverlay = document.getElementById('adminModalOverlay');
   const adminErr     = document.getElementById('adminError');
   let _tenants = [];
+  let _users = [];
   async function adminApi(path, opts){
     opts = opts || {};
     const res = await fetch(path, {
@@ -10412,13 +10419,30 @@ function resetReportFilters() {
         + '</div></div>';
     }).join('');
   }
+  function renderTenantList(){
+    const box = document.getElementById('adminTenantList');
+    if(!box) return;
+    if(!_tenants.length){ box.innerHTML = '<p class="admin-hint">No client companies yet.</p>'; return; }
+    box.innerHTML = _tenants.map(function(t){
+      const logins = _users.filter(function(u){ return u.tenant_id === t.id; }).length;
+      const saved  = t.last_state_update ? 'last saved ' + _fmtDate(t.last_state_update) : 'no saved projects';
+      return '<div class="admin-user">'
+        + '<div><strong>' + _esc(t.name) + '</strong><br>'
+        + '<span class="admin-hint">' + logins + ' login(s) · ' + saved + '</span></div>'
+        + '<div class="admin-user-actions">'
+        + '<button type="button" data-act="delcompany" data-id="' + _esc(t.id) + '" data-name="' + _esc(t.name) + '" class="admin-danger">Delete company &amp; all data</button>'
+        + '</div></div>';
+    }).join('');
+  }
   async function loadAdminData(){
     adminClear();
     try {
       const [tRes, uRes] = await Promise.all([ adminApi('/api/admin/tenants'), adminApi('/api/admin/users') ]);
       _tenants = tRes.tenants || [];
+      _users   = uRes.users   || [];
       renderTenantDropdown();
-      renderUserList(uRes.users || []);
+      renderUserList(_users);
+      renderTenantList();
     } catch(e){ adminNotice('Could not load admin data: ' + ((e.body && e.body.error) || e.message), false); }
   }
   function openAdmin(){ adminClear(); adminOverlay.classList.add('is-open'); loadAdminData(); }
@@ -10476,6 +10500,33 @@ function resetReportFilters() {
       if(!window.confirm('Delete this login? Their saved projects stay on the server, but they will no longer be able to sign in.')) return;
       try { await adminApi('/api/admin/users/' + encodeURIComponent(id), { method: 'DELETE' }); await loadAdminData(); adminNotice('Login deleted.', true); }
       catch(e2){ adminNotice('Could not delete: ' + ((e2.body && e2.body.error) || e2.message), false); }
+    }
+  });
+
+  document.getElementById('adminTenantList').addEventListener('click', async function(e){
+    const btn = e.target.closest('button[data-act="delcompany"]');
+    if(!btn) return;
+    const id   = btn.getAttribute('data-id');
+    const name = btn.getAttribute('data-name') || id;
+    adminClear();
+    const logins = _users.filter(function(u){ return u.tenant_id === id; });
+    if(!window.confirm('Permanently DELETE the company "' + name + '"?\n\nThis removes the company, its ' + logins.length + ' login(s), and ALL its saved projects. This cannot be undone.')) return;
+    const typed = window.prompt('To confirm, type the company name exactly:\n\n' + name);
+    if(typed == null) return;
+    if(typed.trim() !== name){ adminNotice('Name did not match — nothing was deleted.', false); return; }
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    try {
+      // The server refuses to delete a company while it still has logins, so
+      // remove the logins first, then the company (which cascades its projects).
+      for(let i = 0; i < logins.length; i++){
+        await adminApi('/api/admin/users/' + encodeURIComponent(logins[i].id), { method: 'DELETE' });
+      }
+      await adminApi('/api/admin/tenants/' + encodeURIComponent(id), { method: 'DELETE' });
+      await loadAdminData();
+      adminNotice('Company "' + name + '" and all its data were deleted.', true);
+    } catch(e2){
+      await loadAdminData();
+      adminNotice('Could not fully delete the company: ' + ((e2.body && e2.body.error) || e2.message), false);
     }
   });
 
