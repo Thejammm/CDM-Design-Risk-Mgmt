@@ -1269,18 +1269,6 @@ body {
   padding: 8px 8px;
 }
 
-/* Required project-information fields (item 2) */
-.risk-meta td.req-label {
-  font-weight: 700;
-  color: var(--brand-accent);
-  background: rgba(0, 120, 212, 0.06);
-}
-.risk-meta td.req-label .req-star {
-  color: #d11;
-  margin-left: 2px;
-  font-weight: 700;
-}
-
 /* First column pair (Client, Project, Location, Revision) */
 .risk-meta td:nth-child(1) {
   width: 60px;  /* Label */
@@ -1423,56 +1411,11 @@ body {
 }
 
 .risk-image-preview img {
-  max-width: 320px;
-  max-height: 220px;
-  width: auto;
-  height: auto;
-  object-fit: contain;
+  max-width: 100%;
+  max-height: 400px;
   border: 1px solid #d1d1d6;
   border-radius: 4px;
   display: block;
-}
-
-.risk-image-note {
-  font-size: 11px;
-  line-height: 1.5;
-  color: #92400e;
-  background: #fff7ed;
-  border: 1px solid #fed7aa;
-  border-radius: 6px;
-  padding: 8px 10px;
-}
-
-.risk-image-remove {
-  display: inline-block;
-  margin-top: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 10px;
-  color: #b91c1c;
-  background: #fff;
-  border: 1px solid #fca5a5;
-  border-radius: 6px;
-  cursor: pointer;
-}
-.risk-image-remove:hover { background: #fee2e2; }
-
-.risk-image-ref-label {
-  display: block;
-  margin-top: 10px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #374151;
-}
-.risk-image-ref {
-  display: block;
-  margin-top: 4px;
-  width: 100%;
-  max-width: 320px;
-  font-size: 11px;
-  padding: 6px 8px;
-  border: 1px solid #d1d1d6;
-  border-radius: 4px;
 }
 /* Brand Setup Modal */
 .brand-field {
@@ -1660,14 +1603,6 @@ body {
   </script>
 </head>
 <body>
-<!-- Sign-in: expose the active (client, project) BEFORE the app initialises so
-     the register loads/saves into the right per-project bucket. -->
-<script>
-  try {
-    var _ahsU = JSON.parse(localStorage.getItem('ahsAuthUser') || 'null');
-    if (_ahsU && _ahsU.email && _ahsU.project) window.__ahsActive = _ahsU;
-  } catch (e) {}
-</script>
 <div class="wrapper">
 
   <!-- Letterhead (Top Row) -->
@@ -1790,23 +1725,23 @@ body {
         </div>
         <table class="risk-meta">
           <tr>
-            <td class="req-label">Client:<span class="req-star">*</span></td>
+            <td>Client:</td>
             <td contenteditable="true"></td>
-            <td class="req-label">Produced by:<span class="req-star">*</span></td>
+            <td>Produced by:</td>
             <td contenteditable="true">XX XX (PD)</td>
-            <td class="req-label">Prepared by:<span class="req-star">*</span></td>
+            <td>Prepared by:</td>
             <td contenteditable="true">XX XX (PD)</td>
           </tr>
           <tr>
-            <td class="req-label">Project:<span class="req-star">*</span></td>
+            <td>Project:</td>
             <td contenteditable="true"></td>
-            <td class="req-label">Principal Designer<span class="req-star">*</span></td>
+            <td>Principal Designer</td>
             <td contenteditable="true"></td>
-            <td class="req-label">Date:<span class="req-star">*</span></td>
+            <td>Date:</td>
             <td contenteditable="true">XX XX</td>
           </tr>
           <tr>
-            <td class="req-label">Location:<span class="req-star">*</span></td>
+            <td>Location:</td>
             <td contenteditable="true"></td>
             <td>Lead Designer</td>
             <td contenteditable="true"></td>
@@ -1814,7 +1749,7 @@ body {
             <td contenteditable="true">TBC</td>
           </tr>
           <tr>
-            <td class="req-label">Project No:<span class="req-star">*</span></td>
+            <td>Project No:</td>
             <td contenteditable="true"></td>
             <td>Internal-Ref:</td>
             <td contenteditable="true"></td>
@@ -1859,7 +1794,7 @@ body {
               <th title="The final agreed status after design team meetings or acceptance by duty holders">Final Status</th>
               <th title="Date Registered">Registered</th>
               <th title="Date Resolved">Resolved</th>
-              <th title="Who is responsible for validating the design for this risk">Design Validation</th>
+              <th title="Does the information need to be specifically referenced in the pre construction information">PCI</th>
               <th title="Does the information need to be specifically referenced in the H&amp;S File">H&amp;S File</th>
             </tr>
             </thead>
@@ -1972,14 +1907,8 @@ body {
             </div>
 
             <div class="detail-field">
-              <label for="detail-clientPCI">Design Validation</label>
-              <select id="detail-clientPCI" disabled>
-                <option value=""></option>
-                <option value="Designer">Designer</option>
-                <option value="Client">Client</option>
-                <option value="Principal Contractor">Principal Contractor</option>
-                <option value="Principal Designer">Principal Designer</option>
-              </select>
+              <label for="detail-clientPCI">Client Pre-Construction Information</label>
+              <input id="detail-clientPCI" disabled>
             </div>
 
             <div class="detail-field">
@@ -2086,44 +2015,6 @@ body {
           The dashboard reads directly from the Risk Register tab using the "Residual Risk Rating" column (High / Medium / Low).
         </div>
       </div>
-
-      <!-- Second dashboard: Design Validation (item 5) -->
-      <div class="section dashboard-section">
-        <div class="section-title">
-          Design Validation Dashboard
-        </div>
-
-        <div class="dashboard-controls">
-          <button type="button" onclick="updateDashboard()">
-            Refresh charts from register
-          </button>
-          <button type="button" onclick="exportCharts()">
-            Export as PDF
-          </button>
-        </div>
-
-        <div id="dv-dashboard-summary" style="background: #f5f5f7; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 10px;">
-          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
-            <div><strong>Total Risks:</strong><br><span style="font-size: 18px; color: #0078d4;" id="dv-stat-total">0</span></div>
-            <div><strong>Top Element:</strong><br><span style="font-size: 10px;" id="dv-stat-high">—</span></div>
-            <div><strong>Validation Distribution:</strong><br><span style="font-size: 10px;" id="dv-stat-dist">—</span></div>
-          </div>
-        </div>
-
-        <div class="dashboard-chart">
-          <h4 style="margin:4px 0 6px;font-size:11px;">Design Validation by Building Element / Activity</h4>
-          <canvas id="chartDVByElement"></canvas>
-        </div>
-
-        <div class="dashboard-chart">
-          <h4 style="margin:4px 0 6px;font-size:11px;">Total by Design Validation</h4>
-          <canvas id="chartDVTotals"></canvas>
-        </div>
-
-        <div class="note-text">
-          This dashboard reads directly from the Risk Register tab using the "Design Validation" column (Designer / Client / Principal Contractor / Principal Designer).
-        </div>
-      </div>
     </div> <!-- end tab-dashboard -->
 
    <!-- CREATE REPORT TAB -->
@@ -2167,7 +2058,6 @@ body {
     <option value="designer">Designer</option>
   </select>
 </div>
-    </div><!-- /Filters Row .report-controls (was unclosed → nested everything below) -->
 
 <!-- Column Selection -->
 <div class="report-controls">
@@ -2188,7 +2078,7 @@ body {
       <label><input type="checkbox" class="report-column" value="finalStatus" checked> Final Status</label>
       <label><input type="checkbox" class="report-column" value="dateRegistered"> Date Registered</label>
       <label><input type="checkbox" class="report-column" value="dateResolved"> Date Resolved</label>
-      <label><input type="checkbox" class="report-column" value="clientPCI"> Design Validation</label>
+      <label><input type="checkbox" class="report-column" value="clientPCI"> Client PCI</label>
       <label><input type="checkbox" class="report-column" value="hsFile"> H&S File</label>
     </div>
   </div>
@@ -2197,6 +2087,9 @@ body {
 <!-- Generate Button -->
 <!-- Generate Button -->
 <div class="report-controls">
+  <button class="tab-button" onclick="printRiskRegisterPDF()">
+    Generate Risk Summary Report
+  </button>
   <button class="tab-button" onclick="generateNarrativeReport()">
     Generate Narrative Report
   </button>
@@ -2236,15 +2129,26 @@ body {
   <div class="note-text" style="margin-bottom: 16px;">
     Select an Excel file (.xlsx) to import risks. You'll be able to map columns to risk fields in the next step.
   </div>
-  <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="margin-bottom: 12px;" onchange="populateHeaderRowOptions()">
-
+  <input type="file" id="excel-file-input" accept=".xlsx,.xls" style="margin-bottom: 12px;">
+  
   <div style="margin-bottom: 12px;">
     <label for="header-row-select" style="font-weight: 600; font-size: 11px;">Header row starts at:</label>
     <select id="header-row-select" style="margin-left: 8px; padding: 4px 8px;">
       <option value="1">Row 1</option>
+      <option value="2">Row 2</option>
+      <option value="3">Row 3</option>
+      <option value="4">Row 4</option>
+      <option value="5">Row 5</option>
+      <option value="6" selected>Row 6</option>
+      <option value="7">Row 7</option>
+      <option value="8">Row 8</option>
+      <option value="9">Row 9</option>
+      <option value="10">Row 10</option>
+      <option value="15">Row 15</option>
+      <option value="20">Row 20</option>
     </select>
     <span style="font-size: 10px; color: #6e6e73; margin-left: 8px;">
-      (Row number where your column names are — list fills to match your file once selected)
+      (Row number where your column names are)
     </span>
   </div>
   
@@ -2351,7 +2255,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Include the SI report and groundwater observations in the Pre-Construction Information.",
         hsFile: "Record the as-built foundation type and any encountered ground anomalies in the H&S File."
       }
     },
@@ -2381,7 +2285,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "PCI to flag overhead-line proximity and any neighbouring building constraints.",
         hsFile: "Record the as-built steel grade, connection schedule and erection drawings."
       }
     },
@@ -2411,7 +2315,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Reference to maintenance access strategy and anchor-point loading.",
         hsFile: "Record system specification, anchor-point certificates and inspection regime."
       }
     },
@@ -2441,7 +2345,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Reference to BIM coordination model and clash-detection process.",
         hsFile: "Record as-installed MEP routing and fire-stopping inspection certificates."
       }
     }
@@ -2473,7 +2377,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Include the R&D survey, sample analysis certificates and any management plan in the Pre-Construction Information.",
         hsFile: "Update the asbestos register with as-found / as-removed ACMs; retain consignment notes."
       }
     },
@@ -2503,7 +2407,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Reference lead survey results and any restricted access requirements.",
         hsFile: "Record lead-paint extent identified and the disposal route used."
       }
     },
@@ -2533,7 +2437,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Provide details of the occupier population and any sensitive activities (medical, education, manufacturing).",
         hsFile: "Retain final segregation plan and any occupier communications log."
       }
     },
@@ -2563,7 +2467,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Note the building's fire strategy, alarm systems and isolation procedure in the PCI.",
         hsFile: "Retain hot-works permits and any incident reports in the H&S File."
       }
     }
@@ -6388,7 +6292,7 @@ const snippetLibraries = {
       finalStatus: "Active",
       dateRegistered: "",
       dateResolved: "",
-      clientPCI: "",
+      clientPCI: "Include the assumed wall build-up, compartment line locations and any pre-existing condensation history in the Pre-Construction Information.",
       hsFile: "Record the as-installed duct route, sleeve detail, external grille type and fire-stopping certificate (where used) in the H&S File."
     }
   },
@@ -6418,7 +6322,7 @@ const snippetLibraries = {
       finalStatus: "Active",
       dateRegistered: "",
       dateResolved: "",
-      clientPCI: "",
+      clientPCI: "Flag the bathroom Special Location classification and existing supply / RCD protection arrangement in the PCI.",
       hsFile: "Record the BS 7671 zone diagram, unit IP rating, EIC and RCD test result in the H&S File."
     }
   },
@@ -6448,7 +6352,7 @@ const snippetLibraries = {
       finalStatus: "Active",
       dateRegistered: "",
       dateResolved: "",
-      clientPCI: "",
+      clientPCI: "Provide the existing asbestos management plan / register and any prior R&D surveys with the PCI.",
       hsFile: "Update the asbestos register with any ACMs left in situ, removal certificates and four-stage clearance records."
     }
   },
@@ -6478,7 +6382,7 @@ const snippetLibraries = {
       finalStatus: "Active",
       dateRegistered: "",
       dateResolved: "",
-      clientPCI: "",
+      clientPCI: "Note any restricted-access locations or live occupancy patterns affecting maintenance windows.",
       hsFile: "Record the unit make / model, filter part number, cleaning frequency, replacement schedule and recommended access method in the H&S File."
     }
   },
@@ -6508,7 +6412,7 @@ const snippetLibraries = {
       finalStatus: "Active",
       dateRegistered: "",
       dateResolved: "",
-      clientPCI: "",
+      clientPCI: "Confirm the existing appliance type (open-flued / room-sealed / electric) and flue arrangement in the PCI.",
       hsFile: "Record the appliance type, dMEV flow rate, spillage-test certificate, CO alarm model and replacement date in the H&S File."
     }
   }
@@ -6540,7 +6444,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Provide all available original drawings of the existing building and details of any prior alterations.",
         hsFile: "Record the as-built connection details and any temporary works retained or removed."
       }
     },
@@ -6570,7 +6474,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Highlight any items of value, sensitive equipment or finishes below the affected roof area.",
         hsFile: "Record the as-installed flashing details at the new / existing roof junction."
       }
     },
@@ -6600,7 +6504,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Provide the party-wall award and neighbour Schedule of Condition.",
         hsFile: "Retain post-works condition survey and any reinstatement records."
       }
     },
@@ -6630,7 +6534,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Reference Building Control approval, any consequential-works conditions and the upgrade package.",
         hsFile: "Update the H&S File with the as-built upgrade scope and certifications."
       }
     }
@@ -6662,7 +6566,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Provide the PAS 128 survey, LSBUD reply and any relevant utility plans in the PCI.",
         hsFile: "Record the as-built service routes and update the asset register."
       }
     },
@@ -6692,7 +6596,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Specify any concrete mix or admixture restrictions (e.g. low-carbon mixes).",
         hsFile: "Record the concrete mix design and any post-pour sample test results."
       }
     },
@@ -6722,7 +6626,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Reference TTRO consent, traffic-management plan and emergency-services notification.",
         hsFile: "Retain the as-installed road markings, signage schedule and any incident reports."
       }
     },
@@ -6752,7 +6656,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "List all confined spaces and the rescue plan in the Pre-Construction Information.",
         hsFile: "Confined-space register and entry procedure included in the H&S File."
       }
     }
@@ -6784,7 +6688,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Provide PAS 128 results, statutory replies and the existing-asset register.",
         hsFile: "Record as-decommissioned and as-installed service routes; flag any abandoned-in-place runs."
       }
     },
@@ -6814,7 +6718,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Communicate planned outages to affected stakeholders; record consents in the PCI.",
         hsFile: "Retain the as-implemented cut-over plan and any incident reports."
       }
     },
@@ -6844,7 +6748,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Document expected hazardous materials in the Pre-Construction Information.",
         hsFile: "Retain disposal certificates and final environmental sampling results."
       }
     },
@@ -6874,7 +6778,7 @@ const snippetLibraries = {
         finalStatus: "Active",
         dateRegistered: "",
         dateResolved: "",
-        clientPCI: "",
+        clientPCI: "Provide existing single-line diagrams and protection settings in the Pre-Construction Information.",
         hsFile: "Retain as-built electrical drawings, cut-over records and protection-test certificates."
       }
     }
@@ -6933,18 +6837,6 @@ const STORAGE_KEY_BASE = "cdmRiskRegisterState_v1";
 const STORAGE_KEY = STORAGE_KEY_BASE + "::" + INSTANCE_ID;
 let loadedMetaCells = null;
 
-// When a client is signed in (sign-in wrapper at the foot of the page), the
-// register autosaves to a per-(client, project) bucket so each named project is
-// kept separately and reopens when they sign back in. Signed out = default key.
-function effectiveStorageKey() {
-  var a = window.__ahsActive;
-  if (a && a.email && a.project) {
-    return STORAGE_KEY_BASE + "::" + INSTANCE_ID + "::proj::" +
-      String(a.email).toLowerCase() + "::" + a.project;
-  }
-  return STORAGE_KEY;
-}
-
 function saveStateToStorage() {
   try {
     const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
@@ -6955,7 +6847,7 @@ function saveStateToStorage() {
       meta: metaValues
     };
 
-    localStorage.setItem(effectiveStorageKey(), JSON.stringify(payload));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
   } catch (err) {
     console.warn("Unable to save risk register state", err);
   }
@@ -6963,11 +6855,7 @@ function saveStateToStorage() {
 
 function loadStateFromStorage() {
   try {
-    // Signed in: read only this project's bucket (a new project name starts
-    // fresh). Signed out: default key, falling back to the legacy base key.
-    const raw = window.__ahsActive
-      ? localStorage.getItem(effectiveStorageKey())
-      : (localStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY_BASE));
+    const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(STORAGE_KEY_BASE);
     if (!raw) return;
     const parsed = JSON.parse(raw);
 
@@ -7000,7 +6888,6 @@ function attachMetaListeners() {
     });
   });
 }
-
 
 const detailFieldMap = {
   designer: "detail-designer", 
@@ -7036,7 +6923,7 @@ const fieldLabels = {
   finalStatus: "Final Status",
   dateRegistered: "Date Registered",
   dateResolved: "Date Resolved",
-  clientPCI: "Design Validation",
+  clientPCI: "Client Pre-Construction Information",
   hsFile: "H&S File"
 };
 
@@ -7091,26 +6978,6 @@ function renderRisks() {
         applyRatingClass(select, select.value);
 
         select.addEventListener("change", onRatingChange);
-        td.appendChild(select);
-      } else if (field === "clientPCI") {
-        // Design Validation dropdown — styled exactly like the Initial/Residual
-        // Risk dropdowns (same risk-rating-cell class), minus the High/Med/Low
-        // colour states which don't apply to duty-holder values.
-        td.classList.add("risk-rating-cell");
-
-        const select = document.createElement("select");
-        select.innerHTML = `
-          <option value=""></option>
-          <option value="Designer">Designer</option>
-          <option value="Client">Client</option>
-          <option value="Principal Contractor">Principal Contractor</option>
-          <option value="Principal Designer">Principal Designer</option>
-        `;
-        select.value = risk[field] || "";
-        select.dataset.rowIndex = rowIndex;
-        select.dataset.field = field;
-
-        select.addEventListener("change", onDesignValidationChange);
         td.appendChild(select);
       } else {
         td.contentEditable = "true";
@@ -7184,27 +7051,6 @@ function onRatingChange(e) {
       detailEl.value = value;
       applyRatingClass(detailEl, value);
     }
-    updateDetailTitle();
-  }
-
-  // persist changes
-  saveStateToStorage();
-}
-
-// --- 3c) Design Validation dropdown changes in table ------
-function onDesignValidationChange(e) {
-  const select = e.target;
-  const rowIndex = parseInt(select.dataset.rowIndex, 10);
-  const field = select.dataset.field;
-  const value = select.value.trim();
-
-  if (!risks[rowIndex]) risks[rowIndex] = {};
-  risks[rowIndex][field] = value;
-
-  if (rowIndex === selectedRowIndex) {
-    const detailId = detailFieldMap[field];
-    const detailEl = document.getElementById(detailId);
-    if (detailEl) detailEl.value = value;
     updateDetailTitle();
   }
 
@@ -7300,10 +7146,10 @@ function attachDetailListeners() {
       const selector = `td[data-row-index="${selectedRowIndex}"][data-field="${field}"]`;
       const cell = document.querySelector(selector);
       if (cell) {
-        const sel = cell.querySelector("select");
-        if (sel) {
-          sel.value = value;
-          if (field === "initialRisk" || field === "residualRisk") {
+        if (field === "initialRisk" || field === "residualRisk") {
+          const sel = cell.querySelector("select");
+          if (sel) {
+            sel.value = value;
             applyRatingClass(cell, value);
             applyRatingClass(sel, value);
           }
@@ -7378,12 +7224,12 @@ function clearSelectionContents() {
     if (!td.dataset) return;
     const rowIndex = parseInt(td.dataset.rowIndex, 10);
     const field = td.dataset.field;
-    const cellSelect = td.querySelector("select");
-    if (cellSelect) {
-      cellSelect.value = "";
-      if (field === "initialRisk" || field === "residualRisk") {
+    if (field === "initialRisk" || field === "residualRisk") {
+      const select = td.querySelector("select");
+      if (select) {
+        select.value = "";
         applyRatingClass(td, "");
-        applyRatingClass(cellSelect, "");
+        applyRatingClass(select, "");
       }
     } else {
       td.textContent = "";
@@ -7465,13 +7311,6 @@ function showTab(tabId) {
 // --- 8) Dashboard / Charts ---------------------
 let chartByElement = null;
 let chartTotals = null;
-let chartDVByElement = null;
-let chartDVTotals = null;
-
-// Design Validation categories (item 5) — fixed list + an "Unassigned" bucket
-// for rows where Design Validation has not been set.
-const DV_CATEGORIES = ["Designer", "Client", "Principal Contractor", "Principal Designer", "Unassigned"];
-const DV_COLORS = ["#1e3a8a", "#0d9488", "#b45309", "#7c3aed", "#9ca3af"];
 
 function computeDashboardData() {
   const elementMap = new Map();
@@ -7742,188 +7581,6 @@ function updateDashboard() {
         }
       }
     ]
-  });
-
-  // Keep the Design Validation dashboard in sync (item 5).
-  updateDVDashboard();
-}
-
-// ---- Design Validation dashboard (item 5) — mirrors the risk dashboard ----
-function computeDVDashboardData() {
-  const elementMap = new Map();
-  const totals = {};
-  DV_CATEGORIES.forEach(c => { totals[c] = 0; });
-
-  risks.forEach(r => {
-    const elementRaw = (r.element || "").trim();
-    const dvRaw = (r.clientPCI || "").trim();
-    // Skip rows the user hasn't started (no element AND no Design Validation).
-    if (!elementRaw && !dvRaw) return;
-
-    const category = DV_CATEGORIES.indexOf(dvRaw) >= 0 ? dvRaw : "Unassigned";
-    const element = elementRaw || "Unspecified";
-
-    if (!elementMap.has(element)) {
-      const blank = {};
-      DV_CATEGORIES.forEach(c => { blank[c] = 0; });
-      elementMap.set(element, blank);
-    }
-    elementMap.get(element)[category]++;
-    totals[category]++;
-  });
-
-  let labels = Array.from(elementMap.keys());
-  labels.sort((a, b) => {
-    const sum = (m) => DV_CATEGORIES.reduce((acc, c) => acc + m[c], 0);
-    return sum(elementMap.get(b)) - sum(elementMap.get(a));
-  });
-
-  const datasetsByElement = DV_CATEGORIES.map(c => ({
-    label: c,
-    data: labels.map(l => elementMap.get(l)[c])
-  }));
-
-  const totalCount = DV_CATEGORIES.reduce((acc, c) => acc + totals[c], 0);
-  const topElement = labels.length > 0 ? labels[0] : "None";
-
-  return { labels, datasetsByElement, totals, totalCount, topElement };
-}
-
-function updateDVDashboard() {
-  const elCanvas = document.getElementById("chartDVByElement");
-  const totCanvas = document.getElementById("chartDVTotals");
-  if (!elCanvas || !totCanvas) return;
-
-  const data = computeDVDashboardData();
-
-  // Summary stats
-  const setTxt = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  setTxt("dv-stat-total", data.totalCount);
-  setTxt("dv-stat-high", data.topElement);
-  setTxt("dv-stat-dist", DV_CATEGORIES.map(c => c.replace("Principal ", "P.") + ": " + data.totals[c]).join(" | "));
-
-  // Grow the by-element canvas like the risk dashboard does.
-  const PIXELS_PER_ROW = 26, MIN_HEIGHT = 360, HEADER_PADDING = 60;
-  const required = Math.max(MIN_HEIGHT, (data.labels.length * PIXELS_PER_ROW) + HEADER_PADDING);
-  const wrapper = elCanvas.parentElement;
-  if (wrapper) wrapper.style.height = (required + 40) + "px";
-  elCanvas.style.maxHeight = "none";
-  elCanvas.style.height = required + "px";
-
-  if (chartDVByElement) chartDVByElement.destroy();
-  if (chartDVTotals) chartDVTotals.destroy();
-
-  chartDVByElement = new Chart(elCanvas.getContext("2d"), {
-    type: "bar",
-    data: {
-      labels: data.labels,
-      datasets: data.datasetsByElement.map((ds, i) => ({
-        label: ds.label,
-        data: ds.data,
-        backgroundColor: DV_COLORS[i],
-        borderColor: DV_COLORS[i],
-        borderWidth: 1.5
-      }))
-    },
-    options: {
-      indexAxis: "y",
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: "top", labels: { font: { size: 10 }, padding: 12 } },
-        title: { display: false },
-        tooltip: { callbacks: { afterLabel: function(context) { return "Count: " + context.parsed.x; } } }
-      },
-      scales: {
-        x: { stacked: true, beginAtZero: true, precision: 0, ticks: { font: { size: 9 } } },
-        y: { stacked: true, ticks: { font: { size: 9 } } }
-      }
-    },
-    plugins: [{
-      id: 'dvDatalabels',
-      afterDraw(chart) {
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-          chart.getDatasetMeta(datasetIndex).data.forEach((datapoint, index) => {
-            const value = dataset.data[index];
-            if (!value || value <= 0) return;
-            const props = datapoint.getProps(['x', 'base', 'y'], true);
-            const segWidth = Math.abs(props.x - props.base);
-            if (segWidth < 14) return;
-            const cx = (props.x + props.base) / 2;
-            chart.ctx.save();
-            chart.ctx.fillStyle = '#ffffff';
-            chart.ctx.font = 'bold 10px sans-serif';
-            chart.ctx.textAlign = 'center';
-            chart.ctx.textBaseline = 'middle';
-            chart.ctx.fillText(value.toString(), cx, props.y);
-            chart.ctx.restore();
-          });
-        });
-      }
-    }]
-  });
-
-  chartDVTotals = new Chart(totCanvas.getContext("2d"), {
-    type: "bar",
-    data: {
-      labels: DV_CATEGORIES,
-      datasets: [{
-        label: "Number of risks",
-        data: DV_CATEGORIES.map(c => data.totals[c]),
-        backgroundColor: DV_COLORS.slice(),
-        borderColor: DV_COLORS.slice(),
-        borderWidth: 1.5
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: false },
-        title: { display: false },
-        tooltip: {
-          callbacks: {
-            afterLabel: function(context) {
-              const total = data.totalCount;
-              const pct = total > 0 ? ((context.parsed.y / total) * 100).toFixed(1) : 0;
-              return pct + "% of total";
-            }
-          }
-        }
-      },
-      scales: { y: { beginAtZero: true, precision: 0, ticks: { font: { size: 9 } } } }
-    },
-    plugins: [{
-      id: 'dvTotalsDatalabels',
-      afterDraw(chart) {
-        chart.data.datasets.forEach((dataset, datasetIndex) => {
-          chart.getDatasetMeta(datasetIndex).data.forEach((datapoint, index) => {
-            const value = dataset.data[index];
-            if (!value || value <= 0) return;
-            const total = data.totalCount;
-            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
-            const props = datapoint.getProps(['x', 'y', 'base'], true);
-            const barTop = Math.min(props.y, props.base);
-            const barBottom = Math.max(props.y, props.base);
-            const barH = barBottom - barTop;
-            const cx = props.x, cy = (barTop + barBottom) / 2;
-            chart.ctx.save();
-            chart.ctx.textAlign = 'center';
-            if (barH >= 28) {
-              chart.ctx.fillStyle = '#ffffff'; chart.ctx.font = 'bold 12px sans-serif'; chart.ctx.textBaseline = 'middle';
-              chart.ctx.fillText(value, cx, cy - 7);
-              chart.ctx.font = '9px sans-serif'; chart.ctx.fillText(pct + '%', cx, cy + 8);
-            } else if (barH >= 14) {
-              chart.ctx.fillStyle = '#ffffff'; chart.ctx.font = 'bold 10px sans-serif'; chart.ctx.textBaseline = 'middle';
-              chart.ctx.fillText(value + ' (' + pct + '%)', cx, cy);
-            } else {
-              chart.ctx.fillStyle = '#1f2937'; chart.ctx.font = 'bold 10px sans-serif'; chart.ctx.textBaseline = 'bottom';
-              chart.ctx.fillText(value + ' (' + pct + '%)', cx, barTop - 4);
-            }
-            chart.ctx.restore();
-          });
-        });
-      }
-    }]
   });
 }
 
@@ -8800,7 +8457,7 @@ function buildNarrativeRiskItem(risk, selectedColumns, idx) {
     'finalStatus': { label: 'Final Status', value: risk.finalStatus },
     'dateRegistered': { label: 'Date Registered', value: risk.dateRegistered },
     'dateResolved': { label: 'Date Resolved', value: risk.dateResolved },
-    'clientPCI': { label: 'Design Validation', value: risk.clientPCI },
+    'clientPCI': { label: 'Client PCI', value: risk.clientPCI },
     'hsFile': { label: 'H&S File', value: risk.hsFile }
   };
 
@@ -8814,11 +8471,8 @@ function buildNarrativeRiskItem(risk, selectedColumns, idx) {
   html += `
     <div class="risk-image-container">
       <strong>Risk Evidence Image:</strong>
-      <input type="file" accept="image/*,.heic,.heif,.avif,.jfif,.bmp,.tif,.tiff" onchange="uploadRiskImage(this, ${idx})" class="risk-image-upload">
+      <input type="file" accept="image/*" onchange="uploadRiskImage(this, ${idx})" class="risk-image-upload">
       <div id="risk-image-preview-${idx}" class="risk-image-preview"></div>
-      <label class="risk-image-ref-label">Drawing / reference no:
-        <input type="text" class="risk-image-ref" id="risk-image-ref-${idx}" placeholder="e.g. Drawing A-101 Rev C">
-      </label>
     </div>
   `;
 
@@ -8827,48 +8481,29 @@ function buildNarrativeRiskItem(risk, selectedColumns, idx) {
 }
 
 function uploadRiskImage(input, idx) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const previewContainer = document.getElementById(`risk-image-preview-${idx}`);
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const dataUrl = e.target.result;
-    // Accept ANY file the user picks. Rather than reject by file type (which
-    // wrongly blocks files with a blank MIME type), we try to render it and
-    // only show a note if the browser genuinely can't decode the format.
-    const probe = new Image();
-    probe.onload = function () {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    
+    // Validate it's an image
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
+    }
+    
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const previewContainer = document.getElementById(`risk-image-preview-${idx}`);
       if (previewContainer) {
-        previewContainer.innerHTML =
-          '<img src="' + dataUrl + '" alt="Risk Evidence">' +
-          '<button type="button" class="risk-image-remove" onclick="removeRiskImage(' + idx + ')">✕ Remove image</button>';
+        previewContainer.innerHTML = `<img src="${e.target.result}" alt="Risk Evidence">`;
       }
     };
-    probe.onerror = function () {
-      if (!previewContainer) return;
-      const safeName = (file.name || 'file').replace(/[<>&"]/g, '');
-      previewContainer.innerHTML =
-        '<div class="risk-image-note">⚠ "' + safeName + '" couldn\'t be displayed in the browser. ' +
-        'Use a <strong>JPG, PNG, GIF or WEBP</strong>. ' +
-        '(iPhone HEIC photos aren\'t supported by browsers — set your camera to "Most Compatible", or save the photo as JPG first.)</div>';
+    
+    reader.onerror = function() {
+      alert('Error loading image. Please try again.');
     };
-    probe.src = dataUrl;
-  };
-  reader.onerror = function () {
-    if (previewContainer) previewContainer.innerHTML = '<div class="risk-image-note">Couldn\'t read that file. Please try again.</div>';
-  };
-  reader.readAsDataURL(file);
-}
-
-// Remove an uploaded evidence image (clears the preview and the file input).
-function removeRiskImage(idx) {
-  const preview = document.getElementById('risk-image-preview-' + idx);
-  if (preview) {
-    preview.innerHTML = '';
-    const container = preview.closest('.risk-image-container');
-    const input = container && container.querySelector('.risk-image-upload');
-    if (input) input.value = '';
+    
+    reader.readAsDataURL(file);
   }
 }
 // ========================================
@@ -8948,7 +8583,7 @@ async function exportRiskRegisterExcel() {
     { width: 14 }, // 12 Final Status
     { width: 13 }, // 13 Date Registered
     { width: 13 }, // 14 Date Resolved
-    { width: 22 }, // 15 Design Validation
+    { width: 22 }, // 15 Client PCI
     { width: 22 }  // 16 H&S File
   ];
 
@@ -9066,7 +8701,7 @@ async function exportRiskRegisterExcel() {
     'Initial Risk', 'Designer Comments', 'Risk Eliminated',
     'Stage Required', 'Owner', 'Residual Risk',
     'Action Required', 'Final Status', 'Date Registered',
-    'Date Resolved', 'Design Validation', 'H&S File'
+    'Date Resolved', 'Client PCI', 'H&S File'
   ];
   const headerBorder = {
     top:    { style: 'thin',   color: { argb: 'FF000000' } },
@@ -9286,7 +8921,7 @@ function printRiskRegisterPDF() {
     'Designer', 'Risk Ref', 'Element', 'Hazard',
     'Initial Risk', 'Designer Comments', 'Eliminated',
     'Stage', 'Owner', 'Residual Risk', 'Action Required',
-    'Final Status', 'Date Registered', 'Date Resolved', 'Design Validation', 'H&S File'
+    'Final Status', 'Date Registered', 'Date Resolved', 'Client PCI', 'H&S File'
   ]];
   const body = (risks || []).map(r => [
     r.designer || '', r.ref || '', r.element || '', r.hazard || '',
@@ -9332,7 +8967,7 @@ function printRiskRegisterPDF() {
       11: { cellWidth: 18 },           // Final Status
       12: { cellWidth: 18 },           // Date Registered
       13: { cellWidth: 18 },           // Date Resolved
-      14: { cellWidth: 22 },           // Design Validation
+      14: { cellWidth: 22 },           // Client PCI
       15: { cellWidth: 22 }            // H&S File
     },
     didParseCell: (data) => {
@@ -9396,10 +9031,7 @@ function printNarrativeReport() {
   const reportDate        = metaCells[5]?.innerText.trim() || '';
   const location          = metaCells[6]?.innerText.trim() || '';
   const leadDesigner      = metaCells[7]?.innerText.trim() || '';
-  const checkedBy         = metaCells[8]?.innerText.trim() || '';
   const projectNo         = metaCells[9]?.innerText.trim() || '';
-  const internalRef       = metaCells[10]?.innerText.trim() || '';
-  const checkedDate       = metaCells[11]?.innerText.trim() || '';
   const dateStr = document.getElementById('lhDate')?.textContent ||
     new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 
@@ -9407,14 +9039,13 @@ function printNarrativeReport() {
   const groups = [
     { name: '⚠ High Risks',   items: filteredRisks.filter(r => r.initialRisk === 'High'),   color: [220, 38, 38] },
     { name: '⚡ Medium Risks', items: filteredRisks.filter(r => r.initialRisk === 'Medium'), color: [245, 158, 11] },
-    { name: '✓ Low Risks',    items: filteredRisks.filter(r => r.initialRisk === 'Low'),    color: [16, 185, 129] }
+    { name: '✓ Low Risks',    items: filteredRisks.filter(r => r.initialRisk === 'Low'),    color: [22, 163, 74] }
   ];
 
   // Pull any uploaded risk-evidence images out of the live DOM so they end up in the PDF.
   // generateNarrativeReport assigns IDs as risk-image-preview-${itemIndex} where itemIndex
   // increments globally across high → medium → low. Matching that ordering exactly:
   const imagesByItemIndex = {};
-  const refsByItemIndex = {};
   let probeIdx = 0;
   groups.forEach(group => {
     group.items.forEach(() => {
@@ -9424,10 +9055,6 @@ function printNarrativeReport() {
         if (img && img.src && img.src.startsWith('data:')) {
           imagesByItemIndex[probeIdx] = img.src;
         }
-      }
-      const refEl = document.getElementById(`risk-image-ref-${probeIdx}`);
-      if (refEl && refEl.value && refEl.value.trim()) {
-        refsByItemIndex[probeIdx] = refEl.value.trim();
       }
       probeIdx++;
     });
@@ -9441,14 +9068,14 @@ function printNarrativeReport() {
     initialRisk: 'Initial Risk',
     designerComments: 'Designer Comments',
     riskEliminated: 'Eliminated',
-    stageRequired: 'Stage',
+    stageRequired: 'Stage Required',
     owner: 'Owner',
     residualRisk: 'Residual Risk',
     actionRequired: 'Action Required',
     finalStatus: 'Final Status',
     dateRegistered: 'Date Registered',
     dateResolved: 'Date Resolved',
-    clientPCI: 'Design Validation',
+    clientPCI: 'Client PCI',
     hsFile: 'H&S File'
   };
 
@@ -9474,7 +9101,7 @@ function printNarrativeReport() {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(15);
   doc.setTextColor(255, 255, 255);
-  doc.text('Risk Register - Narrative Report', margin, 13);
+  doc.text('Risk Register — Narrative Report', margin, 13);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.text('Revision ' + revision, pageW - margin, 13, { align: 'right' });
@@ -9490,25 +9117,19 @@ function printNarrativeReport() {
     y += 6;
   }
 
-  // Project info table — matches the on-screen narrative report exactly:
-  // same fields, same order, and 'N/A' shown for blanks (not filtered out).
-  const na = (v) => (v && String(v).trim()) ? v : 'N/A';
+  // Project info table (only rows that have a value)
   const infoRows = [
-    ['Client', na(client)],
-    ['Project', na(project)],
-    ['Location', na(location)],
-    ['Project No', na(projectNo)],
-    ['Internal Ref', na(internalRef)],
-    ['Produced By', na(producedBy)],
-    ['Prepared By', na(preparedBy)],
-    ['Principal Designer', na(principalDesigner)],
-    ['Lead Designer', na(leadDesigner)],
-    ['Checked By', na(checkedBy)],
-    ['Report Date', na(reportDate)],
-    ['Checked Date', na(checkedDate)],
-    ['Date', na(dateStr)],
-    ['Revision', na(revision)]
-  ];
+    ['Client', client],
+    ['Project', project],
+    ['Location', location],
+    ['Project No', projectNo],
+    ['Produced By', producedBy],
+    ['Prepared By', preparedBy],
+    ['Principal Designer', principalDesigner],
+    ['Lead Designer', leadDesigner],
+    ['Report Date', reportDate],
+    ['Date', dateStr]
+  ].filter(row => row[1]);
 
   if (infoRows.length > 0) {
     doc.autoTable({
@@ -9526,185 +9147,107 @@ function printNarrativeReport() {
   }
 
   // ---------- Render groups + risks ----------
-  // Each risk renders as a bordered/shaded card matching the on-screen
-  // .narrative-risk container, and is kept ATOMIC: it never breaks across a
-  // page boundary, and any evidence image stays inside the same card.
-  const CARD = {
-    bg: [249, 250, 251],      // #f9fafb
-    border: [191, 199, 214],  // #bfc7d6
-    accent: accentRgb,        // brand-accent 4px left bar
-    title: [30, 58, 138],     // #1e3a8a
-    rule: [209, 209, 214],    // #d1d1d6
-    label: [55, 65, 81],      // #374151
-    value: [31, 41, 55],      // #1f2937
-    padX: 4, padY: 3.5, lineH: 4.4, fieldGap: 1.2
-  };
-  const innerLeft = margin + CARD.padX + 1.5;        // clear the accent bar
-  const innerWidth = availW - CARD.padX * 2 - 1.5;
-  const usable = (pageH - 18) - (margin + 5);        // content height on a fresh page
-
-  // Lay out one "Label: value" field (label bold, value wraps). Measures when
-  // draw=false, draws when draw=true. Returns the height in mm.
-  function layoutField(label, value, x, yTop, width, draw) {
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    const labelText = label + ': ';
-    const labelW = doc.getTextWidth(labelText);
-    doc.setFont('helvetica', 'normal');
-    const valText = String((value === undefined || value === null || value === '') ? 'N/A' : value);
-    const words = valText.split(/\s+/);
-    const lines = [];
-    let cur = '';
-    let avail = width - labelW;
-    for (let i = 0; i < words.length; i++) {
-      const test = cur ? cur + ' ' + words[i] : words[i];
-      if (!cur || doc.getTextWidth(test) <= avail) { cur = test; }
-      else { lines.push(cur); cur = words[i]; avail = width; }
-    }
-    lines.push(cur);
-    if (draw) {
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(CARD.label[0], CARD.label[1], CARD.label[2]);
-      doc.text(labelText, x, yTop + CARD.lineH - 1.2);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(CARD.value[0], CARD.value[1], CARD.value[2]);
-      lines.forEach((ln, i) => {
-        const lx = i === 0 ? x + labelW : x;
-        doc.text(ln, lx, yTop + (i + 1) * CARD.lineH - 1.2);
-      });
-    }
-    return lines.length * CARD.lineH;
-  }
-
   let globalIdx = 0;
 
   groups.forEach(group => {
-    if (group.items.length === 0) return;
+    if (group.items.length === 0) {
+      // Still need to advance the globalIdx pointer for empty groups — there are none in this set
+      // but kept here for safety.
+      group.items.forEach(() => globalIdx++);
+      return;
+    }
 
-    // Group heading bar (brand-coloured, uppercase — matches the on-screen h3)
-    ensureRoom(16);
+    // Group heading bar
+    ensureRoom(14);
     doc.setFillColor(group.color[0], group.color[1], group.color[2]);
-    doc.roundedRect(margin, y, availW, 10, 1.5, 1.5, 'F');
+    doc.rect(margin, y, availW, 10, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(255, 255, 255);
-    doc.text(group.name.replace(/[^\x20-\x7E]/g, '').trim().toUpperCase(), margin + 4, y + 6.8);
+    doc.text(group.name + '  (' + group.items.length + ')', margin + 3, y + 7);
     y += 14;
 
     group.items.forEach(risk => {
-      const titleText = (risk.ref || 'N/A') + ' - ' + (risk.element || 'N/A');
-      const pageBottom = pageH - 18;
-      const titleBlockH = 7.9;          // title text + rule + gap
+      // Title for the card
+      const titleText = (risk.ref || 'N/A') + '  —  ' + (risk.element || 'N/A');
+      // Body rows: only the columns the user ticked
+      const rows = selectedColumns.map(col => [fieldLabels[col] || col, String(risk[col] || 'N/A')]);
 
-      // ----- Right column: evidence image (top) + drawing reference (below) -----
-      const refText = refsByItemIndex[globalIdx] || '';
+      // We don't know exact rendered height, but we want the title to stay with at least the first
+      // few rows. Reserve enough for the title + 3 rows; autoTable will paginate the rest.
+      ensureRoom(20);
+
+      // Card title bar
+      doc.setFillColor(238, 242, 255);
+      doc.rect(margin, y, availW, 8, 'F');
+      doc.setDrawColor(group.color[0], group.color[1], group.color[2]);
+      doc.setLineWidth(0.6);
+      doc.line(margin, y, margin, y + 8);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10.5);
+      doc.setTextColor(30, 58, 138);
+      doc.text(titleText, margin + 3, y + 5.5);
+      y += 9;
+
+      // Field rows for this risk
+      doc.autoTable({
+        body: rows,
+        startY: y,
+        margin: { left: margin + 2, right: margin },
+        theme: 'plain',
+        styles: { fontSize: 9, cellPadding: 1.2, valign: 'top', overflow: 'linebreak' },
+        columnStyles: {
+          0: { cellWidth: 40, fontStyle: 'bold', textColor: [55, 65, 81] },
+          1: { textColor: [31, 41, 55] }
+        },
+        // Highlight initial / residual risk values with the same colour scheme as the register
+        didParseCell: (data) => {
+          if (data.section !== 'body') return;
+          if (data.column.index !== 1) return;
+          const fieldLabel = data.row.cells[0]?.raw;
+          if (fieldLabel === 'Initial Risk' || fieldLabel === 'Residual Risk') {
+            const v = String(data.cell.raw || '').trim();
+            const fill = { High: [248, 215, 218], Medium: [255, 243, 205], Low: [209, 231, 221] }[v];
+            if (fill) {
+              data.cell.styles.fillColor = fill;
+              data.cell.styles.fontStyle = 'bold';
+            }
+          }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 2;
+
+      // Embed any uploaded image for this risk
       const imgData = imagesByItemIndex[globalIdx];
-      let imgH = 0, imgW = 0, captionH = 0, aspect = 1.6;
-      const RIGHT_W = 58;               // right column width (mm)
       if (imgData) {
         try {
           const props = doc.getImageProperties(imgData);
-          aspect = (props.width && props.height) ? props.width / props.height : 1.6;
-          imgW = RIGHT_W;
-          imgH = imgW / aspect;
-          if (imgH > 72) { imgH = 72; imgW = imgH * aspect; }   // keep it compact (ratio preserved)
-          captionH = 4.2;
-        } catch (err) { console.warn('Could not size image for risk', globalIdx, err); }
-      }
-      const refH = refText ? 5 : 0;
-      const hasRight = (imgData && imgH > 0) || !!refText;
-      const COL_GAP = 6;
-      const rightColW = hasRight ? RIGHT_W : 0;
-      const leftW = innerWidth - (hasRight ? rightColW + COL_GAP : 0);
-      const rightX = innerLeft + leftW + COL_GAP;
-      const rightBlockH = (imgData && imgH > 0 ? captionH + imgH + (refText ? 1.5 : 0) : 0) + refH;
-
-      // ----- Measure each field at the LEFT-column width — fields are atomic units.
-      // Short values never split; long narrative fields stay whole but may move to the
-      // next page. The card flows across pages, breaking only BETWEEN fields. -----
-      const fieldUnits = selectedColumns.map(col => ({
-        col: col,
-        h: layoutField(fieldLabels[col] || col, risk[col], innerLeft, 0, leftW, false) + CARD.fieldGap
-      }));
-
-      // Orphan guard: keep the title with the first field + the image's top.
-      const firstNeed = CARD.padY + titleBlockH + Math.min(rightBlockH, 24) +
-        (fieldUnits[0] ? fieldUnits[0].h : 8) + CARD.padY;
-      if (y + firstNeed > pageBottom) { doc.addPage(); y = margin + 5; }
-
-      let fi = 0;
-      let firstSeg = true;
-      while (true) {
-        const segTop = y;
-        let measureCy = segTop + CARD.padY + (firstSeg ? titleBlockH : 0);
-        const fieldsTop = measureCy;
-        const startFi = fi;
-        while (fi < fieldUnits.length && measureCy + fieldUnits[fi].h <= pageBottom - CARD.padY) {
-          measureCy += fieldUnits[fi].h; fi++;
-        }
-        if (fi === startFi && fi < fieldUnits.length) { measureCy += fieldUnits[fi].h; fi++; } // ensure progress
-        let contentBottom = measureCy;
-        if (firstSeg) contentBottom = Math.max(contentBottom, fieldsTop + rightBlockH);
-        const segH = (contentBottom + CARD.padY) - segTop;
-
-        // ---- Draw the segment box (fill first, content on top) ----
-        doc.setFillColor(CARD.bg[0], CARD.bg[1], CARD.bg[2]);
-        doc.setDrawColor(CARD.border[0], CARD.border[1], CARD.border[2]);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(margin, segTop, availW, segH, 2, 2, 'FD');
-        doc.setFillColor(CARD.accent[0], CARD.accent[1], CARD.accent[2]);
-        doc.rect(margin, segTop, 1.5, segH, 'F');
-
-        let cy = segTop + CARD.padY;
-        if (firstSeg) {
-          // Title + rule (full width)
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-          doc.setTextColor(CARD.title[0], CARD.title[1], CARD.title[2]);
-          doc.text(titleText, innerLeft, cy + 3.6);
-          doc.setDrawColor(CARD.rule[0], CARD.rule[1], CARD.rule[2]); doc.setLineWidth(0.2);
-          doc.line(innerLeft, cy + 5.5, margin + availW - CARD.padX, cy + 5.5);
-          cy += titleBlockH;
-          // Right column — image (top) then drawing reference, shifted up beside the fields
-          let rcy = cy;
-          if (imgData && imgH > 0) {
-            doc.setFont('helvetica', 'italic'); doc.setFontSize(8);
-            doc.setTextColor(107, 114, 128);
-            doc.text('Risk Evidence Image', rightX, rcy + 3);
-            rcy += captionH;
-            try { doc.addImage(imgData, rightX, rcy, imgW, imgH); }
-            catch (e) { console.warn('Could not embed image for risk', globalIdx, e); }
-            rcy += imgH + (refText ? 1.5 : 0);
+          const aspect = props.width / props.height;
+          let imgW = availW - 4;
+          let imgH = imgW / aspect;
+          const maxH = 90; // mm cap so single image doesn't dominate
+          if (imgH > maxH) {
+            imgH = maxH;
+            imgW = imgH * aspect;
           }
-          if (refText) {
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-            doc.setTextColor(CARD.label[0], CARD.label[1], CARD.label[2]);
-            const refLabel = 'Drawing / ref: ';
-            doc.text(refLabel, rightX, rcy + 3.4);
-            const labelW = doc.getTextWidth(refLabel);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(CARD.value[0], CARD.value[1], CARD.value[2]);
-            let refOut = refText;
-            while (doc.getTextWidth(refOut) > (rightColW - labelW) && refOut.length > 2) refOut = refOut.slice(0, -2);
-            doc.text(refOut, rightX + labelW, rcy + 3.4);
-          }
-          firstSeg = false;
+          ensureRoom(imgH + 4);
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8);
+          doc.setTextColor(107, 114, 128);
+          doc.text('Risk Evidence Image', margin + 2, y + 3);
+          y += 4;
+          doc.addImage(imgData, margin + 2, y, imgW, imgH);
+          y += imgH + 2;
+        } catch (err) {
+          console.warn('Could not embed image for risk index', globalIdx, err);
         }
-        // Left column fields for this page segment
-        for (let k = startFi; k < fi; k++) {
-          layoutField(fieldLabels[fieldUnits[k].col] || fieldUnits[k].col, risk[fieldUnits[k].col], innerLeft, cy, leftW, true);
-          cy += fieldUnits[k].h;
-        }
-
-        y = segTop + segH;
-        if (fi >= fieldUnits.length) break;
-        doc.addPage(); y = margin + 5;   // remaining fields continue on the next page
       }
 
-      y += 5; // gap between cards
+      y += 4;        // gap between risk cards
       globalIdx++;
     });
 
-    y += 3; // gap after a group
+    y += 3;          // gap after a group
   });
 
   // Footer on every page
@@ -9817,44 +9360,6 @@ function processExcelFile() {
   reader.readAsArrayBuffer(file);
 }
 
-// Populate the "Header row starts at" dropdown dynamically from the actual
-// number of rows in the chosen file, so ANY row can be selected as the header.
-function populateHeaderRowOptions() {
-  const fileInput = document.getElementById('excel-file-input');
-  const headerRowSelect = document.getElementById('header-row-select');
-  const file = fileInput.files[0];
-  if (!file) return;
-
-  const prev = parseInt(headerRowSelect.value, 10) || 1;
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-    try {
-      const data = new Uint8Array(e.target.result);
-      const workbook = XLSX.read(data, { type: 'array' });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-      const rowCount = jsonData.length;
-      if (rowCount < 1) return;
-
-      let html = '';
-      for (let i = 1; i <= rowCount; i++) {
-        html += '<option value="' + i + '">Row ' + i + '</option>';
-      }
-      headerRowSelect.innerHTML = html;
-
-      // Keep the previous choice if still valid; otherwise default to row 6
-      // (the AHS template's header row) when present, else row 1.
-      const def = (prev >= 1 && prev <= rowCount) ? prev : (rowCount >= 6 ? 6 : 1);
-      headerRowSelect.value = String(def);
-    } catch (err) {
-      console.warn('Could not read row count for header selector', err);
-    }
-  };
-
-  reader.readAsArrayBuffer(file);
-}
-
 function showMappingInterface() {
   document.getElementById('upload-section').style.display = 'none';
   document.getElementById('mapping-section').style.display = 'block';
@@ -9902,7 +9407,7 @@ function showMappingInterface() {
       else if (fieldLower === 'finalstatus' && headerLower.includes('status')) selected = true;
       else if (fieldLower === 'dateregistered' && headerLower.includes('registered')) selected = true;
       else if (fieldLower === 'dateresolved' && headerLower.includes('resolved')) selected = true;
-      else if (fieldLower === 'clientpci' && (headerLower.includes('validation') || headerLower.includes('pci'))) selected = true;
+      else if (fieldLower === 'clientpci' && headerLower.includes('pci')) selected = true;
       else if (fieldLower === 'hsfile' && (headerLower.includes('h&s') || headerLower.includes('hs file'))) selected = true;
       
       html += `<option value="${index}" ${selected ? 'selected' : ''}>${headerStr}</option>`;
@@ -10037,37 +9542,67 @@ function resetReportFilters() {
 }
 </script>
 
-
-<!-- AHS persistent mark -->
-<footer class="ahs-mark">
-  <img class="ahs-mark-logo" src="data:image/png;base64,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" alt="AHS">
-  <span>Produced by <strong>AHS Compliance Consulting</strong></span>
-</footer>
-
 <!-- ════════════════════════════════════════════════════════════
-     SIGN-IN WRAPPER  (offline browser-local copy)
-     Mirrors the deployed auth wrapper's sign-in: a client signs in with their
-     email and a project name. Project names are remembered per email, so on
-     return they pick a previous project to reopen it, or type a new name to
-     start a fresh register. Offline this is browser-local; on deploy the same
-     form is backed by the server (/api/auth + /api/state).
+     AUTH WRAPPER — server sync layer
+     When NOT signed in: app behaves as before (localStorage only).
+     When signed in: every save also persists to the server; on page
+     load the active tenant's server-side state is hydrated into
+     localStorage before the app starts.
      ════════════════════════════════════════════════════════════ -->
 <style>
+  /* The sign-in (and consultant Admin) controls sit at the right-hand end of
+     the tab button row, relocated into .tabs by the wrapper script, so they no
+     longer float over the letterhead date box. */
   .tabs { position: relative; }
-  .auth-bar { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); z-index: 50; display: flex; gap: 8px; align-items: center; }
+  .auth-bar {
+    position: absolute; top: 50%; right: 12px; transform: translateY(-50%);
+    z-index: 50; display: flex; gap: 8px; align-items: center;
+  }
   .auth-fab {
-    z-index: 50; padding: 8px 14px; background: var(--brand-accent, #51a6a9); color: #fff;
-    border: none; border-radius: 999px; font-family: inherit; font-size: 13px; font-weight: 600;
-    box-shadow: 0 2px 8px rgba(0,0,0,.18); cursor: pointer; transition: background .15s, transform .12s;
-    max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    z-index: 50;
+    padding: 8px 14px;
+    background: var(--brand-accent, #51a6a9);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    cursor: pointer;
+    transition: background .15s, transform .12s;
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .auth-fab:hover { background: var(--brand-accent-dark, #408a8d); }
   .auth-fab:active { transform: scale(.97); }
-  @media (max-width: 640px) { .auth-bar { right: 8px; } .auth-fab { font-size: 11.5px; padding: 6px 10px; max-width: 150px; } }
-  @media print { .auth-bar, .auth-fab, #authModalOverlay { display: none !important; } }
-  #authModalOverlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 16px; }
+  .auth-fab.admin { background: #475569; max-width: none; }
+  .auth-fab.admin:hover { background: #334155; }
+  @media (max-width: 640px) { .auth-bar { right: 8px; } .auth-fab { font-size: 11.5px; padding: 6px 10px; max-width: 140px; } }
+  @media print { .auth-bar, .auth-fab, #authModalOverlay, #adminModalOverlay { display: none !important; } }
+
+  #authModalOverlay {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, .55);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
   #authModalOverlay.is-open { display: flex; }
-  .auth-modal { background: #fff; border-radius: 14px; box-shadow: 0 12px 48px rgba(0,0,0,.22); max-width: 420px; width: 100%; padding: 24px 22px 18px; font-family: inherit; color: #344054; }
+  .auth-modal {
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 48px rgba(0,0,0,.22);
+    max-width: 420px;
+    width: 100%;
+    padding: 24px 22px 18px;
+    font-family: inherit;
+    color: #344054;
+  }
   .auth-modal h3 { margin: 0 0 6px; font-size: 18px; color: #1f2937; }
   .auth-modal p.auth-blurb { margin: 0 0 16px; font-size: 13px; color: #6b7280; line-height: 1.5; }
   .auth-modal form { display: flex; flex-direction: column; gap: 12px; }
@@ -10081,21 +9616,39 @@ function resetReportFilters() {
   .auth-modal button[type="button"]:hover { background: #f2f4f7; }
   .auth-modal button[type="submit"] { background: var(--brand-accent, #51a6a9); border-color: var(--brand-accent, #51a6a9); color: #fff; }
   .auth-modal button[type="submit"]:hover { background: var(--brand-accent-dark, #408a8d); border-color: var(--brand-accent-dark, #408a8d); }
+  .auth-modal button[disabled] { opacity: .55; cursor: not-allowed; }
 
-  /* Consultant Admin */
-  .auth-fab.admin { background: #475569; max-width: none; }
-  .auth-fab.admin:hover { background: #334155; }
-  @media print { #adminModalOverlay, .auth-fab.admin { display: none !important; } }
-  #adminModalOverlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 16px; }
+  /* ── Consultant admin panel ── */
+  #adminModalOverlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, .55);
+    z-index: 10000; display: none; align-items: center; justify-content: center; padding: 16px;
+  }
   #adminModalOverlay.is-open { display: flex; }
-  .admin-modal { background: #fff; border-radius: 14px; box-shadow: 0 12px 48px rgba(0,0,0,.22); max-width: 640px; width: 100%; max-height: 88vh; overflow-y: auto; padding: 22px 24px 20px; font-family: inherit; color: #344054; }
+  .admin-modal {
+    background: #fff; border-radius: 14px; box-shadow: 0 12px 48px rgba(0,0,0,.22);
+    max-width: 620px; width: 100%; max-height: 88vh; overflow-y: auto;
+    padding: 22px 24px 20px; font-family: inherit; color: #344054;
+  }
   .admin-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
   .admin-head h3 { margin: 0; font-size: 18px; color: #1f2937; }
   .admin-x { border: none; background: #f2f4f7; border-radius: 8px; width: 30px; height: 30px; cursor: pointer; font-size: 14px; color: #475569; }
   .admin-x:hover { background: #e4e7ec; }
+  .admin-section { margin-top: 18px; padding-top: 14px; border-top: 1px solid #eef0f3; }
+  .admin-section:first-of-type { border-top: none; }
+  .admin-section h4 { margin: 0 0 10px; font-size: 14px; color: #1f2937; }
+  .admin-row { display: flex; gap: 8px; }
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
+  .admin-grid select { grid-column: 1 / -1; }
+  .admin-modal input, .admin-modal select {
+    padding: 9px 12px; border: 1.5px solid #d0d5dd; border-radius: 8px;
+    font-size: 14px; font-family: inherit; outline: none; transition: border-color .15s; width: 100%;
+  }
+  .admin-modal input:focus, .admin-modal select:focus { border-color: var(--brand-accent, #51a6a9); }
+  .admin-modal form button { padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; border: 1.5px solid var(--brand-accent, #51a6a9); background: var(--brand-accent, #51a6a9); color: #fff; white-space: nowrap; }
+  .admin-modal form button:hover { background: var(--brand-accent-dark, #408a8d); border-color: var(--brand-accent-dark, #408a8d); }
   .admin-hint { font-size: 12px; color: #6b7280; line-height: 1.5; margin: 8px 0 0; }
-  .admin-section { margin-top: 16px; padding-top: 12px; border-top: 1px solid #eef0f3; }
-  .admin-section h4 { margin: 0 0 8px; font-size: 14px; color: #1f2937; }
+  .admin-error { font-size: 12.5px; padding: 9px 12px; background: #fee2e2; border: 1px solid #fca5a5; border-radius: 6px; color: #b91c1c; margin-top: 12px; }
+  .admin-error.ok { background: #dcfce7; border-color: #86efac; color: #166534; }
   .admin-list { display: flex; flex-direction: column; gap: 8px; }
   .admin-user { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border: 1px solid #eef0f3; border-radius: 8px; font-size: 13px; }
   .admin-user-actions { display: flex; gap: 6px; flex-shrink: 0; }
@@ -10103,35 +9656,60 @@ function resetReportFilters() {
   .admin-user-actions button:hover { background: #f2f4f7; }
   .admin-user-actions button.admin-danger { border-color: #fca5a5; color: #b91c1c; }
   .admin-user-actions button.admin-danger:hover { background: #fee2e2; }
+  @media (max-width: 560px) { .admin-grid { grid-template-columns: 1fr; } .admin-user { flex-direction: column; align-items: stretch; } }
 </style>
 
-<button class="auth-fab admin no-print" id="adminFab" type="button" title="Consultant: manage all client projects on this device">⚙️ Admin</button>
-<button class="auth-fab no-print" id="authFab" type="button" title="Sign in to save your projects">🔐 Sign in</button>
+<button class="auth-fab admin no-print" id="adminFab" type="button" title="Manage clients and logins" style="display:none;">⚙️ Admin</button>
+<button class="auth-fab no-print" id="authFab" type="button" title="Sign in to sync to the server">🔐 Sign in</button>
 
-<!-- Consultant Admin: see / open / delete every client project saved on this device -->
+<!-- Consultant-only: manage client companies + their logins -->
 <div id="adminModalOverlay" role="dialog" aria-modal="true" aria-labelledby="adminModalTitle">
   <div class="admin-modal">
     <div class="admin-head">
-      <h3 id="adminModalTitle">Client projects — admin</h3>
+      <h3 id="adminModalTitle">Client admin</h3>
       <button type="button" id="adminCloseBtn" class="admin-x" aria-label="Close">✕</button>
     </div>
-    <p class="admin-hint">Every client project saved in this browser, grouped by client. <strong>Open</strong> one to view and edit it, or <strong>Delete</strong> it (e.g. for non-payment). On the deployed server you'll also see clients who worked on other devices.</p>
-    <div id="adminProjectList" class="admin-list" style="margin-top:14px;">Loading…</div>
+    <p class="admin-hint">Add a client company, then create a login for them. They sign in with that email and password, then type a project name to start work — they create their own projects.</p>
+
+    <section class="admin-section">
+      <h4>1 · Add a client company</h4>
+      <form id="adminTenantForm" class="admin-row" autocomplete="off">
+        <input type="text" id="adminTenantName" placeholder="Client company name (e.g. Acme Builders Ltd)" required>
+        <button type="submit">Add client</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h4>2 · Create a login for a client</h4>
+      <form id="adminUserForm" class="admin-grid" autocomplete="off">
+        <select id="adminUserTenant" required></select>
+        <input type="email" id="adminUserEmail" placeholder="Their email address" required>
+        <input type="text" id="adminUserPassword" placeholder="Temporary password (8+ chars)" required>
+        <button type="submit">Create login</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
+      <h4>Existing client logins</h4>
+      <div id="adminUserList" class="admin-list">Loading…</div>
+    </section>
+
+    <div class="admin-error" id="adminError" hidden></div>
   </div>
 </div>
 
 <div id="authModalOverlay" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
   <div class="auth-modal">
     <h3 id="authModalTitle">Sign in</h3>
-    <p class="auth-blurb">Sign in with your email and a project name. Type a new project name to start a fresh register, or pick a previous one to reopen it. Your projects are kept in this browser (and synced to the server once deployed).</p>
+    <p class="auth-blurb">Sign in to save your risk register to the cloud and access it from any device. Without signing in, your work is kept locally in this browser only.</p>
     <form id="authForm" autocomplete="on">
       <label>Email <input type="email" id="authEmail" required autocomplete="username" autofocus></label>
-      <label>Password <input type="password" id="authPassword" autocomplete="current-password"></label>
+      <label>Password <input type="password" id="authPassword" required autocomplete="current-password"></label>
       <label>Project
-        <input type="text" id="authProject" list="authProjectList" placeholder="e.g. Lanchester – Synergize – 25785" autocomplete="off">
+        <input type="text" id="authProject" list="authProjectList" placeholder="e.g. Acme HQ – New Build" autocomplete="off">
         <datalist id="authProjectList"></datalist>
       </label>
-      <p class="auth-blurb" style="margin:-4px 0 0; font-size:12px;">Pick a previous project from the list to reopen it, or type a new name to start fresh.</p>
+      <p class="auth-blurb" style="margin:-4px 0 0; font-size:12px;">Type a project name to work on. A new name starts a fresh register; an existing name reopens it.</p>
       <div class="auth-error" id="authError" hidden></div>
       <div class="auth-actions">
         <button type="button" id="authCancelBtn">Cancel</button>
@@ -10142,179 +9720,347 @@ function resetReportFilters() {
 </div>
 
 <script>
-(function () {
-  var AUTH_KEY = 'ahsAuthUser';
-  function getUser() { try { return JSON.parse(localStorage.getItem(AUTH_KEY) || 'null'); } catch (e) { return null; } }
+(function(){
+  // Auth module — talks to /api/auth/* and /api/state
+  const Auth = (() => {
+    let _user = null;
+    let _syncInFlight = null;
+    const DEFAULT_PROJECT = 'Default Project';
+    let _project = null;
+    try { _project = localStorage.getItem('ahsActiveProject') || null; } catch(_){}
+    function project(){ return _project || DEFAULT_PROJECT; }
+    function setProject(p){
+      _project = (p || '').toString().trim() || DEFAULT_PROJECT;
+      try { localStorage.setItem('ahsActiveProject', _project); } catch(_){}
+    }
+    async function _api(path, opts){
+      opts = opts || {};
+      const res = await fetch(path, {
+        credentials: 'include',
+        headers: Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {}),
+        method: opts.method || 'GET',
+        body:   opts.body
+      });
+      const body = await res.json().catch(() => ({}));
+      if(!res.ok){ const e = new Error(body.error || ('HTTP ' + res.status)); e.status = res.status; e.body = body; throw e; }
+      return body;
+    }
+    async function refresh(){
+      try { const { user } = await _api('/api/auth/me'); _user = user; return user; }
+      catch(e){ _user = null; return null; }
+    }
+    async function login(email, password, proj){
+      const { user } = await _api('/api/auth/login', { method: 'POST', body: JSON.stringify({ email: email, password: password }) });
+      _user = user;
+      if(proj !== undefined) setProject(proj);
+      return user;
+    }
+    async function logout(){ try { await _api('/api/auth/logout', { method: 'POST' }); } catch(e){} _user = null; }
+    function user(){ return _user; }
+    function isSignedIn(){ return !!_user; }
+    function tenantId(){ return _user ? (_user.tenantId || null) : null; }
+    async function loadFromServer(){
+      if(!_user) return null;
+      const tid = tenantId();
+      if(!tid) return null;
+      try {
+        const r = await _api('/api/state?tenantId=' + encodeURIComponent(tid) + '&project=' + encodeURIComponent(project()));
+        return r.state || null;
+      }
+      catch(e){ console.warn('Auth.loadFromServer:', e.message); return null; }
+    }
+    async function saveToServer(state){
+      if(!_user) return false;
+      const tid = tenantId();
+      if(!tid) return false;
+      if(_syncInFlight){ try { await _syncInFlight; } catch(_){} }
+      _syncInFlight = _api('/api/state', { method: 'POST', body: JSON.stringify({ tenantId: tid, project: project(), state: state }) });
+      try { await _syncInFlight; return true; }
+      catch(e){ console.warn('Auth.saveToServer:', e.message); return false; }
+      finally { _syncInFlight = null; }
+    }
+    async function listProjects(){
+      if(!_user) return [];
+      const tid = tenantId();
+      if(!tid) return [];
+      try { const r = await _api('/api/state/projects?tenantId=' + encodeURIComponent(tid)); return r.projects || []; }
+      catch(e){ return []; }
+    }
+    return { refresh: refresh, login: login, logout: logout, user: user, isSignedIn: isSignedIn, tenantId: tenantId, project: project, setProject: setProject, loadFromServer: loadFromServer, saveToServer: saveToServer, listProjects: listProjects };
+  })();
+  window.AHSAuth = Auth;
 
-  var overlay   = document.getElementById('authModalOverlay');
-  var form      = document.getElementById('authForm');
-  var errBox    = document.getElementById('authError');
-  var submitBtn = document.getElementById('authSubmitBtn');
-  var emailIn   = document.getElementById('authEmail');
-  var projInput = document.getElementById('authProject');
-  var fab       = document.getElementById('authFab');
+  // Modal helpers
+  const overlay = document.getElementById('authModalOverlay');
+  const form    = document.getElementById('authForm');
+  const errBox  = document.getElementById('authError');
+  const submitBtn = document.getElementById('authSubmitBtn');
+  const projInput = document.getElementById('authProject');
 
   // Remember the project names a given email has used on this browser, so the
-  // Project box offers them as a dropdown next time they sign in.
-  function knownKey(email) { return 'ahsKnownProjects::' + (email || '').trim().toLowerCase(); }
-  function rememberProject(email, proj) {
+  // Project box can offer them as a dropdown the next time they sign in.
+  function _knownKey(email){ return 'ahsKnownProjects::' + (email||'').trim().toLowerCase(); }
+  function _rememberProject(email, proj){
     try {
-      var k = knownKey(email);
-      var arr = JSON.parse(localStorage.getItem(k) || '[]').filter(function (p) { return p !== proj; });
+      const k = _knownKey(email);
+      const arr = JSON.parse(localStorage.getItem(k) || '[]').filter(function(p){ return p !== proj; });
       arr.unshift(proj);
-      localStorage.setItem(k, JSON.stringify(arr.slice(0, 30)));
-    } catch (e) {}
+      localStorage.setItem(k, JSON.stringify(arr.slice(0, 20)));
+    } catch(_){}
   }
-  function populateProjectList() {
+  function _populateProjectList(){
     try {
-      var dl = document.getElementById('authProjectList');
-      if (!dl) return;
-      var arr = JSON.parse(localStorage.getItem(knownKey(emailIn.value)) || '[]');
-      dl.innerHTML = arr.map(function (p) { return '<option value="' + String(p).replace(/"/g, '&quot;') + '">'; }).join('');
-    } catch (e) {}
+      const dl = document.getElementById('authProjectList');
+      if(!dl) return;
+      const arr = JSON.parse(localStorage.getItem(_knownKey(document.getElementById('authEmail').value)) || '[]');
+      dl.innerHTML = arr.map(function(p){ return '<option value="' + p.replace(/"/g,'&quot;') + '">'; }).join('');
+    } catch(_){}
   }
-
-  function openAuthModal() {
+  function openAuthModal(){
     errBox.hidden = true;
-    var u = getUser();
-    if (u && u.email) emailIn.value = u.email;
-    if (u && u.project) projInput.value = u.project;
-    populateProjectList();
+    if(projInput && Auth.project() && Auth.project() !== 'Default Project') projInput.value = Auth.project();
+    _populateProjectList();
     overlay.classList.add('is-open');
-    setTimeout(function () { emailIn.focus(); }, 30);
+    setTimeout(function(){ document.getElementById('authEmail').focus(); }, 30);
   }
-  function closeAuthModal() { overlay.classList.remove('is-open'); }
-  emailIn.addEventListener('input', populateProjectList);
-  overlay.addEventListener('click', function (e) { if (e.target === overlay) closeAuthModal(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && overlay.classList.contains('is-open')) closeAuthModal(); });
+  document.getElementById('authEmail').addEventListener('input', _populateProjectList);
+  function closeAuthModal(){ overlay.classList.remove('is-open'); }
+  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeAuthModal(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && overlay.classList.contains('is-open')) closeAuthModal(); });
   document.getElementById('authCancelBtn').addEventListener('click', closeAuthModal);
-
-  form.addEventListener('submit', function (e) {
+  form.addEventListener('submit', async function(e){
     e.preventDefault();
     errBox.hidden = true;
-    var email = (emailIn.value || '').trim();
-    var proj  = (projInput.value || '').trim() || 'Default Project';
-    if (!email) { errBox.textContent = 'Enter your email to sign in.'; errBox.hidden = false; return; }
     submitBtn.disabled = true; submitBtn.textContent = 'Signing in…';
-    // Offline: record the client + active project locally. (On deploy the server
-    // validates the password via /api/auth/login.)
-    try { localStorage.setItem(AUTH_KEY, JSON.stringify({ email: email, project: proj })); } catch (e2) {}
-    rememberProject(email, proj);
-    closeAuthModal();
-    window.location.reload();
+    try {
+      const emailVal = document.getElementById('authEmail').value.trim();
+      const projVal  = (projInput.value || '').trim() || 'Default Project';
+      await Auth.login(emailVal, document.getElementById('authPassword').value, projVal);
+      _rememberProject(emailVal, projVal);
+      sessionStorage.removeItem('ahsHydrated');
+      closeAuthModal();
+      window.location.reload();
+    } catch(err){
+      const msg = err.body && err.body.error === 'invalid_credentials' ? 'Email or password incorrect.' : ((err.body && err.body.error) || err.message);
+      errBox.textContent = msg;
+      errBox.hidden = false;
+      submitBtn.disabled = false; submitBtn.textContent = 'Sign in';
+    }
   });
 
-  var adminFab = document.getElementById('adminFab');
-
-  // Place the admin + sign-in buttons into a bar at the right end of the tab row.
-  (function placeBar() {
-    var tabsBar = document.querySelector('.tabs');
-    if (!tabsBar) { if (adminFab) document.body.appendChild(adminFab); document.body.appendChild(fab); return; }
-    var bar = document.getElementById('ahsAuthBar');
-    if (!bar) { bar = document.createElement('div'); bar.id = 'ahsAuthBar'; bar.className = 'auth-bar no-print'; tabsBar.appendChild(bar); }
-    if (adminFab) bar.appendChild(adminFab);
-    bar.appendChild(fab);
+  // Sign-in / sign-out + consultant Admin buttons — relocated into a bar at the
+  // right-hand end of the tab button row so they don't float over the date box.
+  const fab      = document.getElementById('authFab');
+  const adminFab = document.getElementById('adminFab');
+  (function _placeBar(){
+    const tabsBar = document.querySelector('.tabs');
+    if(!tabsBar) return;
+    let bar = document.getElementById('ahsAuthBar');
+    if(!bar){ bar = document.createElement('div'); bar.id = 'ahsAuthBar'; bar.className = 'auth-bar no-print'; tabsBar.appendChild(bar); }
+    if(adminFab && adminFab.parentElement !== bar) bar.appendChild(adminFab);
+    if(fab && fab.parentElement !== bar) bar.appendChild(fab);
   })();
-
-  // ───────── Consultant Admin (offline, this device) ─────────
-  // Passphrase that unlocks the Admin panel. CHANGE THIS to your own secret.
-  // (Offline gating only — the deployed server enforces real consultant login.)
-  var ADMIN_PASS = 'Crossbow01';
-
-  var INSTANCE = (function () { try { var d = decodeURIComponent(location.pathname).replace(/\/[^/]*$/, ''); return d || 'default'; } catch (e) { return 'default'; } })();
-  var BUCKET_PREFIX = 'cdmRiskRegisterState_v1::' + INSTANCE + '::proj::';
-  var adminOverlay = document.getElementById('adminModalOverlay');
-
-  function adminUnlocked() { try { return sessionStorage.getItem('ahsAdminUnlocked') === '1'; } catch (e) { return false; } }
-  function adminEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]; }); }
-  function parseBucketKey(key) { var rest = key.slice(BUCKET_PREFIX.length); var i = rest.indexOf('::'); return { email: rest.slice(0, i), project: rest.slice(i + 2) }; }
-
-  function scanProjects() {
-    var out = [];
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      if (!k || k.indexOf(BUCKET_PREFIX) !== 0) continue;
-      var p = parseBucketKey(k);
-      if (!p.email) continue;
-      var count = 0;
-      try { var d = JSON.parse(localStorage.getItem(k) || '{}'); count = (d.risks || []).filter(function (r) { return r && (r.ref || r.element || r.hazard); }).length; } catch (e) {}
-      out.push({ key: k, email: p.email, project: p.project, count: count });
-    }
-    out.sort(function (a, b) { return a.email.localeCompare(b.email) || a.project.localeCompare(b.project); });
-    return out;
-  }
-
-  function renderAdminList() {
-    var box = document.getElementById('adminProjectList');
-    var items = scanProjects();
-    if (!items.length) { box.innerHTML = '<p class="admin-hint">No client projects saved in this browser yet.</p>'; return; }
-    var groups = {};
-    items.forEach(function (it) { (groups[it.email] = groups[it.email] || []).push(it); });
-    box.innerHTML = Object.keys(groups).map(function (email) {
-      var rows = groups[email].map(function (it) {
-        return '<div class="admin-user">'
-          + '<div><strong>📁 ' + adminEsc(it.project) + '</strong><br><span class="admin-hint">' + it.count + ' risk row(s)</span></div>'
-          + '<div class="admin-user-actions">'
-          + '<button type="button" data-open="' + adminEsc(it.key) + '">Open</button>'
-          + '<button type="button" class="admin-danger" data-del="' + adminEsc(it.key) + '">Delete</button>'
-          + '</div></div>';
-      }).join('');
-      return '<div class="admin-section"><h4>👤 ' + adminEsc(email) + '</h4><div class="admin-list">' + rows + '</div></div>';
-    }).join('');
-    box.querySelectorAll('[data-open]').forEach(function (b) { b.addEventListener('click', function () { adminOpenProject(b.getAttribute('data-open')); }); });
-    box.querySelectorAll('[data-del]').forEach(function (b) { b.addEventListener('click', function () { adminDeleteProject(b.getAttribute('data-del')); }); });
-  }
-
-  function adminOpenProject(key) {
-    var p = parseBucketKey(key);
-    // Sign in AS that client/project so the app loads it; consultant can then edit.
-    try { localStorage.setItem(AUTH_KEY, JSON.stringify({ email: p.email, project: p.project })); } catch (e) {}
-    window.location.reload();
-  }
-  function adminDeleteProject(key) {
-    var p = parseBucketKey(key);
-    if (!confirm('Delete project "' + p.project + '" for ' + p.email + '?\nThis permanently removes it from this browser and cannot be undone.')) return;
-    try { localStorage.removeItem(key); } catch (e) {}
-    try {
-      var kk = 'ahsKnownProjects::' + p.email.toLowerCase();
-      var arr = JSON.parse(localStorage.getItem(kk) || '[]').filter(function (x) { return x !== p.project; });
-      localStorage.setItem(kk, JSON.stringify(arr));
-    } catch (e) {}
-    renderAdminList();
-  }
-
-  function openAdmin() {
-    if (!adminUnlocked()) {
-      var pass = prompt('Consultant passphrase:');
-      if (pass == null) return;
-      if (pass !== ADMIN_PASS) { alert('Incorrect passphrase.'); return; }
-      try { sessionStorage.setItem('ahsAdminUnlocked', '1'); } catch (e) {}
-    }
-    renderAdminList();
-    adminOverlay.classList.add('is-open');
-  }
-  function closeAdmin() { adminOverlay.classList.remove('is-open'); }
-  if (adminFab) adminFab.addEventListener('click', openAdmin);
-  document.getElementById('adminCloseBtn').addEventListener('click', closeAdmin);
-  adminOverlay.addEventListener('click', function (e) { if (e.target === adminOverlay) closeAdmin(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && adminOverlay.classList.contains('is-open')) closeAdmin(); });
-
-  function renderFab() {
-    var u = getUser();
-    if (u && u.email) {
-      fab.innerHTML = '👤 ' + u.email + ' · 📁 ' + (u.project || 'Default Project') + ' · Sign out';
-      fab.onclick = function () {
-        if (!confirm('Sign out? Your saved projects stay in this browser.')) return;
-        try { localStorage.removeItem(AUTH_KEY); } catch (e) {}
-        window.location.reload();
-      };
+  function renderFab(){
+    const isConsultant = Auth.isSignedIn() && Auth.user() && Auth.user().role === 'consultant';
+    if(adminFab) adminFab.style.display = isConsultant ? '' : 'none';
+    if(Auth.isSignedIn()){
+      const u = Auth.user();
+      const tenantLabel = u.tenantName ? ' · ' + u.tenantName : (u.role === 'consultant' ? ' · consultant' : '');
+      const projLabel = ' · 📁 ' + Auth.project();
+      fab.innerHTML = '👤 ' + (u.email || u.name || 'Signed in') + tenantLabel + projLabel + ' · Sign out';
+      fab.onclick = async function(){ await Auth.logout(); window.location.reload(); };
     } else {
       fab.textContent = '🔐 Sign in';
       fab.onclick = openAuthModal;
     }
   }
   renderFab();
+
+  // ── Consultant-only admin panel: manage clients (tenants) + their logins ──
+  const adminOverlay = document.getElementById('adminModalOverlay');
+  const adminErr     = document.getElementById('adminError');
+  let _tenants = [];
+  async function adminApi(path, opts){
+    opts = opts || {};
+    const res = await fetch(path, {
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      method: opts.method || 'GET',
+      body: opts.body
+    });
+    const body = await res.json().catch(() => ({}));
+    if(!res.ok){ const e = new Error(body.error || ('HTTP ' + res.status)); e.body = body; throw e; }
+    return body;
+  }
+  function adminNotice(msg, ok){ adminErr.textContent = msg; adminErr.classList.toggle('ok', !!ok); adminErr.hidden = false; }
+  function adminClear(){ adminErr.hidden = true; adminErr.classList.remove('ok'); }
+  function _esc(s){ return String(s==null?'':s).replace(/[&<>"]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]; }); }
+  function _fmtDate(d){ if(!d) return 'never'; try { return new Date(d).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}); } catch(_){ return '—'; } }
+  function renderTenantDropdown(){
+    const sel = document.getElementById('adminUserTenant');
+    if(!sel) return;
+    sel.innerHTML = _tenants.length
+      ? _tenants.map(function(t){ return '<option value="' + _esc(t.id) + '">' + _esc(t.name) + '</option>'; }).join('')
+      : '<option value="">— add a client first —</option>';
+  }
+  function renderUserList(users){
+    const box = document.getElementById('adminUserList');
+    if(!box) return;
+    const clients = (users || []).filter(function(u){ return u.role === 'client_user'; });
+    if(!clients.length){ box.innerHTML = '<p class="admin-hint">No client logins yet.</p>'; return; }
+    box.innerHTML = clients.map(function(u){
+      return '<div class="admin-user">'
+        + '<div><strong>' + _esc(u.email) + '</strong><br>'
+        + '<span class="admin-hint">' + _esc(u.tenant_name || u.tenant_id || '—') + ' · last login ' + _fmtDate(u.last_login_at) + '</span></div>'
+        + '<div class="admin-user-actions">'
+        + '<button type="button" data-act="reset" data-id="' + _esc(u.id) + '">Reset password</button>'
+        + '<button type="button" data-act="delete" data-id="' + _esc(u.id) + '" class="admin-danger">Delete</button>'
+        + '</div></div>';
+    }).join('');
+  }
+  async function loadAdminData(){
+    adminClear();
+    try {
+      const [tRes, uRes] = await Promise.all([ adminApi('/api/admin/tenants'), adminApi('/api/admin/users') ]);
+      _tenants = tRes.tenants || [];
+      renderTenantDropdown();
+      renderUserList(uRes.users || []);
+    } catch(e){ adminNotice('Could not load admin data: ' + ((e.body && e.body.error) || e.message), false); }
+  }
+  function openAdmin(){ adminClear(); adminOverlay.classList.add('is-open'); loadAdminData(); }
+  function closeAdmin(){ adminOverlay.classList.remove('is-open'); }
+  if(adminFab) adminFab.addEventListener('click', openAdmin);
+  document.getElementById('adminCloseBtn').addEventListener('click', closeAdmin);
+  adminOverlay.addEventListener('click', function(e){ if(e.target === adminOverlay) closeAdmin(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && adminOverlay.classList.contains('is-open')) closeAdmin(); });
+
+  document.getElementById('adminTenantForm').addEventListener('submit', async function(e){
+    e.preventDefault(); adminClear();
+    const name = document.getElementById('adminTenantName').value.trim();
+    if(!name) return;
+    try {
+      await adminApi('/api/admin/tenants', { method: 'POST', body: JSON.stringify({ name: name }) });
+      document.getElementById('adminTenantName').value = '';
+      await loadAdminData();
+      adminNotice('Client added.', true);
+    } catch(e2){
+      adminNotice((e2.body && e2.body.error === 'tenant_id_exists') ? 'A client with that name already exists.' : ('Could not add client: ' + ((e2.body && e2.body.error) || e2.message)), false);
+    }
+  });
+
+  document.getElementById('adminUserForm').addEventListener('submit', async function(e){
+    e.preventDefault(); adminClear();
+    const tenantId = document.getElementById('adminUserTenant').value;
+    const email    = document.getElementById('adminUserEmail').value.trim();
+    const password = document.getElementById('adminUserPassword').value;
+    if(!tenantId){ adminNotice('Add a client first, then create their login.', false); return; }
+    if(password.length < 8){ adminNotice('Password must be at least 8 characters.', false); return; }
+    try {
+      await adminApi('/api/admin/users', { method: 'POST', body: JSON.stringify({ email: email, password: password, role: 'client_user', tenantId: tenantId }) });
+      document.getElementById('adminUserEmail').value = '';
+      document.getElementById('adminUserPassword').value = '';
+      await loadAdminData();
+      adminNotice('Login created for ' + email + '. Give them the email + password you set.', true);
+    } catch(e2){
+      adminNotice((e2.body && e2.body.error === 'email_exists') ? 'That email already has a login.' : ('Could not create login: ' + ((e2.body && e2.body.error) || e2.message)), false);
+    }
+  });
+
+  document.getElementById('adminUserList').addEventListener('click', async function(e){
+    const btn = e.target.closest('button[data-act]');
+    if(!btn) return;
+    const id = btn.getAttribute('data-id');
+    const act = btn.getAttribute('data-act');
+    adminClear();
+    if(act === 'reset'){
+      const pw = window.prompt('Enter a new password for this login (at least 8 characters):');
+      if(pw == null) return;
+      if(pw.length < 8){ adminNotice('Password must be at least 8 characters.', false); return; }
+      try { await adminApi('/api/admin/users/' + encodeURIComponent(id) + '/reset-password', { method: 'POST', body: JSON.stringify({ password: pw }) }); adminNotice('Password updated.', true); }
+      catch(e2){ adminNotice('Could not reset password: ' + ((e2.body && e2.body.error) || e2.message), false); }
+    } else if(act === 'delete'){
+      if(!window.confirm('Delete this login? Their saved projects stay on the server, but they will no longer be able to sign in.')) return;
+      try { await adminApi('/api/admin/users/' + encodeURIComponent(id), { method: 'DELETE' }); await loadAdminData(); adminNotice('Login deleted.', true); }
+      catch(e2){ adminNotice('Could not delete: ' + ((e2.body && e2.body.error) || e2.message), false); }
+    }
+  });
+
+  // Wrap the app's existing save functions to ALSO sync to server, debounced
+  let _syncTimer = null;
+  function _scheduleSync(){
+    if(!Auth.isSignedIn()) return;
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(_doSync, 1000); // autosave ~1s after typing pauses
+  }
+  function _readJson(k){ try { const r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch(_){ return null; } }
+  function _doSync(){
+    if(typeof STORAGE_KEY === 'undefined' || typeof LOCKS_KEY === 'undefined' || typeof BRAND_KEY === 'undefined') return;
+    const bundle = {
+      data:  _readJson(STORAGE_KEY),
+      locks: _readJson(LOCKS_KEY),
+      brand: _readJson(BRAND_KEY)
+    };
+    Auth.saveToServer(bundle);
+  }
+  function _wrapSaves(){
+    const wrap = function(name){
+      const orig = window[name];
+      if(typeof orig !== 'function') return;
+      window[name] = function(){ const r = orig.apply(this, arguments); _scheduleSync(); return r; };
+    };
+    wrap('saveStateToStorage');
+    wrap('saveLocks');
+    wrap('saveBrand');
+  }
+
+  // Initial wiring on DOMContentLoaded
+  async function _init(){
+    const user = await Auth.refresh();
+    renderFab();
+    if(user){
+      const activeProject = Auth.project();
+      const localProject  = (function(){ try { return localStorage.getItem('ahsLocalProject'); } catch(_){ return null; } })();
+      const switching     = localProject !== activeProject;
+      const serverState   = await Auth.loadFromServer();
+      let mutated = false;
+      if(serverState && (serverState.data || serverState.locks || serverState.brand)){
+        // Hydrate localStorage from this project's saved server state
+        try {
+          if(typeof STORAGE_KEY !== 'undefined' && serverState.data)  localStorage.setItem(STORAGE_KEY,  JSON.stringify(serverState.data));
+          if(typeof LOCKS_KEY   !== 'undefined' && serverState.locks) localStorage.setItem(LOCKS_KEY,    JSON.stringify(serverState.locks));
+          if(typeof BRAND_KEY   !== 'undefined' && serverState.brand) localStorage.setItem(BRAND_KEY,    JSON.stringify(serverState.brand));
+        } catch(_){}
+        mutated = true;
+      } else if(switching){
+        // Switched to a project with no saved data yet — start from a blank
+        // register so the previous project's rows don't carry over. (Brand /
+        // client logo is intentionally kept so it persists across projects.)
+        try {
+          if(typeof STORAGE_KEY !== 'undefined') localStorage.removeItem(STORAGE_KEY);
+          if(typeof LOCKS_KEY   !== 'undefined') localStorage.removeItem(LOCKS_KEY);
+        } catch(_){}
+        mutated = true;
+      }
+      try { localStorage.setItem('ahsLocalProject', activeProject); } catch(_){}
+      // sessionStorage flag prevents an infinite reload loop
+      if(mutated && !sessionStorage.getItem('ahsHydrated')){
+        sessionStorage.setItem('ahsHydrated', '1');
+        window.location.reload();
+        return;
+      }
+      sessionStorage.removeItem('ahsHydrated');
+    }
+    _wrapSaves();
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _init);
+  else _init();
 })();
 </script>
+
+<!-- AHS persistent mark -->
+<footer class="ahs-mark">
+  <img class="ahs-mark-logo" src="data:image/png;base64,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" alt="AHS">
+  <span>Produced by <strong>AHS Compliance Consulting</strong></span>
+</footer>
 </body>
 </html>
