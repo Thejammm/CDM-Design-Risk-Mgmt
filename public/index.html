@@ -758,14 +758,16 @@ body {
 
 .snippets-layout {
   display: flex;
+  flex-direction: column;
   gap: 12px;
-  align-items: flex-start;
+  align-items: stretch;
   flex-wrap: wrap;
 }
 
 .snippet-list {
-  flex: 0 0 260px;
-  max-width: 260px;
+  flex: 1 1 100%;
+  max-width: none;
+  width: 100%;
   border-radius: 12px;
   border: 1px solid #e5e5ea;
   background: #f8f8fa;
@@ -850,14 +852,141 @@ body {
 }
 
 .snippet-item-btn span {
-  display: block;
   font-size: 10px;
   color: #6e6e73;
+  /* Wrap to fill the full width; clamp to keep rows tidy in the long list. */
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+.snippet-item-btn strong {
+  display: block;
+  margin-bottom: 2px;
 }
 
 .snippet-item-btn.active {
   border-color: #0078d4;
   background: #eef6ff;
+}
+
+/* Multi-select row: a checkbox beside the clickable snippet button */
+.snippet-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: #ffffff;
+  margin-bottom: 4px;
+  padding: 2px 6px;
+}
+.snippet-item.active {
+  border-color: #0078d4;
+  background: #eef6ff;
+}
+.snippet-item .snippet-pick {
+  margin-top: 8px;
+  flex: 0 0 auto;
+  cursor: pointer;
+}
+.snippet-item .snippet-item-btn {
+  flex: 1 1 auto;
+  margin-bottom: 0;
+  border: none;
+  background: transparent;
+}
+
+/* Select-all control above the list */
+.snippet-select-all-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  padding: 2px 2px;
+  user-select: none;
+  cursor: pointer;
+}
+.snippet-select-all-label input {
+  cursor: pointer;
+}
+
+/* Batch action bar below the list */
+.snippet-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.snippet-batch-bar button {
+  font-size: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid #0078d4;
+  background: #0078d4;
+  color: #ffffff;
+  font-weight: 700;
+}
+.snippet-batch-bar button:hover {
+  background: #0067b8;
+  border-color: #0067b8;
+}
+.snippet-batch-bar #batch-count {
+  font-weight: 600;
+}
+
+/* Section-title toggle button (e.g. Hide editing panel) */
+.section-title .panel-toggle-btn {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: 0;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid #cfd6e3;
+  background: #fff;
+  color: #111827;
+  cursor: pointer;
+}
+.section-title .panel-toggle-btn:hover {
+  background: #f8fbff;
+  border-color: var(--brand-accent);
+}
+
+/* Editing Panel snippet-draft action bar (Apply / Cancel) */
+.detail-apply-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #e5e5ea;
+}
+.detail-apply-bar #detail-apply-hint {
+  margin-right: auto;
+}
+.detail-apply-bar button {
+  font-size: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #0078d4;
+  background: #0078d4;
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+.detail-apply-bar button:hover {
+  background: #0067b8;
+  border-color: #0067b8;
+}
+.detail-apply-bar button.secondary {
+  background: #ffffff;
+  color: #0078d4;
 }
 
 .snippet-detail {
@@ -1757,6 +1886,9 @@ body {
           <button type="button" onclick="addRisk()">
             Add row
           </button>
+          <button type="button" onclick="deleteSelectedRisk()">
+            Delete selected row
+          </button>
           <button type="button" onclick="deleteLastRisk()">
             Delete last row
           </button>
@@ -1869,7 +2001,8 @@ body {
       <!-- Detail panel -->
       <div class="section section-detail">
         <div class="section-title">
-          <span>Selected Risk – Detail Panel</span>
+          <span>Editing Panel</span>
+          <button type="button" onclick="toggleEditingPanel()" id="toggle-editing-panel-btn" class="panel-toggle-btn">Hide editing panel</button>
         </div>
 
         <div id="detail-panel" class="detail-panel detail-panel-disabled">
@@ -1982,10 +2115,24 @@ body {
             </div>
           </div>
 
+          <div id="detail-apply-bar" class="detail-apply-bar" style="display:none;">
+            <span id="detail-apply-hint" class="note-text"></span>
+            <button type="button" onclick="applySnippetDraftToSelectedRow()">Apply to selected row</button>
+            <button type="button" class="secondary" onclick="cancelSnippetDraft()">Cancel</button>
+          </div>
+
           <div class="detail-panel-disabled-overlay" id="detail-overlay">
             Select a row in the table above to view and edit detailed information here.
           </div>
         </div>
+      </div>
+
+      <!-- Control Recommendations — focused snippet's design prompts (sits above the library) -->
+      <div id="control-recommendations" class="section">
+        <div class="section-title">
+          <span>Control Recommendations</span>
+        </div>
+        <div class="snippet-detail" id="snippet-detail"></div>
       </div>
 
       <!-- Inline Snippet Library (hidden by default, only for Simon / Michael) -->
@@ -2031,16 +2178,23 @@ body {
         </div>
 
         <div class="note-text">
-          1) Click a row in the Risk Register table to select it. 2) Choose a snippet, tick which
-          fields to apply, then click "Insert into selected row".
+          Batch: tick one or more snippets and click "Add selected snippets to register".
+          Single row: select a row in the Risk Register table, click a single snippet to load it into
+          the Editing Panel above, adjust or lock any fields, then "Apply to selected row".
         </div>
 
         <div class="snippets-layout">
           <div class="snippet-list" id="snippet-list">
             <input type="search" class="snippet-search" id="snippet-search" placeholder="Search element, hazard, name…" autocomplete="off">
+            <label class="snippet-select-all-label">
+              <input type="checkbox" id="snippet-select-all"> Select all shown
+            </label>
             <div class="snippet-list-items" id="snippet-list-items"></div>
           </div>
-          <div class="snippet-detail" id="snippet-detail"></div>
+          <div class="snippet-batch-bar">
+            <button type="button" onclick="batchInsertSelectedSnippets()">Add selected snippets to register</button>
+            <span id="batch-count" class="note-text"></span>
+          </div>
         </div>
       </div>
 
@@ -7363,6 +7517,12 @@ const riskFields = [
 
 let risks = [{}, {}, {}];
 let selectedRowIndex = null;
+
+// The Editing Panel shows either a register row ("row") or a focused snippet
+// staged for editing ("snippet"). In snippet mode, edits go to snippetDraft and
+// are only written to the register when the user clicks "Apply to selected row".
+let panelMode = "row";
+let snippetDraft = null;
 let tableVisible = true;
 
 // Per-folder storage namespace: keeps multiple copies of this file on the
@@ -7664,6 +7824,8 @@ function onDesignValidationChange(e) {
 // --- 4) Row selection & detail panel ----------
 function selectRow(rowIndex) {
   selectedRowIndex = rowIndex;
+  panelMode = "row";          // clicking a row leaves any snippet-draft mode
+  snippetDraft = null;
   highlightSelectedRow();
   updateDetailPanel();
     updateJumpButton(); // ← ADD THIS LINE
@@ -7691,6 +7853,16 @@ function updateDetailTitle() {
   const titleEl = document.getElementById("detail-title");
   const statusTagEl = document.getElementById("detail-status-tag");
 
+  // Snippet-draft mode: show the staged snippet's name and its target row.
+  if (panelMode === "snippet" && snippetDraft) {
+    const snippet = getActiveSnippets().find(s => s.id === selectedSnippetId);
+    titleEl.textContent = "Snippet: " + (snippet ? snippet.name : "(unnamed)");
+    statusTagEl.textContent = selectedRowIndex !== null
+      ? "→ will apply to Row " + (selectedRowIndex + 1)
+      : "no row selected";
+    return;
+  }
+
   if (selectedRowIndex === null || !risks[selectedRowIndex]) {
     titleEl.textContent = "No row selected";
     statusTagEl.textContent = "";
@@ -7706,6 +7878,23 @@ function updateDetailTitle() {
 }
 
 function updateDetailPanel() {
+  // Snippet-draft mode: the panel shows an editable copy of the focused snippet.
+  if (panelMode === "snippet" && snippetDraft) {
+    setDetailEnabled(true);
+    Object.entries(detailFieldMap).forEach(([field, id]) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const value = snippetDraft[field] || "";
+      el.value = value;
+      if (field === "initialRisk" || field === "residualRisk") {
+        applyRatingClass(el, value);
+      }
+    });
+    updateDetailTitle();
+    updateApplyDraftBar();
+    return;
+  }
+
   if (selectedRowIndex === null || !risks[selectedRowIndex]) {
     setDetailEnabled(false);
     Object.values(detailFieldMap).forEach(id => {
@@ -7716,6 +7905,7 @@ function updateDetailPanel() {
       }
     });
     updateDetailTitle();
+    updateApplyDraftBar();
     return;
   }
 
@@ -7733,6 +7923,89 @@ function updateDetailPanel() {
   });
 
   updateDetailTitle();
+  updateApplyDraftBar();
+}
+
+// Show the staged snippet's content in the Editing Panel for editing/locking.
+// Locked fields override the snippet's generic content.
+function loadSnippetIntoPanel(snippetId) {
+  const snippet = getActiveSnippets().find(s => s.id === snippetId);
+  if (!snippet) return;
+  panelMode = "snippet";
+  snippetDraft = Object.assign({}, snippet.fields);
+  Object.keys(fieldLocks).forEach(field => {
+    snippetDraft[field] = fieldLocks[field];   // lock wins over generic snippet text
+  });
+  updateDetailPanel();
+  // If the user has hidden the editing panel, that choice wins — don't force it open
+  // and don't scroll to it. Only bring it into view when it's actually visible.
+  if (editingPanelVisible) {
+    const panelSection = document.querySelector(".section-detail");
+    if (panelSection) {
+      const r = panelSection.getBoundingClientRect();
+      if (r.top < 0 || r.top > window.innerHeight * 0.5) {
+        // Offset by the sticky controls bar so the "Editing Panel" title lands
+        // just below it instead of hidden behind it.
+        const controls = document.querySelector(".controls-wrapper");
+        const offset = (controls ? controls.offsetHeight : 0) + 12;
+        const y = r.top + window.scrollY - offset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
+    }
+  }
+}
+
+// Toggle the snippet-draft "Apply / Cancel" bar inside the Editing Panel.
+function updateApplyDraftBar() {
+  const bar = document.getElementById("detail-apply-bar");
+  if (!bar) return;
+  if (panelMode === "snippet" && snippetDraft) {
+    bar.style.display = "flex";
+    const hint = document.getElementById("detail-apply-hint");
+    if (hint) {
+      hint.textContent = selectedRowIndex !== null
+        ? `Editing a snippet draft — "Apply" overwrites Row ${selectedRowIndex + 1}. Edits aren't saved until you apply.`
+        : `Editing a snippet draft — select a row in the table above, then Apply. Edits aren't saved until you apply.`;
+    }
+  } else {
+    bar.style.display = "none";
+  }
+}
+
+// Commit the edited snippet draft into the currently selected row (overwrite).
+function applySnippetDraftToSelectedRow() {
+  if (panelMode !== "snippet" || !snippetDraft) return;
+  if (selectedRowIndex === null || !risks[selectedRowIndex]) {
+    alert("Select a row in the Risk Register table first, then apply.");
+    return;
+  }
+  risks[selectedRowIndex] = Object.assign({}, snippetDraft);
+  applyLocksToRow(selectedRowIndex);   // keep any locked values
+
+  // leave draft mode and show the row we just wrote
+  panelMode = "row";
+  snippetDraft = null;
+
+  renderRisks();
+  highlightSelectedRow();
+  updateDetailPanel();
+  updateJumpButton();
+
+  const row = document.querySelector(`#risk-body tr[data-row-index="${selectedRowIndex}"]`);
+  if (row) {
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("row-flash");
+    setTimeout(() => row.classList.remove("row-flash"), 900);
+  }
+
+  saveStateToStorage();
+}
+
+// Discard the snippet draft and return the panel to the selected row (if any).
+function cancelSnippetDraft() {
+  panelMode = "row";
+  snippetDraft = null;
+  updateDetailPanel();
 }
 
 // Detail -> table sync
@@ -7742,8 +8015,21 @@ function attachDetailListeners() {
     if (!el) return;
 
     const sync = () => {
-      if (selectedRowIndex === null || !risks[selectedRowIndex]) return;
       const value = el.value.trim();
+
+      // Snippet-draft mode: edits update the draft only — not any register row,
+      // and nothing is saved until the user applies.
+      if (panelMode === "snippet") {
+        if (!snippetDraft) return;
+        snippetDraft[field] = value;
+        if (field === "initialRisk" || field === "residualRisk") {
+          applyRatingClass(el, value);
+        }
+        updateDetailTitle();
+        return;
+      }
+
+      if (selectedRowIndex === null || !risks[selectedRowIndex]) return;
       risks[selectedRowIndex][field] = value;
 
       const selector = `td[data-row-index="${selectedRowIndex}"][data-field="${field}"]`;
@@ -7795,6 +8081,20 @@ function deleteLastRisk() {
   saveStateToStorage();
 }
 
+function deleteSelectedRisk() {
+  if (selectedRowIndex === null || !risks[selectedRowIndex]) {
+    alert("Select a row in the table first.");
+    return;
+  }
+  risks.splice(selectedRowIndex, 1);   // delete instantly, no confirm
+  selectedRowIndex = null;
+  panelMode = "row";
+  snippetDraft = null;
+  renderRisks();
+  updateDetailPanel();
+  saveStateToStorage();
+}
+
 function printRegister() {
   window.print();
 }
@@ -7813,6 +8113,21 @@ function toggleTable() {
     container.classList.add("hidden");
     if (note) note.style.display = "none";
     btn.textContent = "Show risk table";
+  }
+}
+
+let editingPanelVisible = true;
+function toggleEditingPanel() {
+  editingPanelVisible = !editingPanelVisible;
+  const panel = document.getElementById("detail-panel");
+  const btn = document.getElementById("toggle-editing-panel-btn");
+  if (!panel) return;
+  if (editingPanelVisible) {
+    panel.style.display = "";
+    if (btn) btn.textContent = "Hide editing panel";
+  } else {
+    panel.style.display = "none";
+    if (btn) btn.textContent = "Show editing panel";
   }
 }
 
@@ -8571,6 +8886,25 @@ function getFilteredSnippets() {
   });
 }
 
+// Batch (multi-select) state for the snippet library. A snippet's checkbox toggles
+// membership here; the focused snippet (selectedSnippetId) is separate and drives
+// the Control Recommendations pane.
+const batchSelectedIds = new Set();
+
+function updateBatchCount() {
+  const el = document.getElementById("batch-count");
+  if (el) el.textContent = batchSelectedIds.size ? `${batchSelectedIds.size} selected` : "";
+}
+
+function updateSelectAllState() {
+  const selAll = document.getElementById("snippet-select-all");
+  if (!selAll) return;
+  const shown = getFilteredSnippets();
+  const pickedShown = shown.filter(s => batchSelectedIds.has(s.id)).length;
+  selAll.checked = shown.length > 0 && pickedShown === shown.length;
+  selAll.indeterminate = pickedShown > 0 && pickedShown < shown.length;
+}
+
 function renderSnippetList() {
   const itemsEl = document.getElementById("snippet-list-items");
   if (!itemsEl) return;
@@ -8580,29 +8914,124 @@ function renderSnippetList() {
 
   if (filtered.length === 0) {
     itemsEl.innerHTML = '<div class="note-text" style="padding:10px;">No snippets match your search.</div>';
+    updateBatchCount();
+    updateSelectAllState();
     return;
   }
 
   filtered.forEach(snippet => {
+    const row = document.createElement("div");
+    row.className = "snippet-item" + (snippet.id === selectedSnippetId ? " active" : "");
+    row.dataset.snippetId = snippet.id;
+
+    // Checkbox: batch selection only — must not also trigger focus.
+    const cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.className = "snippet-pick";
+    cb.dataset.snippetId = snippet.id;
+    cb.checked = batchSelectedIds.has(snippet.id);
+    cb.addEventListener("click", (e) => { e.stopPropagation(); });
+    cb.addEventListener("change", (e) => {
+      e.stopPropagation();
+      if (cb.checked) batchSelectedIds.add(snippet.id);
+      else batchSelectedIds.delete(snippet.id);
+      updateBatchCount();
+      updateSelectAllState();
+    });
+
+    // Button: focus/preview the snippet (drives Control Recommendations).
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = "snippet-item-btn" + (snippet.id === selectedSnippetId ? " active" : "");
+    btn.className = "snippet-item-btn";
     btn.dataset.snippetId = snippet.id;
-    btn.innerHTML = `<strong>${snippet.name}</strong><span>${snippet.summary}</span>`;
+    // Show the fuller hazard text (the summary field is a short, sometimes
+    // pre-truncated teaser); fall back to summary if a snippet has no hazard.
+    const listText = (snippet.fields && snippet.fields.hazard) || snippet.summary || "";
+    btn.innerHTML = `<strong>${snippet.name}</strong><span>${listText}</span>`;
     btn.addEventListener("click", () => {
       selectedSnippetId = snippet.id;
+      loadSnippetIntoPanel(snippet.id);   // stage it in the Editing Panel for editing/locking
       renderSnippetList();
       renderSnippetDetail();
     });
-    itemsEl.appendChild(btn);
+
+    row.appendChild(cb);
+    row.appendChild(btn);
+    itemsEl.appendChild(row);
   });
 
-  // Auto-select the first visible snippet only when nothing is selected yet
+  // Auto-focus the first visible snippet only when nothing is focused yet
   if (!selectedSnippetId && filtered.length > 0) {
     selectedSnippetId = filtered[0].id;
     renderSnippetList();
     renderSnippetDetail();
+    return;
   }
+
+  updateBatchCount();
+  updateSelectAllState();
+}
+
+(function initSnippetSelectAll() {
+  const selAll = document.getElementById("snippet-select-all");
+  if (!selAll) return;
+  selAll.addEventListener("change", () => {
+    const shown = getFilteredSnippets();   // respects active library + search filter
+    if (selAll.checked) shown.forEach(s => batchSelectedIds.add(s.id));
+    else shown.forEach(s => batchSelectedIds.delete(s.id));
+    renderSnippetList();
+  });
+})();
+
+function isRowEmpty(r) {
+  return riskFields.every(f => !r || r[f] === undefined || String(r[f]).trim() === "");
+}
+
+function batchInsertSelectedSnippets() {
+  if (batchSelectedIds.size === 0) { alert("Tick one or more snippets first."); return; }
+  // order by position in the active library so rows land in list order
+  const ordered = getActiveSnippets().filter(s => batchSelectedIds.has(s.id));
+  if (ordered.length === 0) return;
+
+  const lastIdx = risks.length - 1;
+  const lastEmpty = lastIdx >= 0 && isRowEmpty(risks[lastIdx]);
+  let firstIndex = null;
+
+  ordered.forEach((snippet, i) => {
+    let idx;
+    if (i === 0 && lastEmpty) {
+      idx = lastIdx;
+      risks[idx] = { ...snippet.fields };       // fill the trailing empty row
+    } else {
+      risks.push({ ...snippet.fields });         // append new rows below
+      idx = risks.length - 1;
+    }
+    applyLocksToRow(idx);
+    if (firstIndex === null) firstIndex = idx;
+  });
+
+  renderRisks();
+  selectedRowIndex = firstIndex;                  // select the first inserted row
+  panelMode = "row";                              // show the row, not any snippet draft
+  snippetDraft = null;
+  updateDetailPanel();                            // refresh the editing panel
+  highlightSelectedRow();
+  updateJumpButton();
+
+  // scroll the first inserted row into view and flash it
+  const row = document.querySelector(`#risk-body tr[data-row-index="${firstIndex}"]`);
+  if (row) {
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    row.classList.add("row-flash");
+    setTimeout(() => row.classList.remove("row-flash"), 900);
+  }
+
+  saveStateToStorage();
+
+  batchSelectedIds.clear();                       // reset selection after upload
+  renderSnippetList();
+  const countEl = document.getElementById("batch-count");
+  if (countEl) countEl.textContent = "";
 }
 
 (function initSnippetSearch() {
@@ -8625,6 +9054,8 @@ function renderSnippetList() {
       activeLibraryKey = key;
       // Reset selection when switching libraries (different snippet IDs).
       selectedSnippetId = null;
+      // Clear batch picks too — ids belong to the previous library.
+      batchSelectedIds.clear();
       // Clear search to avoid carrying a query across libraries.
       const searchEl = document.getElementById("snippet-search");
       if (searchEl) {
@@ -8650,26 +9081,9 @@ function renderSnippetDetail() {
     return;
   }
 
-  let fieldsHtml = "";
-  riskFields.forEach(field => {
-    const label = fieldLabels[field] || field;
-    const value = (snippet.fields && snippet.fields[field]) || "";
-    const id = "snippet-field-" + field;
-    fieldsHtml += `
-      <div class="snippet-field-block">
-        <label>
-          <input type="checkbox" id="${id}" checked>
-          ${label}
-        </label>
-        <div class="snippet-field-preview">${value ? value.replace(/\n/g, "<br>") : "<span style='color:#b0b0b5'>No value provided</span>"}</div>
-      </div>
-    `;
-  });
-
-  // Optional "Think it through" callout — only shown if the snippet defines designPrompts.
-  // These prompts are NOT copied to the row when the snippet is applied; they only
-  // exist to make the designer engage with elimination / reduction / information transfer
-  // before clicking Insert.
+  // The design-prompts ("Control Recommendations"). The per-field grid and the old
+  // "Insert into selected row" button have moved into the Editing Panel: clicking a
+  // snippet stages it there for editing/locking, then "Apply to selected row".
   let promptsHtml = "";
   if (Array.isArray(snippet.designPrompts) && snippet.designPrompts.length > 0) {
     const escape = (s) => String(s || '')
@@ -8677,10 +9091,12 @@ function renderSnippetDetail() {
     const items = snippet.designPrompts.map(q => `<li>${escape(q)}</li>`).join('');
     promptsHtml = `
       <div class="snippet-design-prompts">
-        <div class="snippet-design-prompts-title">💭 Think it through before applying</div>
+        <div class="snippet-design-prompts-title">Control Recommendations</div>
         <ul>${items}</ul>
       </div>
     `;
+  } else {
+    promptsHtml = "<div class='note-text'>No control recommendations recorded for this snippet.</div>";
   }
 
   detailEl.innerHTML = `
@@ -8689,21 +9105,9 @@ function renderSnippetDetail() {
       <div style="font-size:10px;color:#6e6e73;">${snippet.summary}</div>
     </div>
     ${promptsHtml}
-    <div class="snippet-fields-grid">
-      ${fieldsHtml}
+    <div class="note-text" style="margin-top:8px;">
+      Clicking this snippet loaded it into the Editing Panel above — adjust or lock any fields there, then "Apply to selected row".
     </div>
-<div class="snippet-apply-bar">
-  <span id="snippet-status"
-        style="font-size:10px;color:#6e6e73;margin-right:auto;">
-    Select fields then insert into selected row.
-  </span>
-  <button type="button" class="jump-to-row-btn" onclick="jumpToSelectedRow()" id="jump-to-row-btn" ${selectedRowIndex === null ? 'disabled' : ''}>
-    📍 Jump to Row ${selectedRowIndex !== null ? selectedRowIndex + 1 : '—'}
-  </button>
-  <button type="button" class="secondary" onclick="toggleAllSnippetFields(true)">Select all</button>
-  <button type="button" class="secondary" onclick="toggleAllSnippetFields(false)">Clear all</button>
-  <button type="button" class="snippet-insert-btn" onclick="applySnippetToSelectedRow()">Insert into selected row</button>
-</div>
   `;
 }
 
