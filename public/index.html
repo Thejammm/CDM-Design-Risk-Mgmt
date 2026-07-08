@@ -10457,34 +10457,6 @@ function printRiskRegisterPDF() {
   doc.text(row1, margin, nextY);
   doc.text(row2, margin, nextY + 5);
 
-  // Client brand logo (whichever is selected in Brand Setup) — right-aligned in
-  // the report header, sized to fit and kept clear of the brand-coloured page
-  // border. If no client logo is set, the space is simply left empty.
-  // We re-render the already-decoded header logo <img> (any format: PNG/JPG/SVG…)
-  // onto a white canvas and embed it as JPEG — jsPDF embeds JPEG reliably (its
-  // PNG path can stall), and the white matches the white report header.
-  try {
-    const brandForPdf = loadBrand();
-    const logoUri = brandForPdf && brandForPdf.logoDataUri;
-    const imgEl = document.getElementById('lhLogo');
-    if (logoUri && imgEl && imgEl.naturalWidth > 0) {
-      const iw = imgEl.naturalWidth, ih = imgEl.naturalHeight;
-      const cv = document.createElement('canvas');
-      cv.width = iw; cv.height = ih;
-      const cx = cv.getContext('2d');
-      cx.fillStyle = '#ffffff';
-      cx.fillRect(0, 0, iw, ih);
-      cx.drawImage(imgEl, 0, 0, iw, ih);
-      const jpeg = cv.toDataURL('image/jpeg', 0.92);
-      const maxW = 45, maxH = 16;
-      const scale = Math.min(maxW / iw, maxH / ih);
-      const w = iw * scale, h = ih * scale;
-      const x = pageW - margin - w; // right-aligned inside the content margin
-      const y = 8;                  // top of header, clear of the 7mm frame
-      doc.addImage(jpeg, 'JPEG', x, y, w, h);
-    }
-  } catch (e) { /* unsupported/broken logo — leave the space empty */ }
-
   // Push the table down to make room for the title block
   const tableStartY = nextY + 10;
 
@@ -10563,6 +10535,37 @@ function printRiskRegisterPDF() {
     return true;
   };
   while (headFont > 5 && !headWordsFit(headFont)) headFont -= 0.25;
+
+  // Client brand logo (whichever is selected in Brand Setup) — placed in the
+  // report header, right-aligned to the TABLE's right edge (with a little
+  // padding) so it never exceeds the table width, and nudged DOWN from the top
+  // for breathing room and to clear the brand-coloured page border. Empty when
+  // no client logo is set. We re-render the already-decoded header logo <img>
+  // (any format) onto a white canvas and embed it as JPEG — jsPDF embeds JPEG
+  // reliably (its PNG path can stall), and white matches the report header.
+  try {
+    const brandForPdf = loadBrand();
+    const logoUri = brandForPdf && brandForPdf.logoDataUri;
+    const imgEl = document.getElementById('lhLogo');
+    if (logoUri && imgEl && imgEl.naturalWidth > 0) {
+      const iw = imgEl.naturalWidth, ih = imgEl.naturalHeight;
+      const cv = document.createElement('canvas');
+      cv.width = iw; cv.height = ih;
+      const cx = cv.getContext('2d');
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(0, 0, iw, ih);
+      cx.drawImage(imgEl, 0, 0, iw, ih);
+      const jpeg = cv.toDataURL('image/jpeg', 0.92);
+      const maxW = 45, maxH = 16;
+      const scale = Math.min(maxW / iw, maxH / ih);
+      const w = iw * scale, h = ih * scale;
+      const tableWidth = colDefs.reduce((sum, d) => sum + d.w, 0);
+      const rightPad = 3;                           // gap from the table's right edge
+      const x = margin + tableWidth - rightPad - w; // right edge sits inside the table width
+      const y = 13;                                 // nudged down for top padding, clear of the 7mm frame
+      doc.addImage(jpeg, 'JPEG', x, y, w, h);
+    }
+  } catch (e) { /* unsupported/broken logo — leave the space empty */ }
 
   doc.autoTable({
     head,
