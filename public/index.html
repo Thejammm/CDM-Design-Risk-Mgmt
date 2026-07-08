@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>CDM Rolling Risk Register</title>
+  <!-- Favicon: a sensible default; swapped to the active client's brand logo at
+       runtime by applyFavicon() when a client has a logo set. -->
+  <link rel="icon" id="faviconLink" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2351a6a9'/><text x='32' y='45' font-family='Arial,Helvetica,sans-serif' font-size='40' font-weight='700' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+  <link rel="apple-touch-icon" id="appleTouchIcon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2351a6a9'/><text x='32' y='45' font-family='Arial,Helvetica,sans-serif' font-size='40' font-weight='700' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
   <style>
 :root {
   --brand-accent: #51a6a9;
@@ -94,10 +98,13 @@ body {
 
 /* ===== Letterhead: visually engaging, print-safe ===== */
 .letterhead{
+  /* The logo is taken out of flow (absolutely positioned, left) so the title is
+     centred on the WHOLE page, not in the space left over beside the logo. The
+     title reserves symmetric clearance so it never runs under the logo. */
+  position:relative;
   display:flex;
   align-items:center;
-  justify-content:space-between;
-  gap:18px;
+  justify-content:center;
   background-color: white;
   padding:14px 20px 10px 20px;
   margin: 0;
@@ -106,8 +113,8 @@ body {
   color:#6b7280;
 }
 
-/* Left */
-.lh-left{ flex:0 0 auto; display:flex; align-items:center; gap:14px; }
+/* Left — pinned, out of flow, so it can't push the title off-centre */
+.lh-left{ position:absolute; left:20px; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:14px; }
 .lh-logo{ height:55px; width:auto; display:block; max-width:200px; object-fit:contain; }
 
 .lh-logo-placeholder {
@@ -164,9 +171,10 @@ body {
 .lh-muted{ font-size:10px; letter-spacing:.06em; color:#787878; font-weight:700; text-transform:uppercase; }
 .lh-strong{ font-size:13px; font-weight:700; }
 
-/* Center */
+/* Center — centred in the full letterhead; reserves ~230px each side so a wide
+   title truncates (ellipsis) instead of overlapping the pinned logo. */
 .lh-center{
-  flex:1 1 auto;
+  max-width: calc(100% - 460px);
   min-width:0;
   text-align:center;
 }
@@ -206,8 +214,9 @@ body {
   outline:none;
 }
 
-/* Right */
-.lh-right{ flex:0 0 auto; }
+/* Right (empty spacer that mirrors the left column so the centre column is
+   genuinely centred on the page) */
+.lh-right{ justify-self:end; min-width:0; }
 .lh-chip{
   text-align:right;
   padding:8px 12px;
@@ -1920,7 +1929,7 @@ body {
             <td contenteditable="true"></td>
             <td class="req-label">Principal Designer<span class="req-star">*</span></td>
             <td contenteditable="true"></td>
-            <td class="req-label">Date:<span class="req-star">*</span></td>
+            <td>Date Issued:</td>
             <td contenteditable="true" id="pi-date" title="Click to pick a date"></td>
           </tr>
           <tr>
@@ -1937,7 +1946,7 @@ body {
             <td>Internal-Ref:</td>
             <td contenteditable="true"></td>
             <td>Date Checked:</td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" id="pi-date-checked" title="Click to pick a date"></td>
           </tr>
           <tr class="risk-meta">
   <td style="background:var(--brand-accent); color:#fff; font-weight:700; text-align:center;">
@@ -1951,33 +1960,41 @@ body {
           All fields above are editable and will be included when you print / save to PDF.
         </div>
 
-        <!-- Hidden native date picker for the Project Information "Date" field.
-             The Date cell stays contenteditable (so it is still saved as part of
-             the project meta); clicking it opens this picker, which writes the
-             chosen date back into the cell. No date is ever auto-populated. -->
-        <input type="date" id="pi-date-input" aria-label="Pick project date"
+        <!-- Hidden native date picker shared by the Project Information date
+             cells (Date Issued + Date Checked). Each cell stays contenteditable
+             (so it is still saved as part of the project meta); clicking it opens
+             this picker, which writes the chosen date back into that cell.
+             No date is ever auto-populated. -->
+        <input type="date" id="pi-date-input" aria-label="Pick a date"
                style="position:fixed; opacity:0; width:1px; height:1px; border:0; padding:0; margin:0; pointer-events:none;">
         <script>
           (function () {
-            const cell  = document.getElementById('pi-date');
             const input = document.getElementById('pi-date-input');
-            if (!cell || !input) return;
+            if (!input) return;
+            let activeCell = null;
             function fmt(v) {
               if (!v) return '';
               const [y, m, d] = v.split('-').map(Number);
               return new Date(y, (m || 1) - 1, d || 1)
                 .toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
             }
-            cell.addEventListener('click', function () {
-              const r = cell.getBoundingClientRect();
-              input.style.left = r.left + 'px';
-              input.style.top  = r.bottom + 'px';
-              if (typeof input.showPicker === 'function') { try { input.showPicker(); } catch (_) { input.focus(); } }
-              else { input.focus(); input.click(); }
+            ['pi-date', 'pi-date-checked'].forEach(function (id) {
+              const cell = document.getElementById(id);
+              if (!cell) return;
+              cell.addEventListener('click', function () {
+                activeCell = cell;
+                const r = cell.getBoundingClientRect();
+                input.style.left = r.left + 'px';
+                input.style.top  = r.bottom + 'px';
+                input.value = '';
+                if (typeof input.showPicker === 'function') { try { input.showPicker(); } catch (_) { input.focus(); } }
+                else { input.focus(); input.click(); }
+              });
             });
             input.addEventListener('change', function () {
-              cell.textContent = fmt(this.value);
-              cell.dispatchEvent(new Event('input', { bubbles: true }));
+              if (!activeCell) return;
+              activeCell.textContent = fmt(this.value);
+              activeCell.dispatchEvent(new Event('input', { bubbles: true }));
             });
           })();
         </script>
@@ -8967,7 +8984,7 @@ function exportCharts() {
   const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
   const client       = metaCells[0]?.innerText.trim() || '';
   const project      = metaCells[3]?.innerText.trim() || '';
-  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[5]?.innerText || '').trim();
+  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   const accent = getActiveAccent();
   const accentRgb = hexToRgb(accent);
@@ -8995,7 +9012,7 @@ function exportCharts() {
     client ? `Client: ${client}` : null,
     project ? `Project: ${project}` : null,
     `Revision: ${revision}`,
-    `Date: ${dateStr}`
+    `Date Checked: ${dateStr}`
   ].filter(Boolean).join('   |   ');
   doc.text(metaLine, margin, y);
   y += 8;
@@ -9111,11 +9128,12 @@ function exportCharts() {
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
+    drawPdfBrandBorder(doc, accentRgb);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(107, 114, 128);
-    doc.text('Produced by AHS Compliance Consulting', margin, pageH - 6);
-    doc.text(`Page ${i} of ${totalPages}`, pageW - margin, pageH - 6, { align: 'right' });
+    doc.text('Produced by AHS Compliance Consulting', margin, pageH - 9);
+    doc.text(`Page ${i} of ${totalPages}`, pageW - margin, pageH - 9, { align: 'right' });
   }
 
   doc.save(buildPdfFilename('Risk_Dashboard', revision));
@@ -9644,6 +9662,20 @@ function getActiveAccent() {
   return brand.accent || DEFAULT_BRAND.accent;
 }
 
+// Sensible site-wide default favicon (the small teal "A" mark set in <head>).
+const DEFAULT_FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2351a6a9'/><text x='32' y='45' font-family='Arial,Helvetica,sans-serif' font-size='40' font-weight='700' fill='%23ffffff' text-anchor='middle'>A</text></svg>";
+
+// Point the tab/apple-touch icons at the active client's brand logo when set,
+// otherwise fall back to the default mark. Called whenever the brand changes.
+function applyFavicon(brand) {
+  brand = brand || (typeof loadBrand === 'function' ? loadBrand() : null);
+  const uri = (brand && brand.logoDataUri) ? brand.logoDataUri : DEFAULT_FAVICON;
+  ['faviconLink', 'appleTouchIcon'].forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el) el.href = uri;
+  });
+}
+
 function applyBrand(brand) {
   const accent = brand.accent || DEFAULT_BRAND.accent;
   document.documentElement.style.setProperty('--brand-accent', accent);
@@ -9663,6 +9695,7 @@ function applyBrand(brand) {
     }
   }
 
+  applyFavicon(brand);
 }
 
 function openBrandModal() {
@@ -9837,8 +9870,8 @@ function generateNarrativeReport() {
   const revisionField = document.getElementById('revision-field');
   const revision = ((revisionField?.innerText) || '').trim() || '01';
 
-  // Date comes from the Project Information "Date" field (metaCells[5])
-  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[5]?.innerText || '').trim();
+  // The report date comes from the Project Information "Date Checked" field (metaCells[11])
+  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
   const client = metaCells[0]?.innerText.trim() || "N/A";
@@ -9868,9 +9901,8 @@ function generateNarrativeReport() {
       <div class="info-row"><strong>Principal Designer:</strong> ${principalDesigner}</div>
       <div class="info-row"><strong>${getLeadDesignerLabel()}:</strong> ${leadDesigner}</div>
       <div class="info-row"><strong>Checked By:</strong> ${checkedBy}</div>
-      <div class="info-row"><strong>Report Date:</strong> ${reportDate}</div>
-      <div class="info-row"><strong>Checked Date:</strong> ${checkedDate}</div>
-      <div class="info-row"><strong>Date:</strong> ${dateStr}</div>
+      <div class="info-row"><strong>Date Issued:</strong> ${reportDate}</div>
+      <div class="info-row"><strong>Date Checked:</strong> ${dateStr}</div>
       <div class="info-row"><strong>Revision:</strong> ${revision}</div>
     </div>
   `;
@@ -10025,7 +10057,7 @@ async function exportRiskRegisterExcel() {
   const location          = metaCells[6]?.innerText.trim() || '';
   const leadDesigner      = metaCells[7]?.innerText.trim() || '';
   const projectNo         = metaCells[9]?.innerText.trim() || '';
-  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[5]?.innerText || '').trim();
+  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   // ----- Brand colour: hex -> ARGB (ExcelJS expects ARGB) -----
   const accent = getActiveAccent();
@@ -10150,7 +10182,7 @@ async function exportRiskRegisterExcel() {
     [['Project',      project],           ['Prepared by',         preparedBy]],
     [['Project No',   projectNo],         ['Principal Designer',  principalDesigner]],
     [['Location',     location],          [getLeadDesignerLabel(), leadDesigner]],
-    [['Revision',     revision],          ['Date',                dateStr]]
+    [['Revision',     revision],          ['Date Checked',        dateStr]]
   ];
 
   piRows.forEach((pair, i) => {
@@ -10344,6 +10376,19 @@ function buildPdfFilename(prefix, revision) {
   return parts.join('_') + '.pdf';
 }
 
+// Draw a brand-coloured frame around the current PDF page, inset from the paper
+// edge so printers don't clip it and content stays clear of it. rgb = [r,g,b].
+function drawPdfBrandBorder(doc, rgb) {
+  const pw = doc.internal.pageSize.getWidth();
+  const ph = doc.internal.pageSize.getHeight();
+  const inset = 7; // mm from paper edge
+  const prevW = doc.getLineWidth ? doc.getLineWidth() : 0.2;
+  doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+  doc.setLineWidth(1.2);
+  doc.rect(inset, inset, pw - inset * 2, ph - inset * 2);
+  doc.setLineWidth(prevW);
+}
+
 function printRiskRegisterPDF() {
   if (!window.jspdf || !window.jspdf.jsPDF) {
     alert('PDF library is still loading. Please try again in a moment.');
@@ -10363,7 +10408,7 @@ function printRiskRegisterPDF() {
   const location          = metaCells[6]?.innerText.trim() || '';
   const leadDesigner      = metaCells[7]?.innerText.trim() || '';
   const projectNo         = metaCells[9]?.innerText.trim() || '';
-  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[5]?.innerText || '').trim();
+  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   const accent = getActiveAccent();
   const accentRgb = hexToRgb(accent);
@@ -10405,7 +10450,7 @@ function printRiskRegisterPDF() {
     preparedBy ? `Prepared by: ${preparedBy}` : null,
     principalDesigner ? `Principal Designer: ${principalDesigner}` : null,
     leadDesigner ? `${getLeadDesignerLabel()}: ${leadDesigner}` : null,
-    `Date: ${dateStr}`
+    `Date Checked: ${dateStr}`
   ].filter(Boolean).join('   |   ');
 
   doc.text(row1, margin, nextY);
@@ -10414,14 +10459,19 @@ function printRiskRegisterPDF() {
   // Push the table down to make room for the title block
   const tableStartY = nextY + 10;
 
-  // Build table data
-  const head = [[
+  // Build table data. Headings must never break mid-word; where a heading has a
+  // forward slash, allow a break ONLY after the slash (Element/ Activity,
+  // Hazard/ Associated Risk). Inserting a newline after each "/" makes the slash
+  // the only forced wrap point; autoTable otherwise wraps on spaces (never
+  // mid-word, and jsPDF does not hyphenate).
+  const headLabels = [
     'Designer', 'Risk Ref', 'Element/Activity', 'Stage',
     'Hazard/Associated Risk', 'Person at Risk', 'Initial Risk',
     'Designers Comments', 'Eliminated', 'Residual Risk', 'Owner',
     'Design Validation', 'Further action required?', 'Status',
     'Date Registered', 'Date Resolved', 'H&S File information required'
-  ]];
+  ];
+  const head = [ headLabels.map(h => h.replace(/\//g, '/\n')) ];
   const body = (risks || []).map(r => [
     r.designer || '', r.ref || '', r.element || '', r.stageRequired || '',
     r.hazard || '', r.personAtRisk || '', r.initialRisk || '',
@@ -10479,14 +10529,16 @@ function printRiskRegisterPDF() {
       }
     },
     didDrawPage: (data) => {
-      // Footer: page X of Y + AHS strapline
+      // Brand-coloured frame around the whole page
+      drawPdfBrandBorder(doc, accentRgb);
+      // Footer: page X of Y + AHS strapline (kept inside the frame)
       const pageCount = doc.internal.getNumberOfPages();
       const pageNum = doc.internal.getCurrentPageInfo().pageNumber;
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(8);
       doc.setTextColor(107, 114, 128);
-      doc.text(`Produced by AHS Compliance Consulting`, margin, pageH - 4);
-      doc.text(`Page ${pageNum} of ${pageCount}`, pageW - margin, pageH - 4, { align: 'right' });
+      doc.text(`Produced by AHS Compliance Consulting`, margin, pageH - 9);
+      doc.text(`Page ${pageNum} of ${pageCount}`, pageW - margin, pageH - 9, { align: 'right' });
     }
   });
 
@@ -10535,7 +10587,7 @@ function printNarrativeReport() {
   const projectNo         = metaCells[9]?.innerText.trim() || '';
   const internalRef       = metaCells[10]?.innerText.trim() || '';
   const checkedDate       = metaCells[11]?.innerText.trim() || '';
-  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[5]?.innerText || '').trim();
+  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   // Group risks by initial-risk level (matches generateNarrativeReport behaviour)
   const groups = [
@@ -10638,9 +10690,8 @@ function printNarrativeReport() {
     ['Principal Designer', na(principalDesigner)],
     [getLeadDesignerLabel(), na(leadDesigner)],
     ['Checked By', na(checkedBy)],
-    ['Report Date', na(reportDate)],
-    ['Checked Date', na(checkedDate)],
-    ['Date', na(dateStr)],
+    ['Date Issued', na(reportDate)],
+    ['Date Checked', na(dateStr)],
     ['Revision', na(revision)]
   ];
 
@@ -10845,11 +10896,12 @@ function printNarrativeReport() {
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
+    drawPdfBrandBorder(doc, accentRgb);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(107, 114, 128);
-    doc.text('Produced by AHS Compliance Consulting', margin, pageH - 6);
-    doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 6, { align: 'right' });
+    doc.text('Produced by AHS Compliance Consulting', margin, pageH - 9);
+    doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 9, { align: 'right' });
   }
 
   doc.save(buildPdfFilename('Narrative_Report', revision));
