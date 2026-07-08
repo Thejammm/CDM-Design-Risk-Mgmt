@@ -10487,6 +10487,54 @@ function printRiskRegisterPDF() {
     Low:    [209, 231, 221]
   };
 
+  // Column widths (mm). Single-word heading columns (Eliminated, Residual,
+  // Date Registered, etc.) are wide enough to hold their longest word; the text
+  // columns give back the space. Index order matches the register columns.
+  const colDefs = [
+    { w: 18 },                                    // 0  Designer
+    { w: 13 },                                    // 1  Risk Ref
+    { w: 24 },                                    // 2  Element/Activity
+    { w: 18 },                                    // 3  Stage
+    { w: 42 },                                    // 4  Hazard/Associated Risk
+    { w: 20 },                                    // 5  Person at Risk
+    { w: 15, halign: 'center', fontStyle: 'bold' }, // 6  Initial Risk
+    { w: 42 },                                    // 7  Designers Comments
+    { w: 20, halign: 'center' },                  // 8  Eliminated
+    { w: 17, halign: 'center', fontStyle: 'bold' }, // 9  Residual Risk
+    { w: 20 },                                    // 10 Owner
+    { w: 22 },                                    // 11 Design Validation
+    { w: 42 },                                    // 12 Further action required?
+    { w: 16 },                                    // 13 Status
+    { w: 20 },                                    // 14 Date Registered
+    { w: 17 },                                    // 15 Date Resolved
+    { w: 22 }                                     // 16 H&S File information required
+  ];
+  const columnStyles = {};
+  colDefs.forEach((d, i) => {
+    columnStyles[i] = { cellWidth: d.w };
+    if (d.halign) columnStyles[i].halign = d.halign;
+    if (d.fontStyle) columnStyles[i].fontStyle = d.fontStyle;
+  });
+
+  // Auto-shrink the header font until EVERY heading word fits inside its column
+  // (cell width minus padding). This guarantees no heading word is ever split;
+  // words still wrap onto new lines (and only after a slash), never mid-word.
+  const headPad = 1.2;
+  let headFont = 8;
+  doc.setFont('helvetica', 'bold');
+  const headWordsFit = (fs) => {
+    doc.setFontSize(fs);
+    for (let i = 0; i < headLabels.length; i++) {
+      const avail = colDefs[i].w - 2 * headPad - 0.4; // usable text width, with a small safety
+      const words = headLabels[i].split(/[\s/]+/).filter(Boolean);
+      for (let j = 0; j < words.length; j++) {
+        if (doc.getTextWidth(words[j]) > avail) return false;
+      }
+    }
+    return true;
+  };
+  while (headFont > 5 && !headWordsFit(headFont)) headFont -= 0.25;
+
   doc.autoTable({
     head,
     body,
@@ -10498,28 +10546,11 @@ function printRiskRegisterPDF() {
       fillColor: accentRgb,
       textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 8,
+      fontSize: headFont,
+      cellPadding: headPad,
       halign: 'center'
     },
-    columnStyles: {
-      0:  { cellWidth: 18 },           // Designer
-      1:  { cellWidth: 13 },           // Risk Ref
-      2:  { cellWidth: 26 },           // Element/Activity
-      3:  { cellWidth: 20 },           // Stage
-      4:  { cellWidth: 46 },           // Hazard/Associated Risk
-      5:  { cellWidth: 20 },           // Person at Risk
-      6:  { cellWidth: 13, halign: 'center', fontStyle: 'bold' }, // Initial Risk
-      7:  { cellWidth: 46 },           // Designers Comments
-      8:  { cellWidth: 16, halign: 'center' }, // Eliminated
-      9:  { cellWidth: 13, halign: 'center', fontStyle: 'bold' }, // Residual Risk
-      10: { cellWidth: 22 },           // Owner
-      11: { cellWidth: 20 },           // Design Validation
-      12: { cellWidth: 46 },           // Further action required?
-      13: { cellWidth: 16 },           // Status
-      14: { cellWidth: 16 },           // Date Registered
-      15: { cellWidth: 16 },           // Date Resolved
-      16: { cellWidth: 20 }            // H&S File information required
-    },
+    columnStyles,
     didParseCell: (data) => {
       if (data.section !== 'body') return;
       const col = data.column.index;
