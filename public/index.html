@@ -911,6 +911,21 @@ body {
   white-space: normal;
 }
 
+/* Stage legend: the four standard stages, colours + definitions. */
+.stage-legend {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 6px 12px;
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  background: #fbfbfd;
+}
+.stage-legend-item { display: flex; align-items: baseline; gap: 8px; font-size: 11px; line-height: 1.4; color: #444; }
+.stage-legend-item .stage-chip { flex: 0 0 auto; margin: 0; }
+.stage-legend-note { color: #6e6e73; }
+
 .snippet-item-btn.active {
   border-color: #0078d4;
   background: #eef6ff;
@@ -2230,6 +2245,10 @@ body {
           the Editing Panel above, adjust or lock any fields, then "Apply to selected row".
         </div>
 
+        <!-- Stage legend: the four standard lifecycle stages, their colours and meaning.
+             Populated from STAGE_DEFS so it always matches the colour map. -->
+        <div id="stage-legend" class="stage-legend" aria-label="Stage key"></div>
+
         <div class="snippets-layout">
           <div class="snippet-list" id="snippet-list">
             <input type="search" class="snippet-search" id="snippet-search" placeholder="Search element, hazard, name…" autocomplete="off">
@@ -2545,7 +2564,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Site investigation report (SI) provided by Client at PCI stage; geotechnical engineer to confirm safe excavation profile, battering / benching angles or specify shoring system. Designer to mark assumed ground conditions and any high-risk strata on the foundation drawings.",
         riskEliminated: "Partially",
-        stageRequired: "Pre-construction / Construction",
+        stageRequired: "Construction",
         owner: "Designer / Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to provide a temporary works design covering shoring or battering. Daily inspection and recording of trench condition. Stop works after heavy rain until reassessed.",
@@ -2607,7 +2626,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Specify cold-applied or self-adhesive systems wherever possible to design out hot works. Permanent edge protection installed early in the sequence. Roof anchors / mansafe specified for future maintenance.",
         riskEliminated: "Partially",
-        stageRequired: "Design / Construction",
+        stageRequired: "Construction",
         owner: "Designer / Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to operate hot-works permits per the FPA Joint Code of Practice; fire watch for one hour after completion; daily inspection of roof edge protection.",
@@ -2638,7 +2657,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "BIM coordination of mechanical, electrical and plumbing routes against the structural model before site issue. Clash detection report retained with the design pack. Designer to specify pre-formed penetrations rather than site-cut openings.",
         riskEliminated: "Partially",
-        stageRequired: "Design / Construction",
+        stageRequired: "Construction",
         owner: "Designer / MEP Engineer",
         residualRisk: "Low",
         actionRequired: "Principal Contractor to confirm any site-found clashes through the design team before modification. Photographic record of fire-stopping reinstatement at every penetration.",
@@ -2650,23 +2669,48 @@ const snippetLibraries = {
       }
     },
     {
-      id: "mpb1-001-roof-construction-maintenance-and",
+      id: "mpb1-001a-roof-construction",
       name: "Roof construction, maintenance and future access",
-      summary: "Fall from height at roof edge and through fragile surfaces during construction and later maintenance",
+      summary: "Fall from height at the roof edge and through fragile surfaces during roof construction and installation",
       designPrompts: [],
       fields: {
         designer: "",
         ref: "",
         element: "Roof construction, maintenance and future access",
-        hazard: "Fall from height at roof edge and through fragile surfaces during construction and later maintenance",
-        personAtRisk: "Roofers, maintenance operatives, window cleaners",
+        hazard: "Fall from height at the roof edge and through fragile surfaces during roof construction and installation.",
+        personAtRisk: "Roofers, followers-on",
         initialRisk: "High",
-        designerComments: "Falls from height remain the largest single cause of construction fatalities. Fix the permanent access and edge protection strategy early rather than leaving it to the contractor. Cannot fully eliminate. Reduce by designing in permanent edge protection, non-fragile roof assemblies and anchor points",
+        designerComments: "Falls from height remain the largest single cause of construction fatalities. Fix the edge protection and safe access strategy at design rather than leaving it to the contractor. Reduce by designing in permanent edge protection and non-fragile roof assemblies.",
         riskEliminated: "Partially",
         stageRequired: "Construction",
         owner: "",
         residualRisk: "Medium",
-        actionRequired: "Specify permanent edge protection and access provisions and record in the H&S File",
+        actionRequired: "Specify edge protection and safe access provisions for the construction phase and record the assumptions in the pre-construction information.",
+        finalStatus: "Open",
+        dateRegistered: "",
+        dateResolved: "",
+        clientPCI: "",
+        hsFile: "Yes, roof build-up and any fragile or non-fragile areas"
+      }
+    },
+    {
+      id: "mpb1-001b-roof-maintenance-access",
+      name: "Roof construction, maintenance and future access",
+      summary: "Fall from height during future roof maintenance, cleaning and inspection access",
+      designPrompts: [],
+      fields: {
+        designer: "",
+        ref: "",
+        element: "Roof construction, maintenance and future access",
+        hazard: "Fall from height at the roof edge and through fragile surfaces during future maintenance, cleaning and inspection access.",
+        personAtRisk: "Maintenance operatives, window cleaners",
+        initialRisk: "High",
+        designerComments: "Design in a safe permanent access strategy for future maintenance rather than relying on ad-hoc access. Reduce by designing in permanent edge protection, anchor points and non-fragile roof assemblies.",
+        riskEliminated: "Partially",
+        stageRequired: "Operation & Maintenance",
+        owner: "",
+        residualRisk: "Medium",
+        actionRequired: "Specify permanent maintenance access and fall protection provisions and record the roof access strategy in the H&S File.",
         finalStatus: "Open",
         dateRegistered: "",
         dateResolved: "",
@@ -2738,7 +2782,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Asbestos is the largest cause of occupational cancer in construction. Commission a refurbishment and demolition survey before any work is designed or priced. Cannot eliminate presence. Reduce by pre-demolition survey, licensed removal and structural appraisal",
         riskEliminated: "Partially",
-        stageRequired: "Deconstruction",
+        stageRequired: "Demolition",
         owner: "",
         residualRisk: "Medium",
         actionRequired: "Commission asbestos survey and structural appraisal and provide to the team",
@@ -2863,7 +2907,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Provide adequate headroom, access routes and removal routes for heavy components early, not as an afterthought. Reduce by designing adequate access, lifting beams and removal routes early",
         riskEliminated: "Partially",
-        stageRequired: "Maintenance and Repairs",
+        stageRequired: "Operation & Maintenance",
         owner: "",
         residualRisk: "Low",
         actionRequired: "Confirm plant replacement strategy and lifting provisions",
@@ -2913,7 +2957,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Avoid creating confined spaces where possible. Where unavoidable, design in access, ventilation and rescue provision. Reduce by designing out confined spaces, or by providing access, ventilation and safe egress",
         riskEliminated: "Partially",
-        stageRequired: "Maintenance and Repairs",
+        stageRequired: "Construction",
         owner: "",
         residualRisk: "Medium",
         actionRequired: "Identify residual confined spaces and record in the H&S File",
@@ -2938,7 +2982,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Design pipework to avoid dead legs, maintain temperatures and allow flushing and sampling access. Reduce by design to minimise stagnation, control temperatures and provide sampling and maintenance access",
         riskEliminated: "Partially",
-        stageRequired: "Maintenance and Repairs",
+        stageRequired: "Construction",
         owner: "",
         residualRisk: "Low",
         actionRequired: "Provide water system operating and maintenance regime for the H&S File",
@@ -2963,7 +3007,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Coordinate cause-and-effect, compartmentation penetrations and access for testing across the design team. Reduce by a coordinated fire strategy, tested cause-and-effect and maintainable systems",
         riskEliminated: "Partially",
-        stageRequired: "Maintenance and Repairs",
+        stageRequired: "Operation & Maintenance",
         owner: "",
         residualRisk: "Medium",
         actionRequired: "Provide fire strategy and cause-and-effect for the H&S File and building information",
@@ -3063,7 +3107,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Design windows to be cleaned from inside and locate boilers and services for safe access. Reduce by inward-cleanable windows, accessible service locations and low-maintenance details",
         riskEliminated: "Partially",
-        stageRequired: "Maintenance and Repairs",
+        stageRequired: "Operation & Maintenance",
         owner: "",
         residualRisk: "Low",
         actionRequired: "Confirm maintenance access approach",
@@ -3121,7 +3165,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Refurbishment & Demolition (R&D) asbestos survey by a UKAS-accredited surveyor before any works. Designer to review the survey and identify ACMs requiring removal. HSE-licensed contractor for licensable ACMs.",
         riskEliminated: "Partially",
-        stageRequired: "Pre-construction / Construction",
+        stageRequired: "Demolition",
         owner: "Client / Principal Designer / Principal Contractor",
         residualRisk: "Low",
         actionRequired: "Client to commission the R&D survey as part of the PCI. Principal Contractor to include the asbestos register in the Construction Phase Plan and update the H&S File post-removal.",
@@ -3152,7 +3196,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Lead paint survey of all painted surfaces before strip-out. Designer to specify wet methods of removal and HEPA-filtered extraction. Operative PPE specified per CLAW Regulations 2002.",
         riskEliminated: "Partially",
-        stageRequired: "Pre-construction / Construction",
+        stageRequired: "Demolition",
         owner: "Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to provide blood-lead monitoring for operatives, hand-washing facilities, and dispose of waste as hazardous. Stop works if children or vulnerable occupants are within the building envelope.",
@@ -3183,7 +3227,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Designer to define the works boundary and segregation strategy. Provide hoardings / dust screens to separate occupied areas. Specify out-of-hours working windows for high-noise tasks.",
         riskEliminated: "No",
-        stageRequired: "Pre-construction / Construction",
+        stageRequired: "Construction",
         owner: "Client / Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to maintain dust monitoring, agree and publish hoarding lines and access routes with occupants, and enforce no-go zones.",
@@ -3214,7 +3258,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Specify cold-process alternatives (e.g. crimped pipe joints, mechanical fixings) wherever feasible to design out hot works. Where unavoidable, mark hot-works zones on the construction-phase drawings.",
         riskEliminated: "Partially",
-        stageRequired: "Design / Construction",
+        stageRequired: "Construction",
         owner: "Designer / Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to operate a hot-works permit-to-work per the FPA Joint Code of Practice including a one-hour fire watch after each task. Local extinguishers and clear voids before any spark-producing operation.",
@@ -3562,7 +3606,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Unable to design out due to materials being used, full information to be provided to the client and included into the H&S file for future contractors to be able to plan the safe and correct disposal of the hazardous waste in the panels.",
       riskEliminated: "Partially",
-      stageRequired: "Operation & Maintenance",
+      stageRequired: "Demolition",
       owner: "Operational Owner",
       residualRisk: "Low",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -3636,7 +3680,7 @@ const snippetLibraries = {
     }
   },
   {
-    id: "industry-pv-dc-isolation",
+    id: "industry-pv-dc-isolation-construction",
     name: "Photovoltaic Panels – DC isolation hazard",
     summary: "PV cells produce DC voltage when illuminated and cannot be switched off from the panel side.",
     designPrompts: [
@@ -3650,12 +3694,12 @@ const snippetLibraries = {
       designer: "",
       ref: "",
       element: "Photovoltaic Panels",
-      hazard: "DC isolation hazard. PV cells generate DC voltage whenever they are illuminated and cannot be switched off from the panel side; only sundown or fully covering the array prevents shock during installation or maintenance.",
-      personAtRisk: "Maintenance operatives",
+      hazard: "DC isolation hazard during installation. PV cells generate DC voltage whenever they are illuminated and cannot be switched off from the panel side; only sundown or fully covering the array prevents shock while operatives install the array.",
+      personAtRisk: "Construction operatives, electricians",
       initialRisk: "High",
       designerComments: "Specify lockable DC isolators near the string inverter. Provide labelled, polarity-marked DC cabling. Include the isolation procedure in the O&M manual and Pre-Construction Information. Designer to confirm isolation arrangement at the DTM before procurement.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction / Operation & Maintenance",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to develop a safe system of work covering string isolation sequence, Class 0 insulating gloves, and confirmation of zero volts at connector before disconnection.",
@@ -3667,7 +3711,38 @@ const snippetLibraries = {
     }
   },
   {
-    id: "industry-pv-arc-flash",
+    id: "industry-pv-dc-isolation-maintenance",
+    name: "Photovoltaic Panels – DC isolation hazard",
+    summary: "PV cells produce DC voltage when illuminated and cannot be switched off from the panel side.",
+    designPrompts: [
+      "Can DC be ELIMINATED indoors entirely by using microinverters or DC optimisers at each panel, so only AC enters the building?",
+      "Has a lockable DC isolator been specified at the inverter, accessible to maintenance without entering an occupied space?",
+      "Is the isolation sequence (string isolator FIRST, connectors second) documented in the O&M and on a posted procedure?",
+      "Have operatives been required to hold appropriate competency (e.g. NICEIC PV pathway) for DC works?",
+      "Has the operational owner been given a written briefing that PV DC remains live whenever the panels see daylight, even with the AC supply isolated?"
+    ],
+    fields: {
+      designer: "",
+      ref: "",
+      element: "Photovoltaic Panels",
+      hazard: "DC isolation hazard during maintenance. PV cells generate DC voltage whenever they are illuminated and cannot be switched off from the panel side; only sundown or fully covering the array prevents shock during maintenance and repair.",
+      personAtRisk: "Maintenance operatives",
+      initialRisk: "High",
+      designerComments: "Specify lockable DC isolators near the string inverter. Provide labelled, polarity-marked DC cabling. Include the isolation procedure in the O&M manual and Pre-Construction Information. Designer to confirm isolation arrangement at the DTM before procurement.",
+      riskEliminated: "Partially",
+      stageRequired: "Operation & Maintenance",
+      owner: "Designer / Principal Contractor",
+      residualRisk: "Medium",
+      actionRequired: "Principal Contractor to develop a safe system of work covering string isolation sequence, Class 0 insulating gloves, and confirmation of zero volts at connector before disconnection.",
+      finalStatus: "Active",
+      dateRegistered: "",
+      dateResolved: "",
+      clientPCI: "",
+      hsFile: "Record the relevant design assumptions and as-built information for this item in the H&S File."
+    }
+  },
+  {
+    id: "industry-pv-arc-flash-construction",
     name: "Photovoltaic Panels – DC arc flash",
     summary: "DC arcs sustain longer than AC and can cause severe burns or roof fires when MC4 connectors are pulled under load.",
     designPrompts: [
@@ -3681,12 +3756,43 @@ const snippetLibraries = {
       designer: "",
       ref: "",
       element: "Photovoltaic Panels",
-      hazard: "DC arc flash. Disconnecting MC4-style DC connectors under load creates a sustained arc; risk of operative burns and ignition of roof covering.",
+      hazard: "DC arc flash during installation. Disconnecting MC4-style DC connectors under load during installation creates a sustained arc; risk of operative burns and ignition of the roof covering.",
+      personAtRisk: "Construction operatives, electricians",
+      initialRisk: "High",
+      designerComments: "Specify Arc-Fault Circuit Interrupter (AFCI) inverters per IEC 63027 where available. Detail the safe disconnection sequence (string isolator first, then connectors) on the design drawings. PCI to require operative training records.",
+      riskEliminated: "Partially",
+      stageRequired: "Construction",
+      owner: "Designer / Principal Contractor",
+      residualRisk: "Medium",
+      actionRequired: "Principal Contractor to provide a written method statement and ensure operatives hold appropriate competency (e.g. NICEIC PV pathway). Include arc-fault response in the O&M manual.",
+      finalStatus: "Active",
+      dateRegistered: "",
+      dateResolved: "",
+      clientPCI: "",
+      hsFile: "Record the relevant design assumptions and as-built information for this item in the H&S File."
+    }
+  },
+  {
+    id: "industry-pv-arc-flash-maintenance",
+    name: "Photovoltaic Panels – DC arc flash",
+    summary: "DC arcs sustain longer than AC and can cause severe burns or roof fires when MC4 connectors are pulled under load.",
+    designPrompts: [
+      "Can DC be ELIMINATED indoors via microinverters / DC optimisers at panel level?",
+      "Has the inverter been specified to include AFCI per IEC 63027 (or equivalent)?",
+      "Is the safe disconnection sequence (string isolator → connectors) documented on the design drawings AND on a posted notice at the inverter?",
+      "Have operatives been required to demonstrate competency for live DC works (NICEIC PV pathway or equivalent)?",
+      "Is the arc-fault response procedure included in the O&M manual (do NOT pull connectors under load; isolate first)?"
+    ],
+    fields: {
+      designer: "",
+      ref: "",
+      element: "Photovoltaic Panels",
+      hazard: "DC arc flash during maintenance. Disconnecting MC4-style DC connectors under load during maintenance or repair creates a sustained arc; risk of operative burns and ignition of the roof covering.",
       personAtRisk: "Maintenance operatives",
       initialRisk: "High",
       designerComments: "Specify Arc-Fault Circuit Interrupter (AFCI) inverters per IEC 63027 where available. Detail the safe disconnection sequence (string isolator first, then connectors) on the design drawings. PCI to require operative training records.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction / Operation & Maintenance",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to provide a written method statement and ensure operatives hold appropriate competency (e.g. NICEIC PV pathway). Include arc-fault response in the O&M manual.",
@@ -3717,7 +3823,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Risk assessment per BS EN 62305 to determine if a Lightning Protection System (LPS) is required. If required, specify LPS bonding to array frames, surge protection devices on inverter DC and AC sides, and equipotential bonding to the building earth.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Electrical Contractor",
       residualRisk: "Low",
       actionRequired: "Electrical contractor to provide test certificate for earthing and bonding. Include LPS inspection schedule (annually) in the H&S file.",
@@ -3748,7 +3854,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Specify roof-hook flashings appropriate to the covering type (slate, tile, profiled metal). Pre-formed lead or EPDM upstands at penetrations. Fixing schedule certified by the bracket manufacturer for the specific covering. Detail at ridge and verge.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to commission a 5-year leak warranty and include an inspection regime in the H&S file. Specify flashing repair procedure at end-of-life array removal.",
@@ -3810,7 +3916,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Structural calculation per BS EN 1991-1-3 covering snow loads for the site location and BS EN 1991-1-4 for wind. Include the array dead load in the calculation. Designer assumption note on minimum roof pitch and rafter span to be included in the O&M manual.",
       riskEliminated: "Partially",
-      stageRequired: "Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Structural Engineer",
       residualRisk: "Medium",
       actionRequired: "Structural engineer to confirm capacity in writing prior to procurement. Where existing structure is inadequate, specify reinforcement; otherwise reduce array footprint or relocate.",
@@ -3844,7 +3950,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "All sheet material to be ordered in small manageable sizes to avoid manual handling risks. To be specified by designers",
       riskEliminated: "Partially",
-      stageRequired: "Design",
+      stageRequired: "Construction",
       owner: "Designer",
       residualRisk: "Low",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -3999,7 +4105,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Refurbishment and Demolition (R&D) asbestos survey by a UKAS-accredited surveyor before any works. Designer to review the survey and identify ACMs requiring removal. Specify HSE-licensed contractor for licensable ACMs.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Client / Principal Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Client to commission the R&D survey as Pre-Construction Information. Principal Contractor to include asbestos register in the Construction Phase Plan. Update the H&S file with as-built ACM register.",
@@ -4030,7 +4136,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Programme works for cooler months where possible. Specify eaves access provision (loft hatches, removable boards) in design to reduce time in restricted areas. PCI to require provision of forced ventilation and rest breaks.",
       riskEliminated: "No",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to provide forced ventilation, work-rest cycles per HSE heat stress guidance, drinking water, and limit shift duration in the eaves. Daily welfare check.",
@@ -4061,7 +4167,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Pre-installation electrical inspection (EICR) to identify cable routes. Designer to specify either de-rating calculations per BS 7671 Appendix 4 for cables in insulation, or relocation of cables to clear of insulation, or replacement.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Electrical Contractor",
       residualRisk: "Low",
       actionRequired: "Electrical contractor to issue updated EICR after works. Note de-rated circuits in the H&S file and consumer-unit labelling.",
@@ -4092,7 +4198,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Fire strategy review by competent fire engineer. Specify fire-rated ceiling between RIR space and the dwelling below per Approved Document B. Detail cavity barriers at party walls. Confirm escape arrangements (stair, window, smoke alarms) meet ADB Volume 1.",
       riskEliminated: "Partially",
-      stageRequired: "Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Fire Engineer",
       residualRisk: "Medium",
       actionRequired: "Building Control sign-off on fire strategy. Update the H&S file with the as-built fire strategy and compartment line drawings.",
@@ -4123,7 +4229,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Detail thermal continuity per PAS 2035 with continuous insulation around junctions. Specify vapour control layer on the warm side. Maintain ventilated airspace at eaves per BR 262. Confirm psi-values in the SAP / RdSAP calculation.",
       riskEliminated: "Partially",
-      stageRequired: "Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to install per the agreed details and provide a sign-off photograph at each junction. Include the as-built detail in the H&S file.",
@@ -4154,7 +4260,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Structural appraisal of existing rafters at design stage. Specify reinforcement plates, sister rafters or new purlins where capacity is inadequate. Designer to record assumptions and limits in the structural calculation pack.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Structural Engineer",
       residualRisk: "Low",
       actionRequired: "Structural engineer to inspect and sign off opening-up findings before plasterboard is fixed. Update the H&S file with the as-built structural arrangement.",
@@ -4281,7 +4387,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Full survey of services routing prior to access. CAT scan before any drilling or fixing. Isolation/shut-off procedure agreed with utilities. Designer to mark known runs on the works drawings.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to operate a permit-to-dig system and re-survey when new runs are exposed. Include as-built service routes in the H&S file.",
@@ -4343,7 +4449,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Pre-clean by a specialist pest control / cleaning contractor before insulation works. Designer to highlight in PCI. Specify operative PPE: RPE (FFP3 minimum), disposable coveralls, gloves. Dispose of contaminated waste as biological.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to provide health surveillance for operatives and toolbox talk on zoonotic disease. Record cleaning certification in the H&S file.",
@@ -4374,7 +4480,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Damp survey before insulation works. Designer to verify damp source is addressed first (DPC repair, ventilation, drainage). Specify breathable insulation systems (e.g. sheep's wool, wood fibre) where appropriate to allow moisture migration.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer",
       residualRisk: "Low",
       actionRequired: "Designer to record damp survey findings in the design risk register and require sub-floor moisture readings on completion. Include in the H&S file.",
@@ -4405,7 +4511,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Pre-installation condition survey of joists by structural engineer. Specify spreader boards and crawler boards for access. Designer to specify replacement or sister joists where defects identified before insulation works begin.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to confirm joist capacity at point of access and stop works if defects identified. Update H&S file with as-found condition photos.",
@@ -4594,7 +4700,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "It is unlikely that fire will occur due the specification of the insulation being fire resistant to 200 degrees C. All electrical installations must therefore comply with current legislation and a consideration of cyclical testing by the client should be considered.",
       riskEliminated: "Partially",
-      stageRequired: "Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -4687,7 +4793,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "R&D asbestos survey before works. Designer to identify ACMs and instruct removal where required. HSE-licensed contractor for licensable ACMs. Designer to record findings in PCI.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction",
+      stageRequired: "Construction",
       owner: "Client / Principal Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Client to fund and obtain the survey. Update the asbestos register and the H&S file post-works.",
@@ -4718,7 +4824,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Tank condition survey before works. Specify a tank insulation jacket and pipework lagging. Designer to recommend tank replacement where existing tank exceeds expected service life or is in poor condition. Maintain warm space below tank where feasible.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Plumber",
       residualRisk: "Low",
       actionRequired: "Plumber to certify pipework lagging on completion. Include tank inspection/replacement schedule in the H&S file.",
@@ -4749,7 +4855,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Specify cross-flow eaves vents (10mm minimum continuous gap or equivalent) per BR 262. Install rafter ventilation chutes/baffles to maintain a 50mm air gap above the insulation. Designer to detail at typical eaves on the drawings.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to photograph the eaves condition before and after install and lodge with the H&S file.",
@@ -4780,7 +4886,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Pre-works wildlife survey by a licensed ecologist where the dwelling is in a known bat area or shows signs of roosting. Designer to incorporate any mitigation (timing of works, alternative roost provision) into the design.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction",
+      stageRequired: "Design",
       owner: "Client / Designer / Ecologist",
       residualRisk: "Low",
       actionRequired: "Halt works immediately if bats or other protected species discovered. Engage ecologist for mitigation licence (Natural England). Record outcome in the H&S file.",
@@ -4811,7 +4917,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Identify the party wall line on the design drawings. Specify cavity barriers / fire stopping at the party wall to maintain compartmentation per Approved Document B. Insulation to be cut clear of the wall.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to photograph the as-built fire stopping at every party wall and lodge with the H&S file. Building Control sign-off where applicable.",
@@ -4873,7 +4979,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to set the hatch position to fall between ceiling joists wherever possible to avoid structural trimming, and to specify a proprietary insulated, fire-rated loft hatch so insulation continuity and ceiling compartmentation are maintained. Mark assumed joist positions and any known services on the drawing.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Asbestos survey reviewed before cutting any pre-2000 ceiling. Cable and pipe detector used before cutting. Opening formed from a tower or platform, not a stepladder. Any joist cut to be supported with a trimmer to the structural engineer's detail.",
@@ -4907,7 +5013,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Design measure taken to reduce risk of working at height. On replacement of the existing windows it has been assumed that the windows will be broken down into smaller parts and the glazing removed without breaking. It was also assumed that all panes except smaller single panes will be lifted by two or more persons.",
       riskEliminated: "Partially",
-      stageRequired: "Operation & Maintenance",
+      stageRequired: "Construction",
       owner: "Operational Owner",
       residualRisk: "Low",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -5000,7 +5106,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Unable to design out due the PAS 2035 specified thickness of insulation. Information on the thickness of the insultation will be passed to the client in the health and safety file this information may result in the client restricting the customers ability to fix anything to the external of the property this approach will ensure the warranty and efficiency of the product is maintained.",
       riskEliminated: "Partially",
-      stageRequired: "Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Principal Contractor",
       residualRisk: "Low",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -5062,7 +5168,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Unable to design out risk, Information about the new location of the service routes is to be supplied in the health and safety file. The client MUST then produce this as part of any pre construction information for future projects and ensure the occupational customers are aware of new locations of shut off valves & stop taps and any other associated emergency arrangements.",
       riskEliminated: "Partially",
-      stageRequired: "Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Principal Contractor",
       residualRisk: "Low",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -5124,7 +5230,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Design per Building Regulations Approved Document B and the Building Safety Act 2022. Specify Class A2-s1,d0 or better insulation on relevant buildings. Cavity barriers at compartment lines. Competent fire engineer sign-off and Building Control consultation.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Pre-construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Fire Engineer",
       residualRisk: "Medium",
       actionRequired: "Designer to confirm the system tested per BS 8414 / BR 135 where applicable. Update H&S file with as-built system specification, certificates and cavity barrier locations.",
@@ -5155,7 +5261,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Damp survey before works. Address damp source first (DPC, drainage, faulty rainwater goods). Designer to specify breathable system (e.g. mineral wool with breathable render) on solid masonry. WUFI / hygrothermal analysis where in doubt.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to record substrate moisture readings before application. Lodge with H&S file. Designer to confirm in writing that the system is suitable for the substrate.",
@@ -5249,7 +5355,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Lead survey of substrate before strip-out. Designer to specify wet methods of removal and HEPA-filtered extraction. Operative PPE per CLAW Regulations 2002 (RPE FFP3, coveralls, hand washing facilities).",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Demolition",
       owner: "Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to provide blood lead monitoring for operatives and dispose of waste as hazardous. Record in H&S file.",
@@ -5280,7 +5386,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Pre-works ecology survey. Mitigation measures (artificial roost boxes, exclusion timing) where required. Designer to programme the works outside the breeding season where feasible.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction",
+      stageRequired: "Design",
       owner: "Client / Designer / Ecologist",
       residualRisk: "Low",
       actionRequired: "Halt works if active nest or bat roost found. Engage ecologist for licence (Natural England) where required. Update H&S file.",
@@ -5438,7 +5544,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Specify cold-applied or self-adhesive systems where possible to design out hot works. Where torch-on is required, mandate hot works permit, fire watch (1 hour after extinguishing per FPA Joint Code of Practice), and on-point extinguishers.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to issue daily hot works permits and lodge with the H&S file. Toolbox talks on fire response.",
@@ -5469,7 +5575,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Structural calculation for stockpile loads at design stage. Restrict to loaded areas with structural support beneath. Designer to mark permitted storage zones on the drawings.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to enforce daily clearance of waste and limit overnight storage. Record on Construction Phase Plan.",
@@ -5562,7 +5668,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Lightning protection design per BS EN 62305. Designer to schedule all roof-mounted metalwork for equipotential bonding. Specify certified electrical sign-off and test results.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Electrical Contractor",
       residualRisk: "Low",
       actionRequired: "Electrical contractor to provide test certificate. Annual LPS inspection schedule lodged in the H&S file.",
@@ -5593,7 +5699,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Specify a permanent roof ladder or stair, walkway pavers, certified anchor points (e.g. mansafe rail), and load-rated guardrails at access hatches. Designer to follow ACR(M)001 and BS 8454.",
       riskEliminated: "Partially",
-      stageRequired: "Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer",
       residualRisk: "Low",
       actionRequired: "Designer to record assumed maintenance arrangements in the design risk register and the H&S file. User information sheet for the operational owner.",
@@ -5751,7 +5857,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Local authority building control issue conditions from Eurocodes based on the span depth and size of notch or hole. These MUST be adhered to. Unable to ascertain exact information at this point.",
       riskEliminated: "Partially",
-      stageRequired: "Operation & Maintenance",
+      stageRequired: "Construction",
       owner: "Operational Owner",
       residualRisk: "Low",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -5969,7 +6075,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Unable to design out, All temporary state excavation to be correctly restricted by contractor as per their safe system of works. Coordinators and designer must be appointed should the risk assessment deem as per controls identified.",
       riskEliminated: "Partially",
-      stageRequired: "Operation & Maintenance",
+      stageRequired: "Construction",
       owner: "Operational Owner",
       residualRisk: "Low",
       actionRequired: "To be developed by the Principal Contractor in the Construction Phase Plan and confirmed at the design team meeting.",
@@ -6043,7 +6149,7 @@ const snippetLibraries = {
     }
   },
   {
-    id: "industry-ashp-fgas",
+    id: "industry-ashp-fgas-construction",
     name: "Air Source Heat Pump – F-Gas regulation compliance",
     summary: "Refrigerant handling requires F-Gas certified engineer; mishandling leads to gas leaks and prosecution.",
     designPrompts: [
@@ -6057,12 +6163,43 @@ const snippetLibraries = {
       designer: "",
       ref: "",
       element: "Air Source Heat Pump",
-      hazard: "F-Gas regulation compliance. Refrigerant handling and installation require F-Gas certification under the F-Gas Regulation; non-compliance leads to refrigerant leaks (acute health, environmental) and HSE prosecution.",
-      personAtRisk: "Maintenance operatives",
+      hazard: "F-Gas compliance at installation. Refrigerant handling and charging at installation require F-Gas certification under the F-Gas Regulation; non-compliance leads to refrigerant leaks (acute health, environmental) and HSE prosecution.",
+      personAtRisk: "Construction operatives, F-Gas engineers",
       initialRisk: "High",
       designerComments: "Specify F-Gas certified contractor (Company Certificate plus operative certificate). Record refrigerant type and charge on commissioning. Annual leak check schedule for installations >5 tCO2e per the Regulation.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction / Operation & Maintenance",
+      stageRequired: "Construction",
+      owner: "Principal Contractor / Operational Owner",
+      residualRisk: "Low",
+      actionRequired: "Principal Contractor to lodge F-Gas certificates and commissioning logbook in the H&S file. Operational owner to maintain leak-check schedule.",
+      finalStatus: "Active",
+      dateRegistered: "",
+      dateResolved: "",
+      clientPCI: "",
+      hsFile: "Record the relevant design assumptions and as-built information for this item in the H&S File."
+    }
+  },
+  {
+    id: "industry-ashp-fgas-maintenance",
+    name: "Air Source Heat Pump – F-Gas regulation compliance",
+    summary: "Refrigerant handling requires F-Gas certified engineer; mishandling leads to gas leaks and prosecution.",
+    designPrompts: [
+      "Has F-Gas certification been specified for the install contractor (company AND operative certificates)?",
+      "Can the system be specified with a refrigerant charge BELOW the 5 tCO2e threshold to remove the annual leak-check obligation?",
+      "Is the commissioning logbook (refrigerant type, charge, system pressure) included in handover?",
+      "Has the operational owner been told that future top-ups / repairs MUST be by F-Gas certified engineers?",
+      "Is the F-Gas paperwork lodged in the H&S File and the annual leak check assigned to a named party?"
+    ],
+    fields: {
+      designer: "",
+      ref: "",
+      element: "Air Source Heat Pump",
+      hazard: "F-Gas compliance in service. Refrigerant top-ups, repairs and annual leak checks in service require F-Gas certification under the F-Gas Regulation; non-compliance leads to refrigerant leaks (acute health, environmental) and HSE prosecution.",
+      personAtRisk: "Maintenance operatives, F-Gas engineers",
+      initialRisk: "High",
+      designerComments: "Specify F-Gas certified contractor (Company Certificate plus operative certificate). Record refrigerant type and charge on commissioning. Annual leak check schedule for installations >5 tCO2e per the Regulation.",
+      riskEliminated: "Partially",
+      stageRequired: "Operation & Maintenance",
       owner: "Principal Contractor / Operational Owner",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to lodge F-Gas certificates and commissioning logbook in the H&S file. Operational owner to maintain leak-check schedule.",
@@ -6105,7 +6242,7 @@ const snippetLibraries = {
     }
   },
   {
-    id: "industry-ashp-working-at-height",
+    id: "industry-ashp-working-at-height-construction",
     name: "Air Source Heat Pump – outdoor unit fixing at height",
     summary: "Wall-mounted or first-floor outdoor units require working at height for install and future service.",
     designPrompts: [
@@ -6119,12 +6256,43 @@ const snippetLibraries = {
       designer: "",
       ref: "",
       element: "Air Source Heat Pump",
-      hazard: "Outdoor unit fixing at height. Wall-mounted outdoor units, or units sited at first-floor level or above, require working at height for install and every future service visit; falls from height risk.",
+      hazard: "Outdoor unit fixing at height during installation. Wall-mounted units, or units sited at first-floor level or above, require working at height to install; falls from height risk.",
+      personAtRisk: "Construction operatives",
+      initialRisk: "High",
+      designerComments: "Designer to specify ground-level location wherever feasible. Where elevated mount is unavoidable, specify scaffold or MEWP for install and detail permanent service access (anchor points, removable handrail).",
+      riskEliminated: "Partially",
+      stageRequired: "Construction",
+      owner: "Designer / Principal Contractor",
+      residualRisk: "Medium",
+      actionRequired: "Principal Contractor to plan access for install per Work at Height Regulations. Operational owner to retain service access provision in the H&S file.",
+      finalStatus: "Active",
+      dateRegistered: "",
+      dateResolved: "",
+      clientPCI: "",
+      hsFile: "Record the relevant design assumptions and as-built information for this item in the H&S File."
+    }
+  },
+  {
+    id: "industry-ashp-working-at-height-maintenance",
+    name: "Air Source Heat Pump – outdoor unit fixing at height",
+    summary: "Wall-mounted or first-floor outdoor units require working at height for install and future service.",
+    designPrompts: [
+      "Can the outdoor unit be LOCATED at ground level to eliminate working at height entirely?",
+      "If elevated mount is unavoidable for noise / planning / theft reasons, is permanent service access (anchor points, MEWP-friendly kerb space) designed in?",
+      "Is install method (MEWP vs scaffold) specified by design rather than left to PC?",
+      "Has the future service access provision been costed into the lifecycle (so the operational owner doesn't have to scaffold every visit)?",
+      "Is the access method documented in the H&S File for the operational owner's reference?"
+    ],
+    fields: {
+      designer: "",
+      ref: "",
+      element: "Air Source Heat Pump",
+      hazard: "Outdoor unit access at height for servicing. Wall-mounted units, or units sited at first-floor level or above, require working at height for every future service visit; falls from height risk.",
       personAtRisk: "Maintenance operatives",
       initialRisk: "High",
       designerComments: "Designer to specify ground-level location wherever feasible. Where elevated mount is unavoidable, specify scaffold or MEWP for install and detail permanent service access (anchor points, removable handrail).",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction / Operation & Maintenance",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to plan access for install per Work at Height Regulations. Operational owner to retain service access provision in the H&S file.",
@@ -6186,7 +6354,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "R&D asbestos survey before strip-out. Designer to confirm any ACMs identified. Licensed contractor for licensable ACMs. Record findings in PCI.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Demolition",
       owner: "Client / Principal Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Update asbestos register and H&S file with as-found findings post strip-out.",
@@ -6198,7 +6366,7 @@ const snippetLibraries = {
     }
   },
   {
-    id: "industry-ashp-scalding-commissioning",
+    id: "industry-ashp-scalding-commissioning-construction",
     name: "Air Source Heat Pump – hot water scalding during commissioning",
     summary: "Commissioning includes a high-temperature thermal disinfection cycle; scalding risk to occupiers.",
     designPrompts: [
@@ -6212,12 +6380,43 @@ const snippetLibraries = {
       designer: "",
       ref: "",
       element: "Air Source Heat Pump",
-      hazard: "Hot water scalding during commissioning. Commissioning a new hot water cylinder includes a thermal disinfection cycle (>60°C); risk of scalding for the occupier or operatives at the outlet.",
-      personAtRisk: "Maintenance operatives",
+      hazard: "Hot water scalding during commissioning. Commissioning a new hot water cylinder includes a thermal disinfection cycle (>60°C); risk of scalding for operatives at the outlet.",
+      personAtRisk: "Construction operatives, commissioning engineers",
       initialRisk: "Medium",
       designerComments: "Specify thermostatic mixing valves (TMVs) at all hot water outlets in vulnerable settings (care, education) or default to 48°C tap temperature. Commissioning to be at lower temperature first. Warning notice to occupier during commissioning.",
       riskEliminated: "Partially",
-      stageRequired: "Construction / Operation & Maintenance",
+      stageRequired: "Construction",
+      owner: "Designer / Plumber / Operational Owner",
+      residualRisk: "Low",
+      actionRequired: "Plumber to confirm TMV settings on commissioning. Maintain TMV inspection schedule in the H&S file (annual).",
+      finalStatus: "Active",
+      dateRegistered: "",
+      dateResolved: "",
+      clientPCI: "",
+      hsFile: "Record the relevant design assumptions and as-built information for this item in the H&S File."
+    }
+  },
+  {
+    id: "industry-ashp-scalding-commissioning-maintenance",
+    name: "Air Source Heat Pump – hot water scalding during commissioning",
+    summary: "Commissioning includes a high-temperature thermal disinfection cycle; scalding risk to occupiers.",
+    designPrompts: [
+      "Have thermostatic mixing valves (TMVs) been specified at all hot water outlets — or at least all those accessible to vulnerable users?",
+      "Can the commissioning thermal-disinfection cycle be done OUT OF HOURS so occupiers aren't at the tap during the cycle?",
+      "Has a written warning to the occupier been specified for the commissioning period?",
+      "Is the TMV inspection schedule (annual) documented for the operational owner?",
+      "Is the commissioning record + TMV settings + inspection schedule lodged in the H&S File?"
+    ],
+    fields: {
+      designer: "",
+      ref: "",
+      element: "Air Source Heat Pump",
+      hazard: "Hot water scalding in use. Stored hot water and periodic thermal disinfection (>60°C) present a scalding risk to occupiers at the outlet unless thermostatic mixing valves limit tap temperature.",
+      personAtRisk: "Building occupants, maintenance operatives",
+      initialRisk: "Medium",
+      designerComments: "Specify thermostatic mixing valves (TMVs) at all hot water outlets in vulnerable settings (care, education) or default to 48°C tap temperature. Commissioning to be at lower temperature first. Warning notice to occupier during commissioning.",
+      riskEliminated: "Partially",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Plumber / Operational Owner",
       residualRisk: "Low",
       actionRequired: "Plumber to confirm TMV settings on commissioning. Maintain TMV inspection schedule in the H&S file (annual).",
@@ -6375,7 +6574,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Lead survey of window frames before removal. Specify wet methods of paint removal (chemical strippers or wet scraping) and HEPA-filtered extraction. Operative PPE per CLAW Regulations 2002 (RPE FFP3, coveralls, hand washing).",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Demolition",
       owner: "Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to provide blood lead monitoring for operatives and dispose of waste as hazardous. Record in H&S file.",
@@ -6406,7 +6605,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Consult conservation officer at design stage. Specify like-for-like replacement (sash, casement, glazing pattern, profile, material). Document the existing condition and the agreed replacement specification.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Design",
+      stageRequired: "Design",
       owner: "Designer / Client",
       residualRisk: "Low",
       actionRequired: "Client to obtain consent before works start. Lodge consent and approved drawings in the H&S file.",
@@ -6437,7 +6636,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Specify maximum unit size based on safe two-person lift, or split larger openings. Where unavoidable, specify mechanical handling (suction lifters, glass robot) in the Construction Phase Plan.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to provide manual handling training per L23 and ensure mechanical aids are on site for relevant lifts.",
@@ -6468,7 +6667,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Bulk sampling of putty / gaskets pre-removal as part of the R&D asbestos survey. Designer to confirm test results before specifying removal method. Licensed contractor disposal where samples confirm ACM.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Demolition",
       owner: "Client / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Update asbestos register and H&S file post-removal. Retain consignment notes.",
@@ -6561,7 +6760,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to specify units that glaze from inside so operatives work inboard of the opening, to limit unit size and weight or specify mechanical handling for large units, and to specify toughened or laminated glass to critical locations with any required restrictors. Define edge protection to the open reveal during change-out.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Glaze from inside wherever the design allows. Mechanical aids or adequate crew for heavy units. Temporary edge protection or harness to the open reveal while the unit is out. Exclusion zone below; glass offcuts handled and removed safely.",
@@ -6657,7 +6856,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Pre-injection visual and borescope inspection in summer months. Designer to specify halt-and-treat procedure: pause works, professional pest control or bee-keeper relocation, then resume. PCI to require operative training on insect-sting first aid.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to retain access to epi-pens via on-site first aiders and document procedure in the Construction Phase Plan.",
@@ -6688,7 +6887,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Pre-injection inspection includes asbestos sampling where the construction date suggests possible ACMs. Designer to specify alternative wall treatment (EWI, internal wall insulation) where asbestos confirmed.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Update H&S file with the as-found cavity composition. Lodge sample test results.",
@@ -6719,7 +6918,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Borescope inspection of every elevation before injection. Designer to specify cavity clearance procedure where blockages found. Halt and re-inspect before pressing on.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to record borescope photos per elevation and lodge with the H&S file. Report findings to client and update the design risk register.",
@@ -6750,7 +6949,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Tie inspection sample (5% minimum per BRE Digest 401). Specify replacement tie schedule as a separate works package where corrosion identified. Structural engineer sign-off before insulation works proceed.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Structural Engineer",
       residualRisk: "Medium",
       actionRequired: "Structural engineer to record tie inspection findings and replacement schedule in the H&S file.",
@@ -6781,7 +6980,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Pre-injection borescope inspection. Halt and engage pest control / ecologist where active nests found. Designer to record findings and adjust scope (alternative wall treatment if protected species).",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor / Ecologist",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to record outcome in the H&S file. Operative health surveillance for zoonotic disease.",
@@ -6812,7 +7011,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Detailing at all openings agreed before injection. Specify cavity trays at heads and stop ends. Drip details at sills. Designer to confirm the system spec is appropriate for exposure category per BRE 262.",
       riskEliminated: "Partially",
-      stageRequired: "Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to photograph as-built details and lodge with the H&S file. Defect-period inspection for damp manifestation.",
@@ -7032,7 +7231,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Specify wall-fixed units only. Designer to confirm the wall substrate is suitable for the manufacturer's fixing schedule. Annual fixing inspection scheduled in the H&S file.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Operational owner to retain the fixing inspection schedule and check on tenant change-over.",
@@ -7063,7 +7262,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Specify Low-Surface-Temperature (LST) units in care, education and medical settings (HBN 00-10 / HTM 64). Where standard units are used, specify guards or grilles in family homes.",
       riskEliminated: "Partially",
-      stageRequired: "Design",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer",
       residualRisk: "Low",
       actionRequired: "Operational owner to provide warning information to occupiers via the user information sheet. Lodge with the H&S file.",
@@ -7094,7 +7293,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Specify dedicated RCD-protected circuit per BS 7671. Designer to confirm consumer unit upgrade is included if existing CU does not provide RCD protection. Certified electrician for install.",
       riskEliminated: "Partially",
-      stageRequired: "Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Electrical Contractor",
       residualRisk: "Low",
       actionRequired: "Electrical contractor to issue Electrical Installation Certificate. Periodic test record (5-yearly EICR) lodged in the H&S file.",
@@ -7125,7 +7324,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Gas Safe registered engineer to disconnect, cap and certify the existing gas system. Designer to specify a CO detector be retained or installed in occupied rooms. Flue capping certified separately.",
       riskEliminated: "Partially",
-      stageRequired: "Construction",
+      stageRequired: "Demolition",
       owner: "Gas Safe Contractor",
       residualRisk: "Low",
       actionRequired: "Lodge gas decommissioning certificate and CO detector specification in the H&S file. Annual CO detector check by the operational owner.",
@@ -7156,7 +7355,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to specify minimum clearance distances per the manufacturer in the user information sheet. Warning labels factory-applied. Position units away from natural deposition points (e.g. behind doors).",
       riskEliminated: "Partially",
-      stageRequired: "Design / Operation & Maintenance",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Operational Owner",
       residualRisk: "Medium",
       actionRequired: "Operational owner to communicate the clearance requirement to occupiers at handover and tenant change-over. Lodge in the H&S file.",
@@ -7187,7 +7386,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Specify licensed waste carrier for clay and refractory blocks. Designer to record block weight per unit on the user information sheet. Mechanical lifting where weight exceeds 25kg per worker (HSE manual handling guidance).",
       riskEliminated: "No",
-      stageRequired: "Demolition / Operation & Maintenance",
+      stageRequired: "Demolition",
       owner: "Operational Owner / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Operational owner to retain the disposal information in the H&S file for any future replacement or refurbishment.",
@@ -7221,7 +7420,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Designer to specify the duct route, sleeve, fall-to-outside, external grille (with anti-backdraft + vermin mesh) and any required fire-stopping detail at compartment crossings. Cold-bridge detail (insulated duct or pre-formed sleeve) marked on the section drawing — not left to site to interpret.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to install per detail. Photographic record of fire-stopping (where applicable) and external sealing retained for the H&S File.",
@@ -7252,7 +7451,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to mark the BS 7671 bathroom zones on the layout. Specify unit IP rating per zone (IPX4 minimum in Zone 1/2). Final circuit RCD-protected at 30 mA. Switching to be a ceiling-pull cord or external switch — not a switch within the zones. Decision recorded on the electrical drawing.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Electrical Contractor",
       residualRisk: "Low",
       actionRequired: "Electrical contractor to complete an Electrical Installation Certificate including RCD test record for the dMEV final circuit. Photographic record of the unit serial / IP plate retained for the H&S File.",
@@ -7283,7 +7482,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to require a Refurbishment & Demolition (R&D) asbestos survey to HSG264 BEFORE specifying the install location. Where ACMs are identified along the duct route or at the unit position, designer to either relocate or specify Licensed Asbestos Removal Contractor (LARC) works under the Control of Asbestos Regulations 2012.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Designer / Principal Contractor",
       residualRisk: "Low",
       actionRequired: "Principal Contractor to issue the R&D survey to every operative; tool-box-talk record retained; LARC four-stage clearance certificate issued before second-fix.",
@@ -7314,7 +7513,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Designer to choose a unit position reachable from a stable standing surface — not directly above wet zones. Specify units with tool-less filter access where available so occupier-level cleaning is feasible. Provide a written maintenance regime (frequency, method, competent person) as part of the design handover.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Operation & Maintenance",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Operational Owner",
       residualRisk: "Low",
       actionRequired: "Operational owner to retain the maintenance regime and record cleaning visits. Any maintenance contractor must use the access method documented in the H&S File.",
@@ -7345,7 +7544,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to confirm appliance type before fan selection. Where an open-flued appliance is present, calculate the maximum allowable extraction rate per BS 5440-1 / Approved Document J and specify a unit at or below that rate. Call up a spillage test at commissioning and specify a Carbon Monoxide alarm to BS EN 50291 in the same room.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Operation & Maintenance",
       owner: "Designer / Gas Safe Engineer",
       residualRisk: "Low",
       actionRequired: "Gas Safe engineer to witness a spillage test at commissioning and issue the test certificate. CO alarm installed and date-labelled before handover.",
@@ -7379,7 +7578,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Designer to consider whether the measure can be installed with most work in open, accessible areas. Where access is poor, specify improved access such as an enlarged hatch, fixed crawl boards or removable cupboard panels, and identify any space meeting the confined-space definition.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Contractor to plan task rotation and rest breaks for sustained awkward postures, provide kneeling and crawling protection, and ensure adequate task lighting. Confined-space procedure and rescue arrangements where a void meets the definition.",
@@ -7410,7 +7609,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to fix vent positions to avoid structural members and known service runs and, where possible, to keep high-level cores within reach of a platform. Specify wet coring or on-tool extraction, and specify the wall make-good, sleeve and any fire-stopping where the core passes through a fire-separating element.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Cable and pipe detection, and reinforcement scan to solid or structural walls, before coring. Wet or dust-extracted coring with RPE; hand-arm vibration exposure managed. High-level coring from a tower or MEWP, not a ladder. Exclusion zone and debris control to the external face.",
@@ -7441,7 +7640,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer or surveyor to identify ground conditions around each work area and assume a stable access method suited to them. Where ground is poor, specify sole boards, levelled bases, props or a scaffold or MEWP rather than free-standing ladders, and flag obstructions such as covers, steps and slopes.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Access equipment set on firm, level bases with sole boards or proprietary levelling; ground assessed before set-up; towers tied or outriggered; MEWPs used only within their rated ground bearing. Daily check of base stability.",
@@ -7472,7 +7671,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to set out the fixing pattern to observe the safe zones around sockets, switches and floor and ceiling junctions and any known heating or gas runs, and to consider bonded fixing to cut penetrations. Require existing concealed services to be traced and, where they clash, isolated or re-routed before insulating.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Full cable and pipe detection of each wall before fixing; safe-zone rules observed; sockets and switches isolated and proven dead where fixings are close. Gas and heating runs identified by a competent person. Drill depth limited where services cannot be ruled out.",
@@ -7503,7 +7702,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "This is a client instruction, not a risk eliminated by design. Designer or Principal Designer to advise the client in writing of the fire performance consequence of unrated insulation and to obtain the manufacturer's reaction-to-fire data, declared performance and limitations of use. Under Regulation 38 of the Building Regulations 2010, where the work is to a relevant building (one to which the Regulatory Reform (Fire Safety) Order 2005 applies, such as flats common parts or non-domestic premises), fire safety information must be given to the responsible person no later than completion or first occupation and the responsible person must acknowledge receipt. Guidance on the information to provide is in Approved Document B Volume 2 Section 19, with wider fire safety management guidance in BS 9999. For a single private dwelling Regulation 38 does not strictly apply, but the same information must still be passed to the client and recorded in the H&S File under CDM.",
       riskEliminated: "No",
-      stageRequired: "Design / Pre-handover",
+      stageRequired: "Design",
       owner: "Client / Principal Designer",
       residualRisk: "Medium",
       actionRequired: "Compile the fire safety information pack: product type and locations, manufacturer reaction-to-fire classification (or a clear statement that none is declared), limitations of use and any required protective lining. Issue to the responsible person under Regulation 38 where applicable and obtain the acknowledgement notice; for a dwelling, issue to the client. Lodge a copy in the H&S File.",
@@ -7536,7 +7735,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Structural appraisal of the existing fabric (load paths, foundation type, lintel capacity) before design is finalised. Specify temporary works (props, needles, strong-boys) for the connection sequence on the design drawings.",
         riskEliminated: "Partially",
-        stageRequired: "Design / Construction",
+        stageRequired: "Construction",
         owner: "Structural Engineer / Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to commission a temporary works design and inspection regime. Building Control sign-off at structural milestones.",
@@ -7567,7 +7766,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Sequence the works so that the new structure is weather-tight before the existing roof is opened. Specify temporary scaffold tents or shrink-wrap protection during the transition.",
         riskEliminated: "Partially",
-        stageRequired: "Design / Construction",
+        stageRequired: "Construction",
         owner: "Designer / Principal Contractor",
         residualRisk: "Low",
         actionRequired: "Principal Contractor to monitor weather forecasts and pause opening-up works during high winds or heavy rain. Daily protection check at end-of-shift.",
@@ -7598,7 +7797,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Party Wall Act 1996 notice served by the Client at design stage. Pre-works condition survey of neighbouring property (Schedule of Condition). Designer to specify low-vibration construction methods where appropriate (mini-piling, hand-dig).",
         riskEliminated: "Partially",
-        stageRequired: "Pre-construction / Construction",
+        stageRequired: "Construction",
         owner: "Client / Designer / Principal Contractor",
         residualRisk: "Low",
         actionRequired: "Principal Contractor to operate a vibration-monitoring regime at the party wall during groundworks. Halt and inform the neighbour if peak particle velocity exceeds the agreed limit.",
@@ -7629,7 +7828,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Pre-application meeting with Building Control to confirm the consequential improvements required (typically loft / cavity insulation, smoke-detection upgrade, replacement glazing). Designer to embed these in the design package.",
         riskEliminated: "Partially",
-        stageRequired: "Pre-construction / Design",
+        stageRequired: "Design",
         owner: "Designer / Client",
         residualRisk: "Low",
         actionRequired: "Client to fund and instruct the additional works package. Designer to produce as-built drawings showing the consequential upgrades for sign-off.",
@@ -7662,7 +7861,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "PAS 128 utilities survey at design stage. Statutory undertakers' records obtained (LSBUD enquiry). Designer to mark known services and high-risk corridors on the construction drawings.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to operate a permit-to-dig system, CAT/Genny scan before every excavation, and re-scan when new services are exposed. Hand-dig within 500 mm of any known live service.",
@@ -7724,7 +7923,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Traffic Management Plan per Chapter 8 of the Traffic Signs Manual produced at design stage. Designer to mark the working corridor, vehicle restraint and lane-closure plan on the drawings. Apply for Highway Authority approval / TTRO before works.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor / Highway Authority",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor to provide trained traffic marshals, daily inspection of TM signage / cones, and stop works in poor visibility. NRSWA-trained operatives only on the carriageway.",
@@ -7755,7 +7954,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designed-in safe access (ladders, fall-arrest anchors, ventilation provision). Specify gas-tight covers and labelled isolation valves. Designer to flag confined spaces on the as-built drawings for future maintenance.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Operation & Maintenance",
+      stageRequired: "Construction",
       owner: "Designer / Principal Contractor / Operational Owner",
       residualRisk: "Medium",
       actionRequired: "Principal Contractor and any future maintainer to apply the Confined Spaces Regulations 1997: permit-to-work, gas detection (O₂, LEL, H₂S, CO), forced ventilation, rescue arrangements before entry.",
@@ -7788,7 +7987,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "PAS 128 survey + statutory undertakers' record search at design stage. Trial holes / non-destructive surveys at high-risk junctions. Designer to record all known services on the works drawings and flag any unknowns.",
         riskEliminated: "Partially",
-        stageRequired: "Pre-construction / Construction",
+        stageRequired: "Construction",
         owner: "Designer / Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to operate a permit-to-disconnect requiring written sign-off from the asset owner before any service is broken or capped. Update the as-built record at every change.",
@@ -7819,7 +8018,7 @@ const snippetLibraries = {
         initialRisk: "Medium",
         designerComments: "Designer to develop a staged replacement plan with the asset owner. Specify any temporary supplies, bypasses or generators needed. Programme the cut-over to a low-demand window (overnight / weekend) where feasible.",
         riskEliminated: "Partially",
-        stageRequired: "Design / Construction",
+        stageRequired: "Construction",
         owner: "Designer / Asset Owner / Principal Contractor",
         residualRisk: "Low",
         actionRequired: "Principal Contractor to confirm the cut-over plan with the asset owner in writing 14 days before. Pre-prepare contingency response in case of failure during cut-over.",
@@ -7850,7 +8049,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Pre-removal survey for hazardous materials (asbestos R&D, oil sampling, soil testing as applicable). Designer to specify safe-removal sequence and licensed waste carrier requirements.",
         riskEliminated: "Partially",
-        stageRequired: "Pre-construction / Demolition",
+        stageRequired: "Demolition",
         owner: "Designer / Principal Contractor",
         residualRisk: "Medium",
         actionRequired: "Principal Contractor to engage HSE-licensed contractors for licensable asbestos / refrigerant work; retain consignment notes for all hazardous waste streams.",
@@ -7881,7 +8080,7 @@ const snippetLibraries = {
         initialRisk: "High",
         designerComments: "Designer / electrical engineer to produce a switching schedule and single-line diagrams of both the existing and replacement systems. Specify lockout-tagout points and certified isolation devices.",
         riskEliminated: "Partially",
-        stageRequired: "Construction / Commissioning",
+        stageRequired: "Construction",
         owner: "Electrical Contractor / Authorised Person",
         residualRisk: "Medium",
         actionRequired: "Switching to be carried out only by an Authorised Person operating the agreed switching schedule. Live working prohibited except under HSE GS38 with documented risk assessment. Permit-to-work issued for every cut-over operation.",
@@ -7914,7 +8113,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Confirm whether the scaffold is a basic configuration to a NASC TG20 compliance sheet or a designed scaffold requiring a bespoke temporary works design under BS 5975. A competent Temporary Works Coordinator to manage design and check. Foundations, ties and loadings to suit the actual structure.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor / Temporary Works Coordinator",
       residualRisk: "Medium",
       actionRequired: "Scaffold erected by competent (CISRS) operatives to the TG20 sheet or bespoke design; handover certificate before use; inspected before first use, every 7 days, and after alteration or adverse weather. Public protection and exclusion zones maintained.",
@@ -7945,7 +8144,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Designer to confirm ground conditions from the site investigation and specify either a battered or benched profile or a designed support system (trench box, hydraulic shores, sheet piling) under BS 6031 and BS 5975. Temporary Works Coordinator to manage design and check. Define spoil set-back and surcharge limits.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor / Temporary Works Coordinator",
       residualRisk: "Medium",
       actionRequired: "Support installed to the temporary works design; safe access and egress; daily inspection and after rain or surcharge change; services located and managed; no entry to an unsupported excavation outside a battered profile.",
@@ -7976,7 +8175,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Propping and needling to form openings to be designed by a competent structural engineer with prop type, spacing, bearing and a defined sequence for loading and striking. Falsework designed under BS 5975 with a Temporary Works Coordinator managing design and check. Bearing surfaces verified to take the temporary load.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Structural Engineer / Temporary Works Coordinator",
       residualRisk: "Medium",
       actionRequired: "Erected to the temporary works design and a permit-to-load issued; no striking until the permanent structure has gained strength and a permit-to-strike is issued; props and bearings inspected during the temporary condition.",
@@ -8007,7 +8206,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Formwork designed under BS 5975 for the concrete pressure, pour rate and pour height, with ties, props and bearing specified. Temporary Works Coordinator to manage design and check. Consider proprietary or permanent formwork to reduce risk.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor / Temporary Works Coordinator",
       residualRisk: "Medium",
       actionRequired: "Erected and checked to the formwork design; permit-to-pour; pour rate and concrete temperature controlled within design limits; safe access to the form edge; striking only to the agreed schedule once strength is gained.",
@@ -8038,7 +8237,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Specify a proprietary edge protection and platform system designed to BS EN 13374 (edge protection) and BS EN 12811 (working platforms) with fixing points checked against the structure. Plan early installation of permanent protection to remove temporary measures. Designer to identify open edges and openings.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor / Temporary Works Coordinator",
       residualRisk: "Medium",
       actionRequired: "Edge protection and platforms installed to the system specification; openings covered and fix-marked; protection only removed under permit and reinstated immediately; inspected before use and after any alteration.",
@@ -8069,7 +8268,7 @@ const snippetLibraries = {
       initialRisk: "Medium",
       designerComments: "Hoarding designed for wind load, and for impact where vehicles are close, with foundations or ballast and bracing to suit the exposure following the relevant temporary works guidance. Plan pedestrian routing, sight lines and lighting. Obtain any highway licence where the hoarding is on or over the public highway.",
       riskEliminated: "Partially",
-      stageRequired: "Pre-construction / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor / Temporary Works Coordinator",
       residualRisk: "Low",
       actionRequired: "Erected to the hoarding design with ballast or bracing; inspected after high winds and impacts; pedestrian route kept clear, lit and signed; highway licence conditions observed.",
@@ -8100,7 +8299,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Loading platform designed for the intended safe working load with the SWL displayed, and the fixings and supporting scaffold or structure checked under BS 5975 by the Temporary Works Coordinator. Specify self-closing gates to the open edge.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Principal Contractor / Temporary Works Coordinator",
       residualRisk: "Medium",
       actionRequired: "Platform used within its marked SWL; loads distributed not concentrated; gates closed except during the lift; inspected before use and after alteration; banksman for lifts to the platform.",
@@ -8131,7 +8330,7 @@ const snippetLibraries = {
       initialRisk: "High",
       designerComments: "Facade retention designed by a competent structural engineer for the unrestrained condition and wind loading, with foundations, raking or flying shores or strongback frames and ties to the facade defined under BS 5975. Facade condition surveyed. Temporary Works Coordinator to manage design, check and monitoring.",
       riskEliminated: "Partially",
-      stageRequired: "Design / Construction",
+      stageRequired: "Construction",
       owner: "Structural Engineer / Temporary Works Coordinator",
       residualRisk: "Medium",
       actionRequired: "Erected to the retention design under permit; movement monitored with defined trigger levels and an evacuation procedure; inspected after high winds; dismantled only once the permanent structure provides stability.",
@@ -8295,7 +8494,7 @@ const detailFieldMap = {
   designer: "detail-designer",
   ref: "detail-ref",
   element: "detail-element",
-  stageRequired: "detail-stageRequired",
+  stageRequired: "Construction",
   hazard: "detail-hazard",
   personAtRisk: "detail-personAtRisk",
   initialRisk: "detail-initialRisk",
@@ -8315,7 +8514,7 @@ const fieldLabels = {
   designer: "Designer",
   ref: "Originator Risk Ref. / Revision",
   element: "Element/Activity",
-  stageRequired: "Stage",
+  stageRequired: "Construction",
   hazard: "Hazard/Associated Risk",
   personAtRisk: "Person at Risk",
   initialRisk: "Initial Risk Level",
@@ -9631,16 +9830,21 @@ function updateSelectAllState() {
 // Map a Stage (often compound, e.g. "Design / Construction") to a distinct
 // colour by its first-listed stage, so the same stage always reads the same
 // colour wherever it appears (Risk Library list + register Stage cell).
+// The four standard lifecycle stages, each with its own distinct colour and a
+// clear definition (shown in the app legend). Every snippet uses exactly one.
+const STAGE_DEFS = [
+  { name: "Design",                  bg: "#e0e7ff", fg: "#3730a3", note: "The risk is dealt with at the design stage — designed out or reduced through a design decision, survey or coordination before work starts on site." },
+  { name: "Construction",            bg: "#d1e7dd", fg: "#0f5132", note: "The risk arises while the works are being built or installed on site." },
+  { name: "Operation & Maintenance", bg: "#ede9fe", fg: "#5b21b6", note: "The risk arises once the building is in use — during operation, cleaning, inspection, servicing, repair or replacement." },
+  { name: "Demolition",              bg: "#f8d7da", fg: "#842029", note: "The risk arises during strip-out, dismantling or demolition, whether at end of life or during refurbishment." }
+];
 function stageColour(stage) {
-  const first = String(stage || "").toLowerCase().split("/")[0].trim();
-  if (!first) return { bg: "#e5e7eb", fg: "#374151" };
-  if (first.startsWith("pre-construction") || first.startsWith("pre construction")) return { bg: "#fef3c7", fg: "#92400e" };
-  if (first.startsWith("design"))       return { bg: "#e0e7ff", fg: "#3730a3" };  // Design
-  if (first.startsWith("construction")) return { bg: "#d1e7dd", fg: "#0f5132" };  // Construction
-  if (first.startsWith("maintenance") || first.startsWith("operation") || first.includes("maintenance")) return { bg: "#ede9fe", fg: "#5b21b6" };  // Maintenance and Repairs
-  if (first.startsWith("deconstruction") || first.startsWith("demolition")) return { bg: "#f8d7da", fg: "#842029" };  // Deconstruction
-  if (first.startsWith("handover") || first.startsWith("completion")) return { bg: "#cffafe", fg: "#155e75" };
-  return { bg: "#e5e7eb", fg: "#374151" };
+  const s = String(stage || "").toLowerCase().trim();
+  if (s === "design")                  return { bg: "#e0e7ff", fg: "#3730a3" };
+  if (s === "construction")            return { bg: "#d1e7dd", fg: "#0f5132" };
+  if (s === "operation & maintenance") return { bg: "#ede9fe", fg: "#5b21b6" };
+  if (s === "demolition")              return { bg: "#f8d7da", fg: "#842029" };
+  return { bg: "#e5e7eb", fg: "#374151" }; // fallback for any non-standard value
 }
 function stageChipHtml(stage) {
   const s = String(stage || "").trim();
@@ -9649,6 +9853,21 @@ function stageChipHtml(stage) {
   const safe = s.replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
   return `<span class="stage-chip" style="background:${c.bg};color:${c.fg};">${safe}</span>`;
 }
+
+// Render the stage legend (four standard stages, colours + definitions) so the
+// standard is visible in the app. Built from STAGE_DEFS to match the colour map.
+function renderStageLegend() {
+  const el = document.getElementById("stage-legend");
+  if (!el) return;
+  el.innerHTML = STAGE_DEFS.map(function (d) {
+    return '<div class="stage-legend-item">' +
+      '<span class="stage-chip" style="background:' + d.bg + ';color:' + d.fg + ';">' + d.name + '</span>' +
+      '<span class="stage-legend-note">' + d.note + '</span>' +
+    '</div>';
+  }).join("");
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", renderStageLegend);
+else renderStageLegend();
 
 function renderSnippetList() {
   const itemsEl = document.getElementById("snippet-list-items");
@@ -10750,6 +10969,15 @@ async function exportRiskRegisterExcel() {
     // Centre Eliminated (col 9)
     ws.getCell(rowNum, 9).alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
 
+    // Stage (col 4) tinted with the standard stage colour
+    if ((r.stageRequired || '').trim()) {
+      const sc = stageColour(r.stageRequired.trim());
+      const toArgb = h => 'FF' + h.replace('#', '').toUpperCase();
+      const scell = ws.getCell(rowNum, 4);
+      scell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: toArgb(sc.bg) } };
+      scell.font = { name: 'Arial', size: 9, bold: true, color: { argb: toArgb(sc.fg) } };
+    }
+
     // Estimate row height from longest cell content (Excel doesn't auto-fit wrapped text)
     const colWidths = [14, 13, 22, 16, 36, 16, 11, 36, 12, 11, 18, 20, 36, 14, 13, 13, 22];
     let maxLines = 1;
@@ -11039,6 +11267,10 @@ function printRiskRegisterPDF() {
       if (col === 6 || col === 9) {
         const v = String(data.cell.raw || '').trim();
         if (riskFill[v]) data.cell.styles.fillColor = riskFill[v];
+      }
+      if (col === 3) { // Stage — tint with the standard stage colour
+        const sv = String(data.cell.raw || '').trim();
+        if (sv) { const sc = stageColour(sv); data.cell.styles.fillColor = hexToRgb(sc.bg); data.cell.styles.textColor = hexToRgb(sc.fg); }
       }
     },
     didDrawPage: (data) => {
