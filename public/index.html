@@ -987,6 +987,7 @@ body {
 .cf-done { font-size: 13px; font-weight: 700; padding: 8px 20px; border: none; border-radius: 8px; background: var(--brand-accent); color: #fff; cursor: pointer; font-family: inherit; }
 .cf-done:hover { background: var(--brand-accent-dark); }
 .rag-residual-note { margin: 4px 0 12px; padding: 9px 12px; border-radius: 8px; background: #fff8e6; border: 1px solid #ffe1a6; color: #664d03; font-size: 12.5px; line-height: 1.5; }
+.rag-eliminated-line { margin: -6px 0 12px; font-size: 12.5px; color: #0f5132; }
 
 /* RAG summary (project RAG list) */
 .rag-band-counts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0 14px; }
@@ -1028,6 +1029,19 @@ body {
 .gpp-wheel-node .node-i-bg { fill: #fff; stroke: var(--brand-accent-dark); stroke-width: 1.5; }
 .gpp-wheel-node .node-i { fill: var(--brand-accent-dark); font-size: 12px; font-weight: 700; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
 .gpp-node-label { fill: #374151; font-size: 20px; font-weight: 700; }
+/* Operational principles (d, g, i) — outlined, so they read as secondary to the
+   design-led ones without any extra text on the wheel. */
+.gpp-wheel-node.op .node-bg { fill: #fff; stroke: var(--brand-accent); stroke-width: 2.5; }
+.gpp-wheel-node.op .node-letter { fill: var(--brand-accent-dark); }
+.gpp-wheel-node.op:hover .node-bg, .gpp-wheel-node.op:focus .node-bg { fill: #f2f4f7; }
+.gpp-wheel-node.op .node-i-bg { fill: #fff; }
+.gpp-wheel-key { text-align: center; font-size: 11.5px; color: #6e6e73; margin: 8px auto 0; }
+.gpp-wheel-key .wk { display: inline-block; width: 12px; height: 12px; border-radius: 50%; vertical-align: -1px; margin-right: 3px; }
+.gpp-wheel-key .wk.solid { background: var(--brand-accent); }
+.gpp-wheel-key .wk.outline { background: #fff; border: 2px solid var(--brand-accent); box-sizing: border-box; }
+.gpp-info-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 22px 0; }
+.gpp-stage-chip { font-size: 11px; font-weight: 800; padding: 2px 10px; border-radius: 999px; letter-spacing: .3px; }
+.gpp-info-role { font-size: 12px; color: #6e6e73; }
 .gpp-list { display: none; flex-direction: column; gap: 8px; margin: 12px 0; }
 @media (max-width: 720px) { .gpp-wheel-wrap { display: none; } .gpp-list { display: flex; } }
 .gpp-item-btn { width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
@@ -10560,6 +10574,29 @@ const GPP_EXAMPLES = {
   i: "A transport company puts every new starter through an induction covering safe movements and posture, road risk and emergency procedures, so people are properly instructed before they are exposed."
 };
 
+// Each principle mapped to the reg 9 step it delivers (Eliminate / Evaluate /
+// Reduce / Control / Inform) and whether it is design-led (the designer can act
+// on it) or mainly a downstream contractor/employer measure. Drives the wheel's
+// solid-vs-outline nodes and the "Reg 9 step" chip in the info popup.
+const GPP_META = {
+  a: { stage: "Eliminate", design: true },
+  b: { stage: "Evaluate",  design: true },
+  c: { stage: "Reduce",    design: true },
+  d: { stage: "Control",   design: false },
+  e: { stage: "Reduce",    design: true },
+  f: { stage: "Reduce",    design: true },
+  g: { stage: "Control",   design: false },
+  h: { stage: "Reduce",    design: true },
+  i: { stage: "Inform",    design: false }
+};
+const GPP_STAGE_COLOUR = {
+  Eliminate: { bg: "#d1e7dd", fg: "#0f5132" },
+  Evaluate:  { bg: "#dbeafe", fg: "#1e40af" },
+  Reduce:    { bg: "#e0e7ff", fg: "#3730a3" },
+  Control:   { bg: "#fff3cd", fg: "#664d03" },
+  Inform:    { bg: "#e5e7eb", fg: "#374151" }
+};
+
 // Wrap a short title into at most two balanced lines for the SVG wheel labels.
 function _wrapGppLabel(s) {
   if (s.length <= 14) return [s];
@@ -10589,7 +10626,8 @@ function buildGppWheelSvg() {
     labels += '<text class="gpp-node-label" x="' + lx.toFixed(1) + '" y="' + y0.toFixed(1) + '" text-anchor="' + anchor + '">' +
       lines.map(function (ln, i) { return '<tspan x="' + lx.toFixed(1) + '" dy="' + (i === 0 ? 0 : LH) + '">' + _escHtml(ln) + "</tspan>"; }).join("") + "</text>";
     const ix = nx + NR * 0.72, iy = ny + NR * 0.72;
-    nodes += '<g class="gpp-wheel-node" data-letter="' + p.letter + '" tabindex="0" role="button" aria-label="' + _escHtml(p.title) + ', see example">' +
+    const isOp = GPP_META[p.letter] && GPP_META[p.letter].design === false;
+    nodes += '<g class="gpp-wheel-node' + (isOp ? ' op' : '') + '" data-letter="' + p.letter + '" tabindex="0" role="button" aria-label="' + _escHtml(p.title) + ', see example">' +
       "<title>" + _escHtml(p.title) + "</title>" +
       '<circle class="node-bg" cx="' + nx.toFixed(1) + '" cy="' + ny.toFixed(1) + '" r="' + NR + '"></circle>' +
       '<text class="node-letter" x="' + nx.toFixed(1) + '" y="' + ny.toFixed(1) + '" text-anchor="middle" dominant-baseline="central">' + p.letter + "</text>" +
@@ -10626,8 +10664,15 @@ function openGppInfo(letter) {
   const p = gppByLetter(letter);
   if (!p) return;
   const ex = GPP_EXAMPLES[p.letter] || "";
+  const meta = GPP_META[p.letter] || {};
+  const sc = GPP_STAGE_COLOUR[meta.stage] || { bg: "#e5e7eb", fg: "#374151" };
+  const role = meta.design ? "Design-led — the designer can act on this" : "Mainly a contractor / employer measure";
+  const metaRow = meta.stage
+    ? '<div class="gpp-info-meta"><span class="gpp-stage-chip" style="background:' + sc.bg + ';color:' + sc.fg + ';">Reg 9: ' + meta.stage + '</span><span class="gpp-info-role">' + role + '</span></div>'
+    : "";
   document.getElementById("gpp-info-body").innerHTML =
     '<div class="gpp-info-head"><span class="gpp-info-letter">' + p.letter + "</span><h3>" + _escHtml(p.title) + "</h3></div>" +
+    metaRow +
     '<div class="gpp-info-section"><div class="gpp-info-label">What it means</div><p>' + _escHtml(p.text) + "</p></div>" +
     (ex ? '<div class="gpp-info-example"><div class="gpp-info-label">Real-world example</div><p>' + _escHtml(ex) + "</p></div>" : "");
   document.getElementById("gppInfoOverlay").classList.add("is-open");
@@ -10644,7 +10689,8 @@ function renderGppScreen() {
   // 2) The nine principles — an engaging wheel (wider screens) with an info popup
   //    per principle, plus a clickable list fallback on narrow screens. Both open
   //    the same popup (plain-English meaning + a real-world example).
-  html += '<div class="gpp-wheel-wrap">' + buildGppWheelSvg() + '</div>';
+  html += '<div class="gpp-wheel-wrap">' + buildGppWheelSvg() +
+    '<div class="gpp-wheel-key"><span class="wk solid"></span> Design can eliminate or reduce it &nbsp;&nbsp;&middot;&nbsp;&nbsp; <span class="wk outline"></span> Mainly a contractor / employer control</div></div>';
   html += '<div class="gpp-list">';
   GPP_PRINCIPLES.forEach(function (p) {
     html += '<button type="button" class="gpp-item gpp-item-btn" onclick="openGppInfo(\'' + p.letter + '\')">' +
@@ -11538,7 +11584,9 @@ function generateNarrativeReport() {
   const ragGroups = { Red: [], DTM: [], Amber: [], Green: [], Unrated: [] };
   filteredRisks.forEach(r => { ragGroups[ragOf(r.residualRisk) || 'Unrated'].push(r); });
   const ragCounts = { Red: ragGroups.Red.length, DTM: ragGroups.DTM.length, Amber: ragGroups.Amber.length, Green: ragGroups.Green.length };
-  
+  // Reg 9 eliminate-first evidence: how many risks were designed out entirely.
+  const elimCount = filteredRisks.filter(r => (r.riskEliminated || '').toLowerCase() === 'yes').length;
+
   // Get project information
   const revisionField = document.getElementById('revision-field');
   const revision = ((revisionField?.innerText) || '').trim() || '01';
@@ -11564,6 +11612,7 @@ function generateNarrativeReport() {
   let html = `
     <h2>Project RAG status</h2>
     <div class="rag-residual-note">These are <strong>residual risks</strong> for further reduction as the design develops. This register is a working document, not a final position — High (Red) risks remain outstanding and are reviewed at each design review.</div>
+    <div class="rag-eliminated-line">Eliminated by design: <strong>${elimCount} of ${filteredRisks.length}</strong> risks.</div>
     <div class="rag-band-counts">
       <span class="rag-band-count rag-red"${ragCounts.Red ? '' : ' data-empty="1"'}>${ragCounts.Red} Red</span>
       ${ragCounts.DTM ? '<span class="rag-band-count rag-dtm">' + ragCounts.DTM + ' DTM</span>' : ''}
@@ -12450,6 +12499,14 @@ function printNarrativeReport() {
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(102, 77, 3);
   doc.text(noteLines, margin + 3, y + 4.6);
   y += noteH + 5;
+
+  // Reg 9 eliminate-first evidence — one line.
+  (function () {
+    const elim = filteredRisks.filter(function (r) { return (r.riskEliminated || '').toLowerCase() === 'yes'; }).length;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(15, 81, 50);
+    doc.text('Eliminated by design: ' + elim + ' of ' + filteredRisks.length + ' risks.', margin, y);
+    y += 6;
+  })();
 
   // Column widths: Ref, Element, Stage fixed; Hazard + Further action share the rest.
   const wRef = 16, wEl = 46, wStage = 30, wGpp = 50;
