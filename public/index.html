@@ -587,6 +587,11 @@ body {
   color: #0f5132 !important;
 }
 
+.risk-dtm {
+  background-color: #dbeafe !important;
+  color: #1e40af !important;
+}
+
 /* Detail panel */
 .detail-panel {
   margin-top: 10px;
@@ -941,7 +946,11 @@ body {
 .reduction-controls-btn:hover { background: #eef7f7; }
 .reduction-controls-btn.is-red { border-color: #c0392b; color: #fff; background: #c0392b; }
 .reduction-controls-btn.is-red:hover { background: #a93226; }
+.reduction-controls-btn.is-dtm { border-color: #1e40af; color: #fff; background: #1e40af; }
+.reduction-controls-btn.is-dtm:hover { background: #1a3691; }
+.detail-reduction.needs-dtm { border-color: #b9d3fb; background: #eff5ff; }
 .reduction-gate { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #f8d7da; color: #842029; font-size: 12px; line-height: 1.5; }
+.reduction-gate.dtm { background: #dbeafe; color: #1e40af; }
 @media print { .detail-reduction { display: none !important; } }
 
 /* Controls focus screen — the single place control recommendations live */
@@ -971,6 +980,7 @@ body {
 .cf-settle { margin-top: 10px; padding: 8px 11px; border-radius: 8px; font-size: 12px; line-height: 1.5; }
 .cf-settle-red { background: #f8d7da; color: #842029; }
 .cf-settle-ok { background: #d1e7dd; color: #0f5132; }
+.cf-settle-dtm { background: #dbeafe; color: #1e40af; }
 .cf-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 560px) { .cf-two { grid-template-columns: 1fr; } }
 .cf-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
@@ -984,6 +994,7 @@ body {
 .rag-band-count.rag-red { background: #f8d7da; color: #842029; }
 .rag-band-count.rag-amber { background: #fff3cd; color: #664d03; }
 .rag-band-count.rag-green { background: #d1e7dd; color: #0f5132; }
+.rag-band-count.rag-dtm { background: #dbeafe; color: #1e40af; }
 .rag-priority { font-size: 12.5px; font-weight: 700; color: #842029; }
 .rag-priority.ok { color: #0f5132; }
 .narrative-rag-head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 2px 0 8px; font-size: 12px; }
@@ -1483,6 +1494,10 @@ body {
 
 .narrative-report h3.risk-level-low {
   background: #10b981;
+}
+
+.narrative-report h3.risk-level-dtm {
+  background: #2563eb;
 }
 
 .narrative-report .risk-item {
@@ -2237,12 +2252,13 @@ body {
             </div>
 
             <div class="detail-field">
-              <label for="detail-residualRisk">Residual Risk Rating (0–25)</label>
+              <label for="detail-residualRisk">Residual Risk Rating</label>
               <select id="detail-residualRisk" disabled>
                 <option value=""></option>
                 <option value="High">High</option>
                 <option value="Medium">Medium</option>
                 <option value="Low">Low</option>
+                <option value="DTM">DTM required (further investigation)</option>
               </select>
             </div>
 
@@ -2407,7 +2423,7 @@ body {
         </div>
 
         <div class="note-text">
-          The dashboard reads directly from the Risk Register tab using the "Residual Risk Rating" column (High / Medium / Low).
+          The dashboard reads directly from the Risk Register tab using the "Residual Risk Rating" column (High / Medium / Low / DTM). DTM = referred for further investigation or a Design Team Meeting.
         </div>
       </div>
 
@@ -8982,7 +8998,7 @@ let selectedSnippetId = null;
 // --- Helper for rating colours -----------------
 function clearRatingClasses(el) {
   if (!el || !el.classList) return;
-  el.classList.remove("risk-high", "risk-medium", "risk-low");
+  el.classList.remove("risk-high", "risk-medium", "risk-low", "risk-dtm");
 }
 
 function applyRatingClass(el, value) {
@@ -8992,6 +9008,7 @@ function applyRatingClass(el, value) {
   if (v === "high") el.classList.add("risk-high");
   if (v === "medium") el.classList.add("risk-medium");
   if (v === "low") el.classList.add("risk-low");
+  if (v === "dtm" || v === "dtm required") el.classList.add("risk-dtm");
 }
 
 // --- 2) Rendering -----------------------------
@@ -9012,11 +9029,15 @@ function renderRisks() {
         td.classList.add("risk-rating-cell");
 
         const select = document.createElement("select");
+        // Residual can also be referred for a DTM (further investigation / Design
+        // Team Meeting); the Initial rating stays a plain severity.
+        const dtmOpt = field === "residualRisk" ? '<option value="DTM">DTM</option>' : '';
         select.innerHTML = `
           <option value=""></option>
           <option value="High">High</option>
           <option value="Medium">Medium</option>
           <option value="Low">Low</option>
+          ${dtmOpt}
         `;
         select.value = risk[field] || "";
         select.dataset.rowIndex = rowIndex;
@@ -9626,7 +9647,7 @@ const DV_COLORS = ["#1e3a8a", "#0d9488", "#b45309", "#7c3aed", "#9ca3af"];
 
 function computeDashboardData() {
   const elementMap = new Map();
-  const totals = { High: 0, Medium: 0, Low: 0, Unrated: 0 };
+  const totals = { High: 0, Medium: 0, Low: 0, DTM: 0, Unrated: 0 };
 
   risks.forEach(r => {
     // Skip completely empty rows (no element AND no risk levels — these are blank
@@ -9636,17 +9657,18 @@ function computeDashboardData() {
     const initial = (r.initialRisk || "").trim();
     if (!elementRaw && !residual && !initial) return;
 
-    // Use residual if set, otherwise fall back to initial. If neither is set, the row
-    // still counts — it's bucketed as "Unrated" so nothing is silently dropped.
-    let level = residual;
-    if (!["High", "Medium", "Low"].includes(level)) {
-      level = ["High", "Medium", "Low"].includes(initial) ? initial : "Unrated";
-    }
+    // Use residual if set. A DTM residual is its own bucket (further investigation /
+    // Design Team Meeting). Otherwise fall back to initial; if neither is set the row
+    // still counts — bucketed as "Unrated" so nothing is silently dropped.
+    let level;
+    if (["High", "Medium", "Low"].includes(residual)) level = residual;
+    else if (isDtm(residual)) level = "DTM";
+    else level = ["High", "Medium", "Low"].includes(initial) ? initial : "Unrated";
 
     const element = elementRaw || "Unspecified";
 
     if (!elementMap.has(element)) {
-      elementMap.set(element, { High: 0, Medium: 0, Low: 0, Unrated: 0 });
+      elementMap.set(element, { High: 0, Medium: 0, Low: 0, DTM: 0, Unrated: 0 });
     }
     elementMap.get(element)[level]++;
     totals[level]++;
@@ -9655,17 +9677,18 @@ function computeDashboardData() {
   let labels = Array.from(elementMap.keys());
   labels.sort((a, b) => {
     const m = elementMap;
-    const totalA = m.get(a).High * 3 + m.get(a).Medium * 2 + m.get(a).Low + m.get(a).Unrated;
-    const totalB = m.get(b).High * 3 + m.get(b).Medium * 2 + m.get(b).Low + m.get(b).Unrated;
+    const totalA = m.get(a).High * 3 + m.get(a).DTM * 3 + m.get(a).Medium * 2 + m.get(a).Low + m.get(a).Unrated;
+    const totalB = m.get(b).High * 3 + m.get(b).DTM * 3 + m.get(b).Medium * 2 + m.get(b).Low + m.get(b).Unrated;
     return totalB - totalA;
   });
 
   const highData    = labels.map(l => elementMap.get(l).High);
   const medData     = labels.map(l => elementMap.get(l).Medium);
   const lowData     = labels.map(l => elementMap.get(l).Low);
+  const dtmData     = labels.map(l => elementMap.get(l).DTM);
   const unratedData = labels.map(l => elementMap.get(l).Unrated);
 
-  const totalRiskCount = totals.High + totals.Medium + totals.Low + totals.Unrated;
+  const totalRiskCount = totals.High + totals.Medium + totals.Low + totals.DTM + totals.Unrated;
   const highestRiskElement = labels.length > 0 ? labels[0] : "None";
 
   return {
@@ -9674,7 +9697,8 @@ function computeDashboardData() {
       { label: "High",    data: highData },
       { label: "Medium",  data: medData },
       { label: "Low",     data: lowData },
-      { label: "Unrated", data: unratedData }
+      { label: "Unrated", data: unratedData },
+      { label: "DTM",     data: dtmData }
     ],
     totals,
     totalRiskCount,
@@ -9690,7 +9714,7 @@ function updateDashboard() {
   // Update summary statistics
   document.getElementById("stat-total").textContent = data.totalRiskCount;
   document.getElementById("stat-high").textContent = data.highestRiskElement;
-  const dist = `H: ${data.totals.High} | M: ${data.totals.Medium} | L: ${data.totals.Low} | Unrated: ${data.totals.Unrated}`;
+  const dist = `H: ${data.totals.High} | M: ${data.totals.Medium} | L: ${data.totals.Low} | DTM: ${data.totals.DTM} | Unrated: ${data.totals.Unrated}`;
   document.getElementById("stat-dist").textContent = dist;
 
   // Dynamically size the chartByElement canvas so every element gets a readable row.
@@ -9736,6 +9760,13 @@ function updateDashboard() {
           data: data.datasetsByElement[2].data,
           backgroundColor: "#0d9488",
           borderColor: "#0d9488",
+          borderWidth: 1.5
+        },
+        {
+          label: "DTM",
+          data: data.datasetsByElement[4].data,
+          backgroundColor: "#2563eb",
+          borderColor: "#2563eb",
           borderWidth: 1.5
         },
         {
@@ -9801,25 +9832,28 @@ function updateDashboard() {
   chartTotals = new Chart(ctxTotals, {
     type: "bar",
     data: {
-      labels: ["High", "Medium", "Low", "Unrated"],
+      labels: ["High", "Medium", "Low", "DTM", "Unrated"],
       datasets: [{
         label: "Number of risks",
         data: [
           data.totals.High,
           data.totals.Medium,
           data.totals.Low,
+          data.totals.DTM,
           data.totals.Unrated
         ],
         backgroundColor: [
           "#1e3a8a",
           "#475569",
           "#0d9488",
+          "#2563eb",
           "#9ca3af"
         ],
         borderColor: [
           "#1e3a8a",
           "#475569",
           "#0d9488",
+          "#2563eb",
           "#9ca3af"
         ],
         borderWidth: 1.5
@@ -10329,11 +10363,19 @@ function gppByLetter(l) {
 function gppFull(l) { const p = gppByLetter(l); return p ? (p.letter + ". " + p.text) : ""; }
 
 // ── RAG (Red / Amber / Green) — the reduction scale. High=Red, Medium=Amber, Low=Green ──
+// DTM is a fourth, non-severity residual STATE: the risk is not yet resolved and needs
+// further investigation or a Design Team Meeting (DTM) to coordinate a decision. It reads
+// as its own blue band and is treated as outstanding alongside Red.
 const RAG_COLOURS = {
   Red:   { bg: "#f8d7da", fg: "#842029" },
   Amber: { bg: "#fff3cd", fg: "#664d03" },
-  Green: { bg: "#d1e7dd", fg: "#0f5132" }
+  Green: { bg: "#d1e7dd", fg: "#0f5132" },
+  DTM:   { bg: "#dbeafe", fg: "#1e40af" }
 };
+// The stored residual value for the DTM state, and its full descriptive label.
+const RESIDUAL_DTM = "DTM";
+const DTM_LABEL = "DTM — Further investigation / Design Team Meeting required";
+function isDtm(v) { const s = String(v || "").toLowerCase().trim(); return s === "dtm" || s === "dtm required"; }
 // Why we apply the General Principles of Prevention — the rationale, shown on the
 // Risk Evaluation screen and the PDF methodology page.
 const GPP_RATIONALE = "Under CDM 2015 designers must take account of the general principles of prevention. We apply them as an eliminate-first hierarchy: work down the list in order, avoiding and designing the hazard out before reducing, isolating or controlling it, giving collective protection priority over individual measures, and treating information and instruction as the last resort. The principle recorded against each risk names the highest level of that hierarchy the design achieves — so the register shows how far a hazard has actually been designed out, not merely how it will be managed on site.";
@@ -10343,27 +10385,29 @@ const RAG_RATIONALE = "The rating is a residual judgement: how significant the r
 const RAG_DEFS = [
   { band: "Red",   rating: "High",   bg: "#f8d7da", fg: "#842029", note: "Significant residual risk. The hazard has not been eliminated or substantially reduced by design and still relies on site controls, procedures or PPE. A priority for further reduction at each design review." },
   { band: "Amber", rating: "Medium", bg: "#fff3cd", fg: "#664d03", note: "Reduced by design but not eliminated. A residual risk remains that must be managed and communicated to the contractor and, where relevant, the Health and Safety File." },
-  { band: "Green", rating: "Low",    bg: "#d1e7dd", fg: "#0f5132", note: "Eliminated, or reduced so far that only routine, well-understood control remains. Considered adequately controlled, with relevant information communicated where required." }
+  { band: "Green", rating: "Low",    bg: "#d1e7dd", fg: "#0f5132", note: "Eliminated, or reduced so far that only routine, well-understood control remains. Considered adequately controlled, with relevant information communicated where required." },
+  { band: "DTM",   rating: "Design Team Meeting", bg: "#dbeafe", fg: "#1e40af", note: "Not a severity rating. The risk cannot be resolved at this stage and is referred for further investigation or a Design Team Meeting (DTM), where the designers coordinate to reach a decision. It remains outstanding until re-rated." }
 ];
 function ragOf(rating) {
   const r = String(rating || "").toLowerCase().trim();
   if (r === "high") return "Red";
   if (r === "medium") return "Amber";
   if (r === "low") return "Green";
+  if (r === "dtm" || r === "dtm required") return "DTM";
   return "";
 }
+// A residual value counts as OUTSTANDING when it is still Red or awaiting a DTM.
+function residualOutstanding(v) { const b = ragOf(v); return b === "Red" || b === "DTM"; }
 function ragChipHtml(rating) {
   const band = ragOf(rating);
   if (!band) return '<span class="rag-chip rag-none">—</span>';
   const c = RAG_COLOURS[band];
   return '<span class="rag-chip" style="background:' + c.bg + ';color:' + c.fg + ';">' + band + '</span>';
 }
-// The interrogation gate fires ONLY when the residual is still Red — this keeps
-// the common Amber/Green case on the fast lane. (Actively choosing b or a
-// non-avoid principle on a non-eliminated risk merely surfaces the prompts;
-// see _setGpp / gppSurfacesPrompts.)
+// The interrogation gate fires when the residual is still Red OR awaiting a DTM —
+// both are outstanding. This keeps the common Amber/Green case on the fast lane.
 function riskNeedsReduction(r) {
-  return !!r && ragOf(r.residualRisk) === "Red";
+  return !!r && residualOutstanding(r.residualRisk);
 }
 // Section 2 trigger: choosing b, or any principle other than a on a hazard that
 // could not be eliminated, surfaces (auto-opens) that row's control prompts.
@@ -10384,16 +10428,22 @@ function renderReductionPanel(rowIndex) {
   if (!el) return;
   if (rowIndex == null || !risks[rowIndex] || panelMode === "snippet") { el.style.display = "none"; el.innerHTML = ""; return; }
   const r = risks[rowIndex];
+  const band = ragOf(r.residualRisk);
+  const dtm = band === "DTM";
   const needs = riskNeedsReduction(r);
   el.style.display = "";
-  el.classList.toggle("needs-reduction", needs);
+  el.classList.toggle("needs-reduction", needs && !dtm);
+  el.classList.toggle("needs-dtm", dtm);
+  const btnLabel = dtm ? 'Record DTM action &rarr;' : (needs ? 'Reduce residual risk &rarr;' : 'Review control measures');
+  const btnClass = dtm ? ' is-dtm' : (needs ? ' is-red' : '');
   let html = '<div class="reduction-head">' +
     '<span class="reduction-title">Reduction</span>' +
     '<span class="reduction-move">Initial ' + ragChipHtml(r.initialRisk) + ' &rarr; Residual ' + ragChipHtml(r.residualRisk) + '</span>' +
-    '<button type="button" class="reduction-controls-btn' + (needs ? ' is-red' : '') + '" onclick="openControlsFocus(' + rowIndex + ')">' +
-      (needs ? 'Reduce residual risk &rarr;' : 'Review control measures') + '</button>' +
+    '<button type="button" class="reduction-controls-btn' + btnClass + '" onclick="openControlsFocus(' + rowIndex + ')">' + btnLabel + '</button>' +
   '</div>';
-  if (needs) {
+  if (dtm) {
+    html += '<div class="reduction-gate dtm">Referred for <strong>further investigation / a Design Team Meeting (DTM)</strong>. Not every risk can be resolved at once — record the coordination or investigation needed in Further action, then re-rate the residual once the design team has reached a decision. It remains outstanding and reopens at each design review.</div>';
+  } else if (needs) {
     html += '<div class="reduction-gate">The residual risk remains <strong>High (Red)</strong>. Open the control measures screen to reduce it further — apply a control and re-assess the residual rating, or record a reasoned justification and set the further action and Health &amp; Safety File information. It remains outstanding and is reviewed at each design review until the residual is reduced to Medium or Low.</div>';
   }
   el.innerHTML = html;
@@ -10616,17 +10666,19 @@ function renderControlsFocus() {
   html += '<label class="cf-field-label" for="cf-comments">Design measures incorporated (Designers Comments)</label>' +
     '<textarea id="cf-comments" class="cf-textarea" rows="4" oninput="cfComments(this.value)">' + _escHtml(r.designerComments || "") + '</textarea>';
 
-  // Re-rate the residual
+  // Re-rate the residual (High/Medium/Low, or refer for a DTM if it cannot be resolved yet)
   html += '<div class="cf-residual-row">' +
     '<label class="cf-field-label" for="cf-residual" style="margin:0;">Residual after controls</label>' +
     '<select id="cf-residual" class="cf-select" onchange="cfResidual(this.value)">' +
-      ['', 'High', 'Medium', 'Low'].map(function (v) {
-        return '<option value="' + v + '"' + (String(r.residualRisk || "") === v ? ' selected' : '') + '>' + (v || '—') + '</option>';
+      [['', '—'], ['High', 'High'], ['Medium', 'Medium'], ['Low', 'Low'], ['DTM', 'DTM required (further investigation)']].map(function (o) {
+        return '<option value="' + o[0] + '"' + (String(r.residualRisk || "") === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
       }).join('') +
     '</select>' + ragChipHtml(r.residualRisk) +
   '</div>';
 
-  if (band === "Red") {
+  if (band === "DTM") {
+    html += '<div class="cf-settle cf-settle-dtm">Referred for <strong>further investigation / a Design Team Meeting (DTM)</strong>. Record the coordination or investigation required in Further action, and set the residual rating once the design team has reached a decision. It remains outstanding until re-rated.</div>';
+  } else if (band === "Red") {
     html += '<div class="cf-settle cf-settle-red">The residual risk remains <strong>High (Red)</strong> — it remains outstanding for further reduction and is reviewed at each design review until reduced to Medium or Low.</div>';
   } else if (band === "Amber" || band === "Green") {
     html += '<div class="cf-settle cf-settle-ok">Residual risk assessed as <strong>' + band + '</strong>. Communicate the residual risk to the contractor and record Health &amp; Safety File information where required.</div>';
@@ -11334,10 +11386,10 @@ function generateNarrativeReport() {
     return;
   }
   
-  // Rank by RESIDUAL RAG band: Red, then Amber, then Green, then unrated.
-  const ragGroups = { Red: [], Amber: [], Green: [], Unrated: [] };
+  // Rank by RESIDUAL band: Red, then DTM (outstanding), then Amber, Green, unrated.
+  const ragGroups = { Red: [], DTM: [], Amber: [], Green: [], Unrated: [] };
   filteredRisks.forEach(r => { ragGroups[ragOf(r.residualRisk) || 'Unrated'].push(r); });
-  const ragCounts = { Red: ragGroups.Red.length, Amber: ragGroups.Amber.length, Green: ragGroups.Green.length };
+  const ragCounts = { Red: ragGroups.Red.length, DTM: ragGroups.DTM.length, Amber: ragGroups.Amber.length, Green: ragGroups.Green.length };
   
   // Get project information
   const revisionField = document.getElementById('revision-field');
@@ -11366,9 +11418,10 @@ function generateNarrativeReport() {
     <div class="rag-residual-note">These are <strong>residual risks</strong> for further reduction as the design develops. This register is a working document, not a final position — High (Red) risks remain outstanding and are reviewed at each design review.</div>
     <div class="rag-band-counts">
       <span class="rag-band-count rag-red"${ragCounts.Red ? '' : ' data-empty="1"'}>${ragCounts.Red} Red</span>
+      ${ragCounts.DTM ? '<span class="rag-band-count rag-dtm">' + ragCounts.DTM + ' DTM</span>' : ''}
       <span class="rag-band-count rag-amber">${ragCounts.Amber} Amber</span>
       <span class="rag-band-count rag-green">${ragCounts.Green} Green</span>
-      ${ragCounts.Red ? '<span class="rag-priority">' + ragCounts.Red + ' High (Red) — priority for further reduction</span>' : '<span class="rag-priority ok">No outstanding High (Red) residual risks</span>'}
+      ${(ragCounts.Red || ragCounts.DTM) ? '<span class="rag-priority">' + (ragCounts.Red + ragCounts.DTM) + ' outstanding — ' + ragCounts.Red + ' High (Red)' + (ragCounts.DTM ? ', ' + ragCounts.DTM + ' awaiting DTM' : '') + '</span>' : '<span class="rag-priority ok">No outstanding residual risks</span>'}
     </div>
     <div class="narrative-project-info">
       <div class="info-row"><strong>Client:</strong> ${client}</div>
@@ -11390,6 +11443,7 @@ function generateNarrativeReport() {
   let itemIndex = 0;
   const bandMeta = [
     { key: 'Red',     cls: 'risk-level-high',   label: '🔴 Red — residual High (priority for further reduction)' },
+    { key: 'DTM',     cls: 'risk-level-dtm',    label: '🔵 DTM — further investigation / Design Team Meeting required' },
     { key: 'Amber',   cls: 'risk-level-medium', label: '🟠 Amber — residual Medium' },
     { key: 'Green',   cls: 'risk-level-low',    label: '🟢 Green — residual Low' },
     { key: 'Unrated', cls: '',                  label: '⚪ Not yet rated' }
@@ -11730,7 +11784,8 @@ async function exportRiskRegisterExcel() {
   const riskFill = {
     High:   { bg: 'FFF8D7DA', text: 'FF842029' },
     Medium: { bg: 'FFFFF3CD', text: 'FF664D03' },
-    Low:    { bg: 'FFD1E7DD', text: 'FF0F5132' }
+    Low:    { bg: 'FFD1E7DD', text: 'FF0F5132' },
+    DTM:    { bg: 'FFDBEAFE', text: 'FF1E40AF' }
   };
   const dataBorder = {
     top:    { style: 'thin', color: { argb: 'FFD1D5DB' } },
@@ -11895,24 +11950,24 @@ function addGppMethodologyPage(doc, accentRgb) {
   const sn = doc.splitTextToSize(GPP_SOURCE_NOTE, pw - 2 * m);
   doc.text(sn, m, y); y += sn.length * 4.4 + 6;
 
-  // Why the residual rating is Red / Amber / Green — coloured swatch + definition
-  if (y > ph - 48) { doc.addPage(); drawPdfBrandBorder(doc, accentRgb); y = m + 4; }
+  // Why the residual rating is Red / Amber / Green / DTM — coloured swatch + definition
+  if (y > ph - 54) { doc.addPage(); drawPdfBrandBorder(doc, accentRgb); y = m + 4; }
   doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(17, 24, 39);
-  doc.text('Residual risk rating — Red, Amber and Green', m, y); y += 5.5;
+  doc.text('Residual risk rating — Red, Amber, Green and DTM', m, y); y += 5.5;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
   const ragR = doc.splitTextToSize(RAG_RATIONALE, pw - 2 * m);
   doc.text(ragR, m, y); y += ragR.length * 4.6 + 3;
-  const chipW = 30, chipH = 6.4, noteX = m + chipW + 5;
+  const chipW = 24, chipH = 6.4, noteX = m + chipW + 5;
   RAG_DEFS.forEach(function (d) {
     const bg = hexToRgb(d.bg), fg = hexToRgb(d.fg);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(31, 41, 55);
-    const note = doc.splitTextToSize(d.note, pw - noteX - m);
+    const note = doc.splitTextToSize(d.rating + ' — ' + d.note, pw - noteX - m);
     const rowH = Math.max(chipH, note.length * 4.3);
     doc.setFillColor(bg[0], bg[1], bg[2]);
     doc.roundedRect(m, y, chipW, chipH, 1.5, 1.5, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(fg[0], fg[1], fg[2]);
-    doc.text(d.band + '  ·  ' + d.rating, m + chipW / 2, y + 4.4, { align: 'center' });
-    doc.setFont('helvetica', 'normal'); doc.setTextColor(31, 41, 55);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(fg[0], fg[1], fg[2]);
+    doc.text(d.band, m + chipW / 2, y + 4.4, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(31, 41, 55);
     doc.text(note, noteX, y + 4.4);
     y += rowH + 3;
   });
@@ -11981,10 +12036,12 @@ function printRiskRegisterPDF() {
   (function () {
     const rows = risks || [];
     const red = rows.filter(r => ragOf(r.residualRisk) === 'Red').length;
+    const dtm = rows.filter(r => ragOf(r.residualRisk) === 'DTM').length;
     const amb = rows.filter(r => ragOf(r.residualRisk) === 'Amber').length;
     const grn = rows.filter(r => ragOf(r.residualRisk) === 'Green').length;
+    const outstanding = red + dtm;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(55, 65, 81);
-    doc.text('Residual bands:  ' + red + ' Red   ' + amb + ' Amber   ' + grn + ' Green' + (red ? '    — ' + red + ' High (Red), priority for further reduction' : '    — no outstanding High (Red) residual'), margin, nextY);
+    doc.text('Residual bands:  ' + red + ' Red   ' + (dtm ? dtm + ' DTM   ' : '') + amb + ' Amber   ' + grn + ' Green' + (outstanding ? '    — ' + outstanding + ' outstanding (' + red + ' High (Red)' + (dtm ? ', ' + dtm + ' awaiting DTM' : '') + ')' : '    — no outstanding residual risks'), margin, nextY);
     nextY += 6;
   })();
 
@@ -12038,7 +12095,8 @@ function printRiskRegisterPDF() {
   const riskFill = {
     High:   [248, 215, 218],
     Medium: [255, 243, 205],
-    Low:    [209, 231, 221]
+    Low:    [209, 231, 221],
+    DTM:    [219, 234, 254]
   };
 
   // Column widths (mm). Single-word heading columns (Eliminated, Residual,
@@ -12189,14 +12247,15 @@ function printNarrativeReport() {
   const projectNo         = (metaCells[9] && metaCells[9].innerText.trim()) || '';
   const dateStr           = (metaCells[11] && metaCells[11].innerText.trim()) || '';
 
-  // Three RAG bands by RESIDUAL rating, HSE style: Red, Amber, Green (+ any unrated).
+  // RAG bands by RESIDUAL rating, HSE style: Red, DTM, Amber, Green (+ any unrated).
   const bands = [
     { key: 'Red',     label: 'RED',           head: [132, 32, 41],  fill: [248, 215, 218], text: [132, 32, 41], note: 'Residual High \u2014 priority for further reduction' },
+    { key: 'DTM',     label: 'DTM',           head: [30, 64, 175],  fill: [219, 234, 254], text: [30, 64, 175],  note: 'Further investigation / Design Team Meeting required' },
     { key: 'Amber',   label: 'AMBER',         head: [102, 77, 3],   fill: [255, 243, 205], text: [102, 77, 3],  note: 'Residual Medium' },
     { key: 'Green',   label: 'GREEN',         head: [15, 81, 50],   fill: [209, 231, 221], text: [15, 81, 50],  note: 'Residual Low' },
     { key: 'Unrated', label: 'NOT YET RATED', head: [107, 114, 128], fill: [243, 244, 246], text: [55, 65, 81], note: 'No residual rating set' }
   ];
-  const grouped = { Red: [], Amber: [], Green: [], Unrated: [] };
+  const grouped = { Red: [], DTM: [], Amber: [], Green: [], Unrated: [] };
   filteredRisks.forEach(function (r) { grouped[ragOf(r.residualRisk) || 'Unrated'].push(r); });
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape', compress: true });
