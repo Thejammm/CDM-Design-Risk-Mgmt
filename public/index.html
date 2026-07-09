@@ -10584,9 +10584,10 @@ function buildGppWheelSvg() {
     const lx = CX + LR * Math.cos(ang), ly = CY + LR * Math.sin(ang);
     const anchor = Math.abs(nx - CX) < 45 ? "middle" : (nx < CX ? "end" : "start");
     const lines = _wrapGppLabel(p.title);
-    const y0 = ly - (lines.length - 1) * 8.5;
+    const LH = 24; // line height for the two-line labels (a touch more breathing room)
+    const y0 = ly - (lines.length - 1) * (LH / 2);
     labels += '<text class="gpp-node-label" x="' + lx.toFixed(1) + '" y="' + y0.toFixed(1) + '" text-anchor="' + anchor + '">' +
-      lines.map(function (ln, i) { return '<tspan x="' + lx.toFixed(1) + '" dy="' + (i === 0 ? 0 : 17) + '">' + _escHtml(ln) + "</tspan>"; }).join("") + "</text>";
+      lines.map(function (ln, i) { return '<tspan x="' + lx.toFixed(1) + '" dy="' + (i === 0 ? 0 : LH) + '">' + _escHtml(ln) + "</tspan>"; }).join("") + "</text>";
     const ix = nx + NR * 0.72, iy = ny + NR * 0.72;
     nodes += '<g class="gpp-wheel-node" data-letter="' + p.letter + '" tabindex="0" role="button" aria-label="' + _escHtml(p.title) + ', see example">' +
       "<title>" + _escHtml(p.title) + "</title>" +
