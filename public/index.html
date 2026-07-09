@@ -937,12 +937,46 @@ body {
 .reduction-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .reduction-title { font-weight: 700; font-size: 13px; color: #1f2937; }
 .reduction-move { font-size: 12px; color: #555; display: inline-flex; gap: 6px; align-items: center; }
-.reduction-toggle { margin-left: auto; font-size: 12px; padding: 3px 10px; border: 1px solid #d0d5dd; border-radius: 6px; background: #fff; cursor: pointer; font-family: inherit; }
+.reduction-controls-btn { margin-left: auto; font-size: 12px; font-weight: 700; padding: 5px 12px; border: 1px solid var(--brand-accent); border-radius: 7px; background: #fff; color: var(--brand-accent-dark); cursor: pointer; font-family: inherit; }
+.reduction-controls-btn:hover { background: #eef7f7; }
+.reduction-controls-btn.is-red { border-color: #c0392b; color: #fff; background: #c0392b; }
+.reduction-controls-btn.is-red:hover { background: #a93226; }
 .reduction-gate { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #f8d7da; color: #842029; font-size: 12px; line-height: 1.5; }
-.reduction-prompts { display: flex; flex-direction: column; gap: 5px; margin-top: 8px; }
-.reduction-prompt { text-align: left; font-size: 12px; padding: 6px 9px; border: 1px solid #d0d5dd; border-radius: 7px; background: #fff; cursor: pointer; font-family: inherit; }
-.reduction-prompt:hover { background: #eef7f7; border-color: var(--brand-accent); }
 @media print { .detail-reduction { display: none !important; } }
+
+/* Controls focus screen — the single place control recommendations live */
+#controlsFocusOverlay { display: none; position: fixed; inset: 0; background: rgba(17,24,39,.55); z-index: 4000; align-items: flex-start; justify-content: center; padding: 4vh 16px; overflow-y: auto; }
+#controlsFocusOverlay.is-open { display: flex; }
+.controls-focus { background: #fff; width: 100%; max-width: 640px; border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.3); padding: 18px 20px 20px; }
+.cf-head { display: flex; align-items: flex-start; gap: 10px; }
+.cf-title { font-size: 16px; font-weight: 800; color: #1f2937; flex: 1; }
+.cf-close { border: none; background: none; font-size: 24px; line-height: 1; color: #6e6e73; cursor: pointer; padding: 0 2px; }
+.cf-hazard { margin: 4px 0 12px; font-size: 12.5px; color: #555; line-height: 1.45; }
+.cf-gpp { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 1px solid #dfe3ea; border-radius: 10px; background: #f7f9fc; margin-bottom: 12px; }
+.cf-gpp-letter { flex: 0 0 auto; width: 40px; height: 40px; border-radius: 50%; background: var(--brand-accent); color: #fff; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; }
+.cf-gpp-body { flex: 1; }
+.cf-gpp-body strong { display: block; font-size: 14px; color: #1f2937; }
+.cf-gpp-body span { font-size: 12px; color: #555; line-height: 1.4; }
+.cf-gpp-none strong { color: #842029; }
+.cf-gpp-change { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 5px 12px; border: 1px solid var(--brand-accent); border-radius: 7px; background: #fff; color: var(--brand-accent-dark); cursor: pointer; font-family: inherit; }
+.cf-gpp-change:hover { background: #eef7f7; }
+.cf-section-label { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .4px; color: #6e6e73; margin: 6px 0 6px; }
+.cf-prompts { display: flex; flex-direction: column; gap: 6px; }
+.cf-prompt { text-align: left; font-size: 12.5px; padding: 8px 11px; border: 1px solid #d0d5dd; border-radius: 8px; background: #fff; cursor: pointer; font-family: inherit; line-height: 1.4; }
+.cf-prompt:hover { background: #eef7f7; border-color: var(--brand-accent); }
+.cf-field-label { display: block; font-size: 12px; font-weight: 700; color: #374151; margin: 12px 0 4px; }
+.cf-textarea { width: 100%; box-sizing: border-box; font-family: inherit; font-size: 13px; padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 8px; resize: vertical; }
+.cf-residual-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.cf-select { font-family: inherit; font-size: 13px; padding: 6px 10px; border: 1px solid #d0d5dd; border-radius: 8px; }
+.cf-settle { margin-top: 10px; padding: 8px 11px; border-radius: 8px; font-size: 12px; line-height: 1.5; }
+.cf-settle-red { background: #f8d7da; color: #842029; }
+.cf-settle-ok { background: #d1e7dd; color: #0f5132; }
+.cf-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .cf-two { grid-template-columns: 1fr; } }
+.cf-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+.cf-done { font-size: 13px; font-weight: 700; padding: 8px 20px; border: none; border-radius: 8px; background: var(--brand-accent); color: #fff; cursor: pointer; font-family: inherit; }
+.cf-done:hover { background: var(--brand-accent-dark); }
+.rag-residual-note { margin: 4px 0 12px; padding: 9px 12px; border-radius: 8px; background: #fff8e6; border: 1px solid #ffe1a6; color: #664d03; font-size: 12.5px; line-height: 1.5; }
 
 /* RAG summary (project RAG list) */
 .rag-band-counts { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 6px 0 14px; }
@@ -1943,7 +1977,7 @@ body {
         Dashboard
       </button>
       <button class="tab-button" data-tab="tab-report" onclick="showTab('tab-report')">
-        Risk Summary Report
+        Project RAG status
       </button>
       <button class="tab-button" data-tab="tab-gpp" onclick="showTab('tab-gpp')">
         Risk Evaluation
@@ -2259,13 +2293,12 @@ body {
         </div>
       </div>
 
-      <!-- Control Recommendations — focused snippet's design prompts (sits above the library) -->
-      <div id="control-recommendations" class="section">
-        <div class="section-title">
-          <span>Control Recommendations</span>
-        </div>
-        <div class="snippet-detail" id="snippet-detail"></div>
-      </div>
+      <!-- Control recommendations live in ONE place only — the controls focus screen
+           reached by highlighting a Red risk (see openControlsFocus). They are NOT
+           previewed at snippet browse/insertion, so the old #control-recommendations
+           panel has been removed. #snippet-detail is retained (hidden) so the existing
+           renderSnippetDetail() call remains a harmless no-op. -->
+      <div id="snippet-detail" style="display:none;"></div>
 
       <!-- Inline Snippet Library (hidden by default, only for Simon / Michael) -->
       <div id="snippet-inline" class="section snippets-section">
@@ -2488,10 +2521,10 @@ body {
 <!-- Generate Button -->
 <div class="report-controls">
   <button class="tab-button" onclick="generateNarrativeReport()">
-    Generate Narrative Report
+    Generate Project RAG status
   </button>
   <button class="tab-button" onclick="printNarrativeReport()">
-    Print Narrative Report
+    Print Project RAG status (PDF)
   </button>
   <button class="tab-button" onclick="resetReportFilters()">
     Reset Filters
@@ -2499,7 +2532,7 @@ body {
 </div>
   <!-- Narrative Report Output -->
   <div class="section" id="narrative-report-section" style="display:none;">
-    <div class="section-title">Narrative Report</div>
+    <div class="section-title">Project RAG status</div>
     <div class="narrative-report">
       <div id="narrative-report-content"></div>
     </div>
@@ -10328,41 +10361,29 @@ function gppSurfacesPrompts(letter, r) {
   return g !== "a" && elim !== "yes";
 }
 
-// Reduction panel in the editing panel: control prompts + Initial→Residual RAG.
-// Stays collapsed for the fast lane; forced open and challenges when still Red.
-let _reductionExpanded = {};
+// Reduction strip in the editing panel: shows the Initial→Residual RAG movement
+// and the way IN to the single controls focus screen. NO control prompts are shown
+// here — the fast lane stays prompt-free; control recommendations live in one place
+// only, the controls focus screen (openControlsFocus), reached for a Red risk.
 function renderReductionPanel(rowIndex) {
   const el = document.getElementById("detail-reduction");
   if (!el) return;
   if (rowIndex == null || !risks[rowIndex] || panelMode === "snippet") { el.style.display = "none"; el.innerHTML = ""; return; }
   const r = risks[rowIndex];
-  const prompts = Array.isArray(r.controlPrompts) ? r.controlPrompts : [];
   const needs = riskNeedsReduction(r);
-  const expanded = needs || _reductionExpanded[rowIndex];
   el.style.display = "";
   el.classList.toggle("needs-reduction", needs);
   let html = '<div class="reduction-head">' +
     '<span class="reduction-title">Reduction</span>' +
-    '<span class="reduction-move">Initial ' + ragChipHtml(r.initialRisk) + ' &rarr; Residual ' + ragChipHtml(r.residualRisk) + '</span>';
-  if (prompts.length && !needs) {
-    html += '<button type="button" class="reduction-toggle" onclick="toggleReduction(' + rowIndex + ')">' + (expanded ? "Hide prompts" : "Show control prompts") + "</button>";
-  }
-  html += "</div>";
+    '<span class="reduction-move">Initial ' + ragChipHtml(r.initialRisk) + ' &rarr; Residual ' + ragChipHtml(r.residualRisk) + '</span>' +
+    '<button type="button" class="reduction-controls-btn' + (needs ? ' is-red' : '') + '" onclick="openControlsFocus(' + rowIndex + ')">' +
+      (needs ? 'Reduce this Red risk &rarr;' : 'Open controls') + '</button>' +
+  '</div>';
   if (needs) {
-    html += '<div class="reduction-gate">Still <strong>Red</strong>, or reduced by a principle other than “avoid”. Drive it further — use a control prompt to reduce it, or record a conscious justification in Designers Comments and set the further action and H&amp;S File information.</div>';
-  }
-  if (expanded && prompts.length) {
-    html += '<div class="reduction-prompts">';
-    prompts.forEach(function (p, i) {
-      html += '<button type="button" class="reduction-prompt" onclick="applyPromptToComments(' + rowIndex + "," + i + ')" title="Add to Designers Comments">' + _escHtml(p) + "</button>";
-    });
-    html += '</div><div class="note-text" style="margin-top:5px;">Click a prompt to add it to Designers Comments, then record your answer and re-rate the residual.</div>';
-  } else if (expanded) {
-    html += '<div class="note-text">No control prompts attached to this risk.</div>';
+    html += '<div class="reduction-gate">Still <strong>Red</strong>. Open the controls screen to work it down — apply a control and re-rate the residual, or record a conscious justification and set the further action and H&amp;S File information. It stays flagged and reopens at each design review until it settles Amber or Green.</div>';
   }
   el.innerHTML = html;
 }
-function toggleReduction(rowIndex) { _reductionExpanded[rowIndex] = !_reductionExpanded[rowIndex]; renderReductionPanel(rowIndex); }
 function applyPromptToComments(rowIndex, i) {
   const r = risks[rowIndex]; if (!r) return;
   const p = (r.controlPrompts || [])[i]; if (!p) return;
@@ -10371,8 +10392,11 @@ function applyPromptToComments(rowIndex, i) {
   renderRisks();
   if (rowIndex === selectedRowIndex) {
     const dc = document.getElementById("detail-designerComments");
-    if (dc) { dc.value = r.designerComments; dc.focus(); }
+    if (dc) { dc.value = r.designerComments; }
   }
+  // Keep the controls focus screen's comments box in sync when it is the one open.
+  const cf = document.getElementById("cf-comments");
+  if (cf && _controlsFocusRow === rowIndex) { cf.value = r.designerComments; cf.focus(); }
   saveStateToStorage();
 }
 
@@ -10475,14 +10499,149 @@ function closeGppPicker() { const ov = document.getElementById("gppPickerOverlay
 function _setGpp(letter) {
   if (_gppPickRow == null || !risks[_gppPickRow]) { closeGppPicker(); return; }
   const row = risks[_gppPickRow];
+  const changedRow = _gppPickRow;
   row.gpp = letter;
-  // Actively choosing b / a non-avoid principle on a non-eliminated risk surfaces
-  // that row's control prompts (auto-opens them).
-  if (gppSurfacesPrompts(letter, row)) _reductionExpanded[_gppPickRow] = true;
   closeGppPicker();
   renderRisks();
   highlightSelectedRow();
-  if (_gppPickRow === selectedRowIndex) updateDetailPanel();
+  if (changedRow === selectedRowIndex) updateDetailPanel();
+  // If the GPP was changed from inside the controls focus screen, re-frame it to
+  // the new principle so the GPP names the intent and the controls deliver it.
+  if (_controlsFocusRow === changedRow && document.getElementById("controlsFocusOverlay")) {
+    renderControlsFocus();
+  }
+  saveStateToStorage();
+}
+
+// ── Controls focus screen — the SINGLE place control recommendations live ──
+// Reached by highlighting a (Red) risk and pressing "Open controls". It is framed
+// by that row's GPP: the principle names the intent at the top, the control
+// recommendations underneath are the means to deliver it, the designer records what
+// they will design in, then re-rates the residual. Changing the GPP here re-frames
+// the screen and updates the row (GPP and controls stay joined on the record).
+let _controlsFocusRow = null;
+function _buildControlsFocus() {
+  if (document.getElementById("controlsFocusOverlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "controlsFocusOverlay";
+  ov.innerHTML = '<div class="controls-focus" role="dialog" aria-modal="true"><div id="cf-body"></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener("click", function (e) { if (e.target === ov) closeControlsFocus(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && ov.classList.contains("is-open")) closeControlsFocus();
+  });
+}
+function openControlsFocus(rowIndex) {
+  if (rowIndex == null || !risks[rowIndex]) return;
+  _buildControlsFocus();
+  _controlsFocusRow = rowIndex;
+  renderControlsFocus();
+  document.getElementById("controlsFocusOverlay").classList.add("is-open");
+}
+function closeControlsFocus() {
+  const ov = document.getElementById("controlsFocusOverlay");
+  if (ov) ov.classList.remove("is-open");
+  if (_controlsFocusRow === selectedRowIndex) updateDetailPanel();
+  _controlsFocusRow = null;
+}
+function renderControlsFocus() {
+  const body = document.getElementById("cf-body");
+  if (body == null || _controlsFocusRow == null || !risks[_controlsFocusRow]) return;
+  const i = _controlsFocusRow;
+  const r = risks[i];
+  const g = gppByLetter(r.gpp);
+  const prompts = Array.isArray(r.controlPrompts) ? r.controlPrompts : [];
+  const band = ragOf(r.residualRisk);
+
+  let html = '<div class="cf-head">' +
+    '<div class="cf-title">Controls &mdash; ' + _escHtml(r.ref || ("Row " + (i + 1))) + (r.element ? ' &middot; ' + _escHtml(r.element) : '') + '</div>' +
+    '<button type="button" class="cf-close" onclick="closeControlsFocus()" aria-label="Close">&times;</button>' +
+  '</div>';
+
+  if (r.hazard) html += '<div class="cf-hazard">' + _escHtml(r.hazard) + '</div>';
+
+  // GPP block — names the intent
+  html += '<div class="cf-gpp">';
+  if (g) {
+    html += '<span class="cf-gpp-letter">' + g.letter + '</span>' +
+      '<div class="cf-gpp-body"><strong>' + _escHtml(g.title) + '</strong><span>' + _escHtml(g.text) + '</span></div>';
+  } else {
+    html += '<div class="cf-gpp-body cf-gpp-none"><strong>No principle chosen yet</strong>' +
+      '<span>Choose the General Principle of Prevention that best characterises the design response — it frames the controls below.</span></div>';
+  }
+  html += '<button type="button" class="cf-gpp-change" onclick="changeGppFromControls()">' + (g ? "Change GPP" : "Choose GPP") + '</button>';
+  html += '</div>';
+
+  // Control recommendations — the means to deliver the principle
+  html += '<div class="cf-section-label">Control recommendations' + (g ? ' &mdash; ways to deliver principle ' + g.letter + ' (' + _escHtml(g.title) + ')' : '') + '</div>';
+  if (prompts.length) {
+    html += '<div class="cf-prompts">';
+    prompts.forEach(function (p, idx) {
+      html += '<button type="button" class="cf-prompt" onclick="applyPromptToComments(' + i + ',' + idx + ')" title="Add to Designers Comments">' + _escHtml(p) + '</button>';
+    });
+    html += '</div><div class="note-text" style="margin:4px 0 2px;">These are prompts, not fixes. Click one to drop it into Designers Comments, then record what you will design in.</div>';
+  } else {
+    html += '<div class="note-text">No control recommendations attached to this risk.</div>';
+  }
+
+  // Record what you will design in
+  html += '<label class="cf-field-label" for="cf-comments">What you will design in (Designers Comments)</label>' +
+    '<textarea id="cf-comments" class="cf-textarea" rows="4" oninput="cfComments(this.value)">' + _escHtml(r.designerComments || "") + '</textarea>';
+
+  // Re-rate the residual
+  html += '<div class="cf-residual-row">' +
+    '<label class="cf-field-label" for="cf-residual" style="margin:0;">Residual after controls</label>' +
+    '<select id="cf-residual" class="cf-select" onchange="cfResidual(this.value)">' +
+      ['', 'High', 'Medium', 'Low'].map(function (v) {
+        return '<option value="' + v + '"' + (String(r.residualRisk || "") === v ? ' selected' : '') + '>' + (v || '—') + '</option>';
+      }).join('') +
+    '</select>' + ragChipHtml(r.residualRisk) +
+  '</div>';
+
+  if (band === "Red") {
+    html += '<div class="cf-settle cf-settle-red">Still <strong>Red</strong> — it remains flagged for further reduction and reopens at each design review until it settles Amber or Green.</div>';
+  } else if (band === "Amber" || band === "Green") {
+    html += '<div class="cf-settle cf-settle-ok">Settles as <strong>' + band + '</strong>. Flag the residual to the contractor and record H&amp;S File information where needed.</div>';
+  }
+
+  // Further action + H&S File — completing the reduction record
+  html += '<div class="cf-two">' +
+    '<div><label class="cf-field-label" for="cf-action">Further action required?</label>' +
+      '<textarea id="cf-action" class="cf-textarea" rows="2" oninput="cfField(\'actionRequired\',this.value)">' + _escHtml(r.actionRequired || "") + '</textarea></div>' +
+    '<div><label class="cf-field-label" for="cf-hsfile">H&amp;S File information required</label>' +
+      '<textarea id="cf-hsfile" class="cf-textarea" rows="2" oninput="cfField(\'hsFile\',this.value)">' + _escHtml(r.hsFile || "") + '</textarea></div>' +
+  '</div>';
+
+  html += '<div class="cf-actions"><button type="button" class="cf-done" onclick="closeControlsFocus()">Done</button></div>';
+
+  body.innerHTML = html;
+}
+function changeGppFromControls() {
+  if (_controlsFocusRow == null) return;
+  openGppPicker(_controlsFocusRow); // _setGpp re-frames this screen on return
+}
+function cfComments(v) {
+  const r = risks[_controlsFocusRow]; if (!r) return;
+  r.designerComments = v;
+  const dc = document.getElementById("detail-designerComments");
+  if (dc && _controlsFocusRow === selectedRowIndex) dc.value = v;
+  renderRisks();
+  saveStateToStorage();
+}
+function cfField(field, v) {
+  const r = risks[_controlsFocusRow]; if (!r) return;
+  r[field] = v;
+  const de = document.getElementById("detail-" + field);
+  if (de && _controlsFocusRow === selectedRowIndex) de.value = v;
+  renderRisks();
+  saveStateToStorage();
+}
+function cfResidual(v) {
+  const r = risks[_controlsFocusRow]; if (!r) return;
+  r.residualRisk = v;
+  renderRisks();
+  if (_controlsFocusRow === selectedRowIndex) updateDetailPanel();
+  renderControlsFocus();
   saveStateToStorage();
 }
 
@@ -11175,7 +11334,8 @@ function generateNarrativeReport() {
 
   // Build the report
   let html = `
-    <h2>Design Risk Reduction Summary <span style="font-weight:400;font-size:14px;color:#6e6e73;">(project RAG list)</span></h2>
+    <h2>Project RAG status</h2>
+    <div class="rag-residual-note">These are <strong>residual risks</strong>, to be further reduced throughout the project. This is a live working tool, not a final position — Red risks remain flagged and reopen at each design review.</div>
     <div class="rag-band-counts">
       <span class="rag-band-count rag-red"${ragCounts.Red ? '' : ' data-empty="1"'}>${ragCounts.Red} Red</span>
       <span class="rag-band-count rag-amber">${ragCounts.Amber} Amber</span>
@@ -11752,7 +11912,7 @@ function printRiskRegisterPDF() {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);
   doc.setTextColor(17, 24, 39);
-  doc.text(`Design Risk Reduction Summary (project RAG list) — Revision ${revision}`, margin, margin + 6);
+  doc.text(`Design Risk Register — Revision ${revision}`, margin, margin + 6);
 
   // Prominent project name in brand colour, just below the title
   let nextY = margin + 12;
@@ -11952,370 +12112,152 @@ function printRiskRegisterPDF() {
   doc.save(buildPdfFilename('DRA', revision));
 }
 function printNarrativeReport() {
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    alert('PDF library is still loading. Please try again in a moment.');
-    return;
-  }
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('PDF library is still loading. Please try again in a moment.'); return; }
   const { jsPDF } = window.jspdf;
 
-  const narrativeContent = document.getElementById('narrative-report-content');
-  if (!narrativeContent || !narrativeContent.innerHTML.trim()) {
-    alert('Please generate the narrative report first!');
-    return;
-  }
-
-  const selectedColumns = getSelectedColumns();
-  if (selectedColumns.length === 0) {
-    alert('Please select at least one column for the report.');
-    return;
-  }
-
   const filteredRisks = getFilteredRisks();
-  if (filteredRisks.length === 0) {
-    alert('No risks match your current filters.');
-    return;
-  }
+  if (filteredRisks.length === 0) { alert('No risks match your current filters. Adjust the filters, then print again.'); return; }
 
-  const revision = ((document.getElementById('revision-field')?.innerText) || '').trim() || '01';
+  const revision = ((document.getElementById('revision-field') && document.getElementById('revision-field').innerText) || '').trim() || '01';
   const accent = getActiveAccent();
   const accentRgb = hexToRgb(accent);
 
-  // Project metadata
+  // Project metadata (positional meta cells)
   const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
-  const client            = metaCells[0]?.innerText.trim() || '';
-  const producedBy        = metaCells[1]?.innerText.trim() || '';
-  const preparedBy        = metaCells[2]?.innerText.trim() || '';
-  const project           = metaCells[3]?.innerText.trim() || '';
-  const principalDesigner = metaCells[4]?.innerText.trim() || '';
-  const reportDate        = metaCells[5]?.innerText.trim() || '';
-  const location          = metaCells[6]?.innerText.trim() || '';
-  const leadDesigner      = metaCells[7]?.innerText.trim() || '';
-  const checkedBy         = metaCells[8]?.innerText.trim() || '';
-  const projectNo         = metaCells[9]?.innerText.trim() || '';
-  const internalRef       = metaCells[10]?.innerText.trim() || '';
-  const checkedDate       = metaCells[11]?.innerText.trim() || '';
-  const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
+  const client            = (metaCells[0] && metaCells[0].innerText.trim()) || '';
+  const producedBy        = (metaCells[1] && metaCells[1].innerText.trim()) || '';
+  const preparedBy        = (metaCells[2] && metaCells[2].innerText.trim()) || '';
+  const project           = (metaCells[3] && metaCells[3].innerText.trim()) || '';
+  const principalDesigner = (metaCells[4] && metaCells[4].innerText.trim()) || '';
+  const location          = (metaCells[6] && metaCells[6].innerText.trim()) || '';
+  const leadDesigner      = (metaCells[7] && metaCells[7].innerText.trim()) || '';
+  const projectNo         = (metaCells[9] && metaCells[9].innerText.trim()) || '';
+  const dateStr           = (metaCells[11] && metaCells[11].innerText.trim()) || '';
 
-  // Rank by RESIDUAL RAG band, Red first — the project RAG list.
-  const groups = [
-    { name: 'RED — residual High (drive further)', items: filteredRisks.filter(r => ragOf(r.residualRisk) === 'Red'),   color: [132, 32, 41] },
-    { name: 'AMBER — residual Medium',              items: filteredRisks.filter(r => ragOf(r.residualRisk) === 'Amber'), color: [102, 77, 3] },
-    { name: 'GREEN — residual Low',                 items: filteredRisks.filter(r => ragOf(r.residualRisk) === 'Green'), color: [15, 81, 50] },
-    { name: 'Not yet rated',                        items: filteredRisks.filter(r => !ragOf(r.residualRisk)),            color: [107, 114, 128] }
-  ].filter(g => g.items.length);
+  // Three RAG bands by RESIDUAL rating, HSE style: Red, Amber, Green (+ any unrated).
+  const bands = [
+    { key: 'Red',     label: 'RED',           head: [132, 32, 41],  fill: [248, 215, 218], text: [132, 32, 41], note: 'Residual High \u2014 priority, drive further' },
+    { key: 'Amber',   label: 'AMBER',         head: [102, 77, 3],   fill: [255, 243, 205], text: [102, 77, 3],  note: 'Residual Medium' },
+    { key: 'Green',   label: 'GREEN',         head: [15, 81, 50],   fill: [209, 231, 221], text: [15, 81, 50],  note: 'Residual Low' },
+    { key: 'Unrated', label: 'NOT YET RATED', head: [107, 114, 128], fill: [243, 244, 246], text: [55, 65, 81], note: 'No residual rating set' }
+  ];
+  const grouped = { Red: [], Amber: [], Green: [], Unrated: [] };
+  filteredRisks.forEach(function (r) { grouped[ragOf(r.residualRisk) || 'Unrated'].push(r); });
 
-  // Pull any uploaded risk-evidence images out of the live DOM so they end up in the PDF.
-  // generateNarrativeReport assigns IDs as risk-image-preview-${itemIndex} where itemIndex
-  // increments globally across high → medium → low. Matching that ordering exactly:
-  const imagesByItemIndex = {};
-  const refsByItemIndex = {};
-  let probeIdx = 0;
-  groups.forEach(group => {
-    group.items.forEach(() => {
-      const previewEl = document.getElementById(`risk-image-preview-${probeIdx}`);
-      if (previewEl) {
-        const img = previewEl.querySelector('img');
-        if (img && img.src && img.src.startsWith('data:')) {
-          imagesByItemIndex[probeIdx] = img.src;
-        }
-      }
-      const refEl = document.getElementById(`risk-image-ref-${probeIdx}`);
-      if (refEl && refEl.value && refEl.value.trim()) {
-        refsByItemIndex[probeIdx] = refEl.value.trim();
-      }
-      probeIdx++;
-    });
-  });
-
-  const fieldLabels = {
-    designer: 'Designer',
-    ref: 'Risk Reference',
-    element: 'Element',
-    hazard: 'Hazard',
-    initialRisk: 'Initial Risk',
-    designerComments: 'Designer Comments',
-    riskEliminated: 'Eliminated',
-    stageRequired: 'Stage',
-    owner: 'Owner',
-    residualRisk: 'Residual Risk',
-    actionRequired: 'Action Required',
-    finalStatus: 'Final Status',
-    dateRegistered: 'Date Registered',
-    dateResolved: 'Date Resolved',
-    clientPCI: 'Design Validation',
-    hsFile: 'H&S File'
-  };
-
-  // ---------- Build the PDF ----------
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape', compress: true });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 12;
-  const availW = pageW - (2 * margin);
-  let y;
-
-  // Helper: ensure room on the current page, add a new one if not.
-  const ensureRoom = (needed) => {
-    if (y + needed > pageH - 18) {
-      doc.addPage();
-      y = margin + 5;
-    }
-  };
+  const availW = pageW - 2 * margin;
 
   // Title bar in the brand colour
   doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
-  doc.rect(0, 0, pageW, 20, 'F');
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(15);
-  doc.setTextColor(255, 255, 255);
-  doc.text('Risk Register - Narrative Report', margin, 13);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text('Revision ' + revision, pageW - margin, 13, { align: 'right' });
+  doc.rect(0, 0, pageW, 18, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
+  doc.text('Project RAG status', margin, 12);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(10);
+  doc.text('Revision ' + revision, pageW - margin, 12, { align: 'right' });
 
-  y = 27;
+  let y = 25;
+  // Project name (left) + band counts (right)
+  if (project) { doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]); doc.text(project, margin, y); }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(55, 65, 81);
+  doc.text(grouped.Red.length + ' Red    ' + grouped.Amber.length + ' Amber    ' + grouped.Green.length + ' Green', pageW - margin, y, { align: 'right' });
+  y += 6;
 
-  // Prominent project name
-  if (project) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(13);
-    doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]);
-    doc.text(project, margin, y);
-    y += 6;
-  }
+  // Meta line
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
+  const metaLine = [
+    client ? 'Client: ' + client : null,
+    location ? 'Location: ' + location : null,
+    projectNo ? 'Project No: ' + projectNo : null,
+    principalDesigner ? 'Principal Designer: ' + principalDesigner : null,
+    leadDesigner ? getLeadDesignerLabel() + ': ' + leadDesigner : null,
+    'Date Checked: ' + (dateStr || '\u2014')
+  ].filter(Boolean).join('    |    ');
+  const metaWrapped = doc.splitTextToSize(metaLine, availW);
+  doc.text(metaWrapped, margin, y);
+  y += metaWrapped.length * 4.4 + 2;
 
-  // Project info table — matches the on-screen narrative report exactly:
-  // same fields, same order, and 'N/A' shown for blanks (not filtered out).
-  const na = (v) => (v && String(v).trim()) ? v : 'N/A';
-  const infoRows = [
-    ['Client', na(client)],
-    ['Project', na(project)],
-    ['Location', na(location)],
-    ['Project No', na(projectNo)],
-    ['Internal Ref', na(internalRef)],
-    ['Produced By', na(producedBy)],
-    ['Prepared By', na(preparedBy)],
-    ['Principal Designer', na(principalDesigner)],
-    [getLeadDesignerLabel(), na(leadDesigner)],
-    ['Checked By', na(checkedBy)],
-    ['Date Issued', na(reportDate)],
-    ['Date Checked', na(dateStr)],
-    ['Revision', na(revision)]
-  ];
+  // Residual note (this report is a live working tool, not a final position)
+  const noteText = 'These are residual risks, to be further reduced throughout the project. This is a live working tool, not a final position \u2014 Red risks remain flagged and reopen at each design review.';
+  const noteLines = doc.splitTextToSize(noteText, availW - 6);
+  const noteH = noteLines.length * 4.2 + 5;
+  doc.setFillColor(255, 248, 230); doc.setDrawColor(255, 225, 166); doc.setLineWidth(0.3);
+  doc.roundedRect(margin, y, availW, noteH, 1.5, 1.5, 'FD');
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(102, 77, 3);
+  doc.text(noteLines, margin + 3, y + 4.6);
+  y += noteH + 5;
 
-  if (infoRows.length > 0) {
+  // Column widths: Ref, Element, Stage fixed; Hazard + Further action share the rest.
+  const wRef = 16, wEl = 46, wStage = 30, wGpp = 50;
+  const flexTotal = availW - (wRef + wEl + wStage + wGpp);
+  const wHaz = Math.round(flexTotal * 0.52);
+  const wAct = availW - (wRef + wEl + wStage + wGpp) - wHaz;
+  const head = [['Ref', 'Element / Activity', 'Stage', 'Hazard / Associated Risk', 'GPP', 'Further action required']];
+
+  bands.forEach(function (b) {
+    const items = grouped[b.key];
+    if (!items.length) return;
+    if (y + 22 > pageH - 14) { doc.addPage(); y = margin + 4; }
+    // Band heading bar (HSE-style coloured band)
+    doc.setFillColor(b.head[0], b.head[1], b.head[2]);
+    doc.roundedRect(margin, y, availW, 8, 1.5, 1.5, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+    doc.text(b.label + '   (' + items.length + ')    ' + b.note, margin + 3, y + 5.6);
+    y += 10;
+
+    const body = items.map(function (r) {
+      return [
+        r.ref || '',
+        r.element || '',
+        r.stageRequired || '',
+        r.hazard || '',
+        r.gpp ? gppFull(r.gpp) : '',
+        r.actionRequired || ''
+      ];
+    });
+
     doc.autoTable({
-      body: infoRows,
-      startY: y,
+      head: head, body: body, startY: y,
       margin: { left: margin, right: margin },
       theme: 'grid',
-      styles: { fontSize: 9, cellPadding: 1.8, valign: 'top', overflow: 'linebreak' },
+      styles: { fontSize: 8.5, cellPadding: 2, valign: 'top', overflow: 'linebreak', lineColor: [210, 214, 222], lineWidth: 0.2, textColor: [31, 41, 55] },
+      headStyles: { fillColor: b.fill, textColor: b.text, fontStyle: 'bold', fontSize: 8.5 },
       columnStyles: {
-        0: { cellWidth: 42, fontStyle: 'bold', textColor: [55, 65, 81], fillColor: [249, 250, 251] },
-        1: { textColor: [17, 24, 39] }
+        0: { cellWidth: wRef, fontStyle: 'bold' },
+        1: { cellWidth: wEl },
+        2: { cellWidth: wStage, halign: 'center' },
+        3: { cellWidth: wHaz },
+        4: { cellWidth: wGpp },
+        5: { cellWidth: wAct }
+      },
+      didParseCell: function (data) {
+        if (data.section === 'body' && data.column.index === 2 && data.cell.raw) {
+          const c = stageColour(data.cell.raw);
+          const bg = hexToRgb(c.bg); const fg = hexToRgb(c.fg);
+          if (bg) data.cell.styles.fillColor = bg;
+          if (fg) data.cell.styles.textColor = fg;
+        }
       }
     });
     y = doc.lastAutoTable.finalY + 6;
-  }
-
-  // ---------- Render groups + risks ----------
-  // Each risk renders as a bordered/shaded card matching the on-screen
-  // .narrative-risk container, and is kept ATOMIC: it never breaks across a
-  // page boundary, and any evidence image stays inside the same card.
-  const CARD = {
-    bg: [249, 250, 251],      // #f9fafb
-    border: [191, 199, 214],  // #bfc7d6
-    accent: accentRgb,        // brand-accent 4px left bar
-    title: [30, 58, 138],     // #1e3a8a
-    rule: [209, 209, 214],    // #d1d1d6
-    label: [55, 65, 81],      // #374151
-    value: [31, 41, 55],      // #1f2937
-    padX: 4, padY: 3.5, lineH: 4.4, fieldGap: 1.2
-  };
-  const innerLeft = margin + CARD.padX + 1.5;        // clear the accent bar
-  const innerWidth = availW - CARD.padX * 2 - 1.5;
-  const usable = (pageH - 18) - (margin + 5);        // content height on a fresh page
-
-  // Lay out one "Label: value" field (label bold, value wraps). Measures when
-  // draw=false, draws when draw=true. Returns the height in mm.
-  function layoutField(label, value, x, yTop, width, draw) {
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    const labelText = label + ': ';
-    const labelW = doc.getTextWidth(labelText);
-    doc.setFont('helvetica', 'normal');
-    const valText = String((value === undefined || value === null || value === '') ? 'N/A' : value);
-    const words = valText.split(/\s+/);
-    const lines = [];
-    let cur = '';
-    let avail = width - labelW;
-    for (let i = 0; i < words.length; i++) {
-      const test = cur ? cur + ' ' + words[i] : words[i];
-      if (!cur || doc.getTextWidth(test) <= avail) { cur = test; }
-      else { lines.push(cur); cur = words[i]; avail = width; }
-    }
-    lines.push(cur);
-    if (draw) {
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(CARD.label[0], CARD.label[1], CARD.label[2]);
-      doc.text(labelText, x, yTop + CARD.lineH - 1.2);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(CARD.value[0], CARD.value[1], CARD.value[2]);
-      lines.forEach((ln, i) => {
-        const lx = i === 0 ? x + labelW : x;
-        doc.text(ln, lx, yTop + (i + 1) * CARD.lineH - 1.2);
-      });
-    }
-    return lines.length * CARD.lineH;
-  }
-
-  let globalIdx = 0;
-
-  groups.forEach(group => {
-    if (group.items.length === 0) return;
-
-    // Group heading bar (brand-coloured, uppercase — matches the on-screen h3)
-    ensureRoom(16);
-    doc.setFillColor(group.color[0], group.color[1], group.color[2]);
-    doc.roundedRect(margin, y, availW, 10, 1.5, 1.5, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(12);
-    doc.setTextColor(255, 255, 255);
-    doc.text(group.name.replace(/[^\x20-\x7E]/g, '').trim().toUpperCase(), margin + 4, y + 6.8);
-    y += 14;
-
-    group.items.forEach(risk => {
-      const titleText = (risk.ref || 'N/A') + ' - ' + (risk.element || 'N/A');
-      const pageBottom = pageH - 18;
-      const titleBlockH = 7.9;          // title text + rule + gap
-
-      // ----- Right column: evidence image (top) + drawing reference (below) -----
-      const refText = refsByItemIndex[globalIdx] || '';
-      const imgData = imagesByItemIndex[globalIdx];
-      let imgH = 0, imgW = 0, captionH = 0, aspect = 1.6;
-      const RIGHT_W = 58;               // right column width (mm)
-      if (imgData) {
-        try {
-          const props = doc.getImageProperties(imgData);
-          aspect = (props.width && props.height) ? props.width / props.height : 1.6;
-          imgW = RIGHT_W;
-          imgH = imgW / aspect;
-          if (imgH > 72) { imgH = 72; imgW = imgH * aspect; }   // keep it compact (ratio preserved)
-          captionH = 4.2;
-        } catch (err) { console.warn('Could not size image for risk', globalIdx, err); }
-      }
-      const refH = refText ? 5 : 0;
-      const hasRight = (imgData && imgH > 0) || !!refText;
-      const COL_GAP = 6;
-      const rightColW = hasRight ? RIGHT_W : 0;
-      const leftW = innerWidth - (hasRight ? rightColW + COL_GAP : 0);
-      const rightX = innerLeft + leftW + COL_GAP;
-      const rightBlockH = (imgData && imgH > 0 ? captionH + imgH + (refText ? 1.5 : 0) : 0) + refH;
-
-      // ----- Measure each field at the LEFT-column width — fields are atomic units.
-      // Short values never split; long narrative fields stay whole but may move to the
-      // next page. The card flows across pages, breaking only BETWEEN fields. -----
-      const fieldVal = (col) => (col === 'gpp' ? (risk.gpp ? gppFull(risk.gpp) : '') : risk[col]);
-      const fieldUnits = selectedColumns.map(col => ({
-        col: col,
-        h: layoutField(fieldLabels[col] || col, fieldVal(col), innerLeft, 0, leftW, false) + CARD.fieldGap
-      }));
-
-      // Orphan guard: keep the title with the first field + the image's top.
-      const firstNeed = CARD.padY + titleBlockH + Math.min(rightBlockH, 24) +
-        (fieldUnits[0] ? fieldUnits[0].h : 8) + CARD.padY;
-      if (y + firstNeed > pageBottom) { doc.addPage(); y = margin + 5; }
-
-      let fi = 0;
-      let firstSeg = true;
-      while (true) {
-        const segTop = y;
-        let measureCy = segTop + CARD.padY + (firstSeg ? titleBlockH : 0);
-        const fieldsTop = measureCy;
-        const startFi = fi;
-        while (fi < fieldUnits.length && measureCy + fieldUnits[fi].h <= pageBottom - CARD.padY) {
-          measureCy += fieldUnits[fi].h; fi++;
-        }
-        if (fi === startFi && fi < fieldUnits.length) { measureCy += fieldUnits[fi].h; fi++; } // ensure progress
-        let contentBottom = measureCy;
-        if (firstSeg) contentBottom = Math.max(contentBottom, fieldsTop + rightBlockH);
-        const segH = (contentBottom + CARD.padY) - segTop;
-
-        // ---- Draw the segment box (fill first, content on top) ----
-        doc.setFillColor(CARD.bg[0], CARD.bg[1], CARD.bg[2]);
-        doc.setDrawColor(CARD.border[0], CARD.border[1], CARD.border[2]);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(margin, segTop, availW, segH, 2, 2, 'FD');
-        doc.setFillColor(CARD.accent[0], CARD.accent[1], CARD.accent[2]);
-        doc.rect(margin, segTop, 1.5, segH, 'F');
-
-        let cy = segTop + CARD.padY;
-        if (firstSeg) {
-          // Title + rule (full width)
-          doc.setFont('helvetica', 'bold'); doc.setFontSize(11);
-          doc.setTextColor(CARD.title[0], CARD.title[1], CARD.title[2]);
-          doc.text(titleText, innerLeft, cy + 3.6);
-          doc.setDrawColor(CARD.rule[0], CARD.rule[1], CARD.rule[2]); doc.setLineWidth(0.2);
-          doc.line(innerLeft, cy + 5.5, margin + availW - CARD.padX, cy + 5.5);
-          cy += titleBlockH;
-          // Right column — image (top) then drawing reference, shifted up beside the fields
-          let rcy = cy;
-          if (imgData && imgH > 0) {
-            doc.setFont('helvetica', 'italic'); doc.setFontSize(8);
-            doc.setTextColor(107, 114, 128);
-            doc.text('Risk Evidence Image', rightX, rcy + 3);
-            rcy += captionH;
-            try { doc.addImage(imgData, rightX, rcy, imgW, imgH); }
-            catch (e) { console.warn('Could not embed image for risk', globalIdx, e); }
-            rcy += imgH + (refText ? 1.5 : 0);
-          }
-          if (refText) {
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-            doc.setTextColor(CARD.label[0], CARD.label[1], CARD.label[2]);
-            const refLabel = 'Drawing / ref: ';
-            doc.text(refLabel, rightX, rcy + 3.4);
-            const labelW = doc.getTextWidth(refLabel);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(CARD.value[0], CARD.value[1], CARD.value[2]);
-            let refOut = refText;
-            while (doc.getTextWidth(refOut) > (rightColW - labelW) && refOut.length > 2) refOut = refOut.slice(0, -2);
-            doc.text(refOut, rightX + labelW, rcy + 3.4);
-          }
-          firstSeg = false;
-        }
-        // Left column fields for this page segment
-        for (let k = startFi; k < fi; k++) {
-          layoutField(fieldLabels[fieldUnits[k].col] || fieldUnits[k].col, fieldVal(fieldUnits[k].col), innerLeft, cy, leftW, true);
-          cy += fieldUnits[k].h;
-        }
-
-        y = segTop + segH;
-        if (fi >= fieldUnits.length) break;
-        doc.addPage(); y = margin + 5;   // remaining fields continue on the next page
-      }
-
-      y += 5; // gap between cards
-      globalIdx++;
-    });
-
-    y += 3; // gap after a group
   });
 
-  // Footer on every page
+  // Footer + brand border on every page
   const totalPages = doc.internal.getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
     doc.setPage(i);
     drawPdfBrandBorder(doc, accentRgb);
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(107, 114, 128);
-    doc.text('Produced by AHS Compliance Consulting', margin, pageH - 9);
-    doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 9, { align: 'right' });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
+    doc.text('Produced by AHS Compliance Consulting \u2014 residual risks, to be reduced throughout the project', margin, pageH - 8);
+    doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 8, { align: 'right' });
   }
 
-  addGppMethodologyPage(doc, accentRgb); // methodology appendix on every report
-  doc.save(buildPdfFilename('Narrative_Report', revision));
+  addGppMethodologyPage(doc, accentRgb); // methodology appendix
+  doc.save(buildPdfFilename('Project_RAG_status', revision));
 }
+
 /// ==========================================
 // EXCEL IMPORT FUNCTIONALITY
 // ==========================================
