@@ -1001,6 +1001,9 @@ body {
 .gpp-eric { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: #eef7f7; font-size: 12.5px; line-height: 1.5; }
 .gpp-eric b { color: var(--brand-accent-dark); }
 .gpp-source { margin-top: 10px; font-size: 11.5px; color: #6e6e73; line-height: 1.5; }
+.gpp-subhead { margin: 4px 0 6px; font-size: 14px; font-weight: 800; color: #1f2937; }
+.gpp-rationale { margin: 0 0 10px; padding: 11px 14px; border: 1px solid #e6e6e6; border-left: 3px solid var(--brand-accent); border-radius: 10px; background: #fbfbfd; font-size: 12.5px; line-height: 1.55; color: #444; }
+.rag-legend .stage-chip { font-size: 10px; }
 
 /* GPP picker modal */
 #gppPickerOverlay { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 10000; display: none; align-items: center; justify-content: center; padding: 16px; }
@@ -10331,6 +10334,17 @@ const RAG_COLOURS = {
   Amber: { bg: "#fff3cd", fg: "#664d03" },
   Green: { bg: "#d1e7dd", fg: "#0f5132" }
 };
+// Why we apply the General Principles of Prevention — the rationale, shown on the
+// Risk Evaluation screen and the PDF methodology page.
+const GPP_RATIONALE = "Under CDM 2015 designers must take account of the general principles of prevention. We apply them as an eliminate-first hierarchy: work down the list in order, avoiding and designing the hazard out before reducing, isolating or controlling it, giving collective protection priority over individual measures, and treating information and instruction as the last resort. The principle recorded against each risk names the highest level of that hierarchy the design achieves — so the register shows how far a hazard has actually been designed out, not merely how it will be managed on site.";
+// Why the residual rating is Red / Amber / Green — a judgement of how significant the
+// risk still is AFTER the design response, not a likelihood x severity score.
+const RAG_RATIONALE = "The rating is a residual judgement: how significant the risk still is after the design response, not a likelihood times severity score. It reflects how far the hazard has been designed out and how much reliance remains on downstream control.";
+const RAG_DEFS = [
+  { band: "Red",   rating: "High",   bg: "#f8d7da", fg: "#842029", note: "Significant residual risk. The hazard has not been eliminated or substantially reduced by design and still relies on site controls, procedures or PPE. Priority — drive it further at each design review." },
+  { band: "Amber", rating: "Medium", bg: "#fff3cd", fg: "#664d03", note: "Reduced by design but not eliminated. A residual risk remains that must be managed and communicated to the contractor and, where relevant, the Health and Safety File." },
+  { band: "Green", rating: "Low",    bg: "#d1e7dd", fg: "#0f5132", note: "Eliminated, or reduced so far that only routine, well-understood control remains. Settles, with information passed on where needed." }
+];
 function ragOf(rating) {
   const r = String(rating || "").toLowerCase().trim();
   if (r === "high") return "Red";
@@ -10437,7 +10451,11 @@ function _escHtml(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, func
 function renderGppScreen() {
   const el = document.getElementById("gpp-screen-content");
   if (!el) return;
-  let html = '<div class="gpp-list">';
+  // 1) Why we apply the GPP — the rationale
+  let html = '<h3 class="gpp-subhead">Why we apply the General Principles of Prevention</h3>';
+  html += '<div class="gpp-rationale">' + _escHtml(GPP_RATIONALE) + '</div>';
+  // 2) The nine principles
+  html += '<div class="gpp-list">';
   GPP_PRINCIPLES.forEach(function (p) {
     html += '<div class="gpp-item"><div class="gpp-letter">' + p.letter + '</div>' +
       '<div class="gpp-body"><strong>' + _escHtml(p.title) + '</strong><span>' + _escHtml(p.text) + '</span></div></div>';
@@ -10446,6 +10464,16 @@ function renderGppScreen() {
   html += '<div class="gpp-eric"><b>Eliminate-first design hierarchy (ERIC):</b> ' +
     GPP_ERIC.join(' &rarr; ') + ' &mdash; then PPE and Discipline. Design out first; treat PPE and reliance on behaviour as the last resort.</div>';
   html += '<div class="gpp-source">' + _escHtml(GPP_SOURCE_NOTE) + '</div>';
+  // 3) Why the residual rating is Red / Amber / Green — same chip + definition style
+  //    as the stage legend, so the rating scale reads at a glance.
+  html += '<h3 class="gpp-subhead" style="margin-top:20px;">Risk rating — what Red, Amber and Green mean</h3>';
+  html += '<div class="gpp-rationale">' + _escHtml(RAG_RATIONALE) + '</div>';
+  html += '<div class="stage-legend rag-legend">' + RAG_DEFS.map(function (d) {
+    return '<div class="stage-legend-item">' +
+      '<span class="stage-chip" style="background:' + d.bg + ';color:' + d.fg + ';">' + d.band + ' &middot; ' + d.rating + '</span>' +
+      '<span class="stage-legend-note">' + _escHtml(d.note) + '</span>' +
+    '</div>';
+  }).join("") + '</div>';
   el.innerHTML = html;
 }
 // Populate the detail-panel GPP select (letter — title) from the source of truth.
@@ -11845,14 +11873,17 @@ function addGppMethodologyPage(doc, accentRgb) {
   const m = 14; let y = m + 4;
   doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(17, 24, 39);
   doc.text('Risk evaluation methodology — General Principles of Prevention', m, y); y += 7;
+  // Why we apply the GPP — the rationale
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]);
+  doc.text('Why we apply the General Principles of Prevention', m, y); y += 5;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
-  const intro = doc.splitTextToSize('The design risk evaluation methodology used on every project. It is not a likelihood x severity score. Each register risk is characterised by the single principle that best describes the design response (its letter, a to i, shown in the GPP column).', pw - 2 * m);
+  const intro = doc.splitTextToSize(GPP_RATIONALE, pw - 2 * m);
   doc.text(intro, m, y); y += intro.length * 4.6 + 3;
   GPP_PRINCIPLES.forEach(function (p) {
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]);
     doc.text(p.letter + '.', m, y);
     doc.setFont('helvetica', 'normal'); doc.setTextColor(31, 41, 55);
-    const t = doc.splitTextToSize(p.text, pw - 2 * m - 8);
+    const t = doc.splitTextToSize(p.title + ' — ' + p.text, pw - 2 * m - 8);
     doc.text(t, m + 6, y);
     y += Math.max(1, t.length) * 4.6 + 1.6;
   });
@@ -11862,7 +11893,30 @@ function addGppMethodologyPage(doc, accentRgb) {
   doc.text(eric, m, y); y += eric.length * 4.6 + 2;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
   const sn = doc.splitTextToSize(GPP_SOURCE_NOTE, pw - 2 * m);
-  doc.text(sn, m, y);
+  doc.text(sn, m, y); y += sn.length * 4.4 + 6;
+
+  // Why the residual rating is Red / Amber / Green — coloured swatch + definition
+  if (y > ph - 48) { doc.addPage(); drawPdfBrandBorder(doc, accentRgb); y = m + 4; }
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(17, 24, 39);
+  doc.text('Risk rating — what Red, Amber and Green mean', m, y); y += 5.5;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
+  const ragR = doc.splitTextToSize(RAG_RATIONALE, pw - 2 * m);
+  doc.text(ragR, m, y); y += ragR.length * 4.6 + 3;
+  const chipW = 30, chipH = 6.4, noteX = m + chipW + 5;
+  RAG_DEFS.forEach(function (d) {
+    const bg = hexToRgb(d.bg), fg = hexToRgb(d.fg);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(31, 41, 55);
+    const note = doc.splitTextToSize(d.note, pw - noteX - m);
+    const rowH = Math.max(chipH, note.length * 4.3);
+    doc.setFillColor(bg[0], bg[1], bg[2]);
+    doc.roundedRect(m, y, chipW, chipH, 1.5, 1.5, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(fg[0], fg[1], fg[2]);
+    doc.text(d.band + '  ·  ' + d.rating, m + chipW / 2, y + 4.4, { align: 'center' });
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(31, 41, 55);
+    doc.text(note, noteX, y + 4.4);
+    y += rowH + 3;
+  });
+
   doc.setFontSize(8); doc.setTextColor(107, 114, 128);
   doc.text('Produced by AHS Compliance Consulting', m, ph - 9);
   doc.text('Risk evaluation methodology', pw - m, ph - 9, { align: 'right' });
