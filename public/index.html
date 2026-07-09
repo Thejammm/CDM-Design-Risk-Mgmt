@@ -10341,9 +10341,9 @@ const GPP_RATIONALE = "Under CDM 2015 designers must take account of the general
 // risk still is AFTER the design response, not a likelihood x severity score.
 const RAG_RATIONALE = "The rating is a residual judgement: how significant the risk still is after the design response, not a likelihood times severity score. It reflects how far the hazard has been designed out and how much reliance remains on downstream control.";
 const RAG_DEFS = [
-  { band: "Red",   rating: "High",   bg: "#f8d7da", fg: "#842029", note: "Significant residual risk. The hazard has not been eliminated or substantially reduced by design and still relies on site controls, procedures or PPE. Priority — drive it further at each design review." },
+  { band: "Red",   rating: "High",   bg: "#f8d7da", fg: "#842029", note: "Significant residual risk. The hazard has not been eliminated or substantially reduced by design and still relies on site controls, procedures or PPE. A priority for further reduction at each design review." },
   { band: "Amber", rating: "Medium", bg: "#fff3cd", fg: "#664d03", note: "Reduced by design but not eliminated. A residual risk remains that must be managed and communicated to the contractor and, where relevant, the Health and Safety File." },
-  { band: "Green", rating: "Low",    bg: "#d1e7dd", fg: "#0f5132", note: "Eliminated, or reduced so far that only routine, well-understood control remains. Settles, with information passed on where needed." }
+  { band: "Green", rating: "Low",    bg: "#d1e7dd", fg: "#0f5132", note: "Eliminated, or reduced so far that only routine, well-understood control remains. Considered adequately controlled, with relevant information communicated where required." }
 ];
 function ragOf(rating) {
   const r = String(rating || "").toLowerCase().trim();
@@ -10391,10 +10391,10 @@ function renderReductionPanel(rowIndex) {
     '<span class="reduction-title">Reduction</span>' +
     '<span class="reduction-move">Initial ' + ragChipHtml(r.initialRisk) + ' &rarr; Residual ' + ragChipHtml(r.residualRisk) + '</span>' +
     '<button type="button" class="reduction-controls-btn' + (needs ? ' is-red' : '') + '" onclick="openControlsFocus(' + rowIndex + ')">' +
-      (needs ? 'Reduce this Red risk &rarr;' : 'Open controls') + '</button>' +
+      (needs ? 'Reduce residual risk &rarr;' : 'Review control measures') + '</button>' +
   '</div>';
   if (needs) {
-    html += '<div class="reduction-gate">Still <strong>Red</strong>. Open the controls screen to work it down — apply a control and re-rate the residual, or record a conscious justification and set the further action and H&amp;S File information. It stays flagged and reopens at each design review until it settles Amber or Green.</div>';
+    html += '<div class="reduction-gate">The residual risk remains <strong>High (Red)</strong>. Open the control measures screen to reduce it further — apply a control and re-assess the residual rating, or record a reasoned justification and set the further action and Health &amp; Safety File information. It remains outstanding and is reviewed at each design review until the residual is reduced to Medium or Low.</div>';
   }
   el.innerHTML = html;
 }
@@ -10466,7 +10466,7 @@ function renderGppScreen() {
   html += '<div class="gpp-source">' + _escHtml(GPP_SOURCE_NOTE) + '</div>';
   // 3) Why the residual rating is Red / Amber / Green — same chip + definition style
   //    as the stage legend, so the rating scale reads at a glance.
-  html += '<h3 class="gpp-subhead" style="margin-top:20px;">Risk rating — what Red, Amber and Green mean</h3>';
+  html += '<h3 class="gpp-subhead" style="margin-top:20px;">Residual risk rating — Red, Amber and Green</h3>';
   html += '<div class="gpp-rationale">' + _escHtml(RAG_RATIONALE) + '</div>';
   html += '<div class="stage-legend rag-legend">' + RAG_DEFS.map(function (d) {
     return '<div class="stage-legend-item">' +
@@ -10582,7 +10582,7 @@ function renderControlsFocus() {
   const band = ragOf(r.residualRisk);
 
   let html = '<div class="cf-head">' +
-    '<div class="cf-title">Controls &mdash; ' + _escHtml(r.ref || ("Row " + (i + 1))) + (r.element ? ' &middot; ' + _escHtml(r.element) : '') + '</div>' +
+    '<div class="cf-title">Control measures &mdash; ' + _escHtml(r.ref || ("Row " + (i + 1))) + (r.element ? ' &middot; ' + _escHtml(r.element) : '') + '</div>' +
     '<button type="button" class="cf-close" onclick="closeControlsFocus()" aria-label="Close">&times;</button>' +
   '</div>';
 
@@ -10594,26 +10594,26 @@ function renderControlsFocus() {
     html += '<span class="cf-gpp-letter">' + g.letter + '</span>' +
       '<div class="cf-gpp-body"><strong>' + _escHtml(g.title) + '</strong><span>' + _escHtml(g.text) + '</span></div>';
   } else {
-    html += '<div class="cf-gpp-body cf-gpp-none"><strong>No principle chosen yet</strong>' +
-      '<span>Choose the General Principle of Prevention that best characterises the design response — it frames the controls below.</span></div>';
+    html += '<div class="cf-gpp-body cf-gpp-none"><strong>No principle selected</strong>' +
+      '<span>Select the General Principle of Prevention that best characterises the design response — it frames the control measures below.</span></div>';
   }
   html += '<button type="button" class="cf-gpp-change" onclick="changeGppFromControls()">' + (g ? "Change GPP" : "Choose GPP") + '</button>';
   html += '</div>';
 
   // Control recommendations — the means to deliver the principle
-  html += '<div class="cf-section-label">Control recommendations' + (g ? ' &mdash; ways to deliver principle ' + g.letter + ' (' + _escHtml(g.title) + ')' : '') + '</div>';
+  html += '<div class="cf-section-label">Control recommendations' + (g ? ' &mdash; measures to deliver principle ' + g.letter + ' (' + _escHtml(g.title) + ')' : '') + '</div>';
   if (prompts.length) {
     html += '<div class="cf-prompts">';
     prompts.forEach(function (p, idx) {
       html += '<button type="button" class="cf-prompt" onclick="applyPromptToComments(' + i + ',' + idx + ')" title="Add to Designers Comments">' + _escHtml(p) + '</button>';
     });
-    html += '</div><div class="note-text" style="margin:4px 0 2px;">These are prompts, not fixes. Click one to drop it into Designers Comments, then record what you will design in.</div>';
+    html += '</div><div class="note-text" style="margin:4px 0 2px;">These are prompts to consider, not prescribed solutions. Select one to add it to Designers Comments, then record the measures to be incorporated into the design.</div>';
   } else {
     html += '<div class="note-text">No control recommendations attached to this risk.</div>';
   }
 
   // Record what you will design in
-  html += '<label class="cf-field-label" for="cf-comments">What you will design in (Designers Comments)</label>' +
+  html += '<label class="cf-field-label" for="cf-comments">Design measures incorporated (Designers Comments)</label>' +
     '<textarea id="cf-comments" class="cf-textarea" rows="4" oninput="cfComments(this.value)">' + _escHtml(r.designerComments || "") + '</textarea>';
 
   // Re-rate the residual
@@ -10627,9 +10627,9 @@ function renderControlsFocus() {
   '</div>';
 
   if (band === "Red") {
-    html += '<div class="cf-settle cf-settle-red">Still <strong>Red</strong> — it remains flagged for further reduction and reopens at each design review until it settles Amber or Green.</div>';
+    html += '<div class="cf-settle cf-settle-red">The residual risk remains <strong>High (Red)</strong> — it remains outstanding for further reduction and is reviewed at each design review until reduced to Medium or Low.</div>';
   } else if (band === "Amber" || band === "Green") {
-    html += '<div class="cf-settle cf-settle-ok">Settles as <strong>' + band + '</strong>. Flag the residual to the contractor and record H&amp;S File information where needed.</div>';
+    html += '<div class="cf-settle cf-settle-ok">Residual risk assessed as <strong>' + band + '</strong>. Communicate the residual risk to the contractor and record Health &amp; Safety File information where required.</div>';
   }
 
   // Further action + H&S File — completing the reduction record
@@ -11363,12 +11363,12 @@ function generateNarrativeReport() {
   // Build the report
   let html = `
     <h2>Project RAG status</h2>
-    <div class="rag-residual-note">These are <strong>residual risks</strong>, to be further reduced throughout the project. This is a live working tool, not a final position — Red risks remain flagged and reopen at each design review.</div>
+    <div class="rag-residual-note">These are <strong>residual risks</strong> for further reduction as the design develops. This register is a working document, not a final position — High (Red) risks remain outstanding and are reviewed at each design review.</div>
     <div class="rag-band-counts">
       <span class="rag-band-count rag-red"${ragCounts.Red ? '' : ' data-empty="1"'}>${ragCounts.Red} Red</span>
       <span class="rag-band-count rag-amber">${ragCounts.Amber} Amber</span>
       <span class="rag-band-count rag-green">${ragCounts.Green} Green</span>
-      ${ragCounts.Red ? '<span class="rag-priority">' + ragCounts.Red + ' still Red — priority to drive further</span>' : '<span class="rag-priority ok">No residual Red risks</span>'}
+      ${ragCounts.Red ? '<span class="rag-priority">' + ragCounts.Red + ' High (Red) — priority for further reduction</span>' : '<span class="rag-priority ok">No outstanding High (Red) residual risks</span>'}
     </div>
     <div class="narrative-project-info">
       <div class="info-row"><strong>Client:</strong> ${client}</div>
@@ -11389,7 +11389,7 @@ function generateNarrativeReport() {
 
   let itemIndex = 0;
   const bandMeta = [
-    { key: 'Red',     cls: 'risk-level-high',   label: '🔴 Red — residual High (drive further)' },
+    { key: 'Red',     cls: 'risk-level-high',   label: '🔴 Red — residual High (priority for further reduction)' },
     { key: 'Amber',   cls: 'risk-level-medium', label: '🟠 Amber — residual Medium' },
     { key: 'Green',   cls: 'risk-level-low',    label: '🟢 Green — residual Low' },
     { key: 'Unrated', cls: '',                  label: '⚪ Not yet rated' }
@@ -11898,7 +11898,7 @@ function addGppMethodologyPage(doc, accentRgb) {
   // Why the residual rating is Red / Amber / Green — coloured swatch + definition
   if (y > ph - 48) { doc.addPage(); drawPdfBrandBorder(doc, accentRgb); y = m + 4; }
   doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(17, 24, 39);
-  doc.text('Risk rating — what Red, Amber and Green mean', m, y); y += 5.5;
+  doc.text('Residual risk rating — Red, Amber and Green', m, y); y += 5.5;
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
   const ragR = doc.splitTextToSize(RAG_RATIONALE, pw - 2 * m);
   doc.text(ragR, m, y); y += ragR.length * 4.6 + 3;
@@ -11984,7 +11984,7 @@ function printRiskRegisterPDF() {
     const amb = rows.filter(r => ragOf(r.residualRisk) === 'Amber').length;
     const grn = rows.filter(r => ragOf(r.residualRisk) === 'Green').length;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(55, 65, 81);
-    doc.text('Residual bands:  ' + red + ' Red   ' + amb + ' Amber   ' + grn + ' Green' + (red ? '    — ' + red + ' still Red, priority to drive further' : '    — no residual Red'), margin, nextY);
+    doc.text('Residual bands:  ' + red + ' Red   ' + amb + ' Amber   ' + grn + ' Green' + (red ? '    — ' + red + ' High (Red), priority for further reduction' : '    — no outstanding High (Red) residual'), margin, nextY);
     nextY += 6;
   })();
 
@@ -12191,7 +12191,7 @@ function printNarrativeReport() {
 
   // Three RAG bands by RESIDUAL rating, HSE style: Red, Amber, Green (+ any unrated).
   const bands = [
-    { key: 'Red',     label: 'RED',           head: [132, 32, 41],  fill: [248, 215, 218], text: [132, 32, 41], note: 'Residual High \u2014 priority, drive further' },
+    { key: 'Red',     label: 'RED',           head: [132, 32, 41],  fill: [248, 215, 218], text: [132, 32, 41], note: 'Residual High \u2014 priority for further reduction' },
     { key: 'Amber',   label: 'AMBER',         head: [102, 77, 3],   fill: [255, 243, 205], text: [102, 77, 3],  note: 'Residual Medium' },
     { key: 'Green',   label: 'GREEN',         head: [15, 81, 50],   fill: [209, 231, 221], text: [15, 81, 50],  note: 'Residual Low' },
     { key: 'Unrated', label: 'NOT YET RATED', head: [107, 114, 128], fill: [243, 244, 246], text: [55, 65, 81], note: 'No residual rating set' }
@@ -12234,8 +12234,8 @@ function printNarrativeReport() {
   doc.text(metaWrapped, margin, y);
   y += metaWrapped.length * 4.4 + 2;
 
-  // Residual note (this report is a live working tool, not a final position)
-  const noteText = 'These are residual risks, to be further reduced throughout the project. This is a live working tool, not a final position \u2014 Red risks remain flagged and reopen at each design review.';
+  // Residual note (this register is a working document, not a final position)
+  const noteText = 'These are residual risks for further reduction as the design develops. This register is a working document, not a final position \u2014 High (Red) risks remain outstanding and are reviewed at each design review.';
   const noteLines = doc.splitTextToSize(noteText, availW - 6);
   const noteH = noteLines.length * 4.2 + 5;
   doc.setFillColor(255, 248, 230); doc.setDrawColor(255, 225, 166); doc.setLineWidth(0.3);
@@ -12305,7 +12305,7 @@ function printNarrativeReport() {
     doc.setPage(i);
     drawPdfBrandBorder(doc, accentRgb);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
-    doc.text('Produced by AHS Compliance Consulting \u2014 residual risks, to be reduced throughout the project', margin, pageH - 8);
+    doc.text('Produced by AHS Compliance Consulting \u2014 residual risks for further reduction throughout the project', margin, pageH - 8);
     doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 8, { align: 'right' });
   }
 
