@@ -1007,23 +1007,27 @@ body {
 /* The wheel is the hero on wider screens; the clickable list is the fallback on
    narrow screens. Exactly one is shown. */
 .gpp-wheel-wrap { display: block; margin: 8px 0 6px; }
-.gpp-wheel { display: block; width: 100%; max-width: 600px; height: auto; margin: 0 auto; }
-.gpp-wheel-hint { text-align: center; margin: 2px auto 0; }
+/* --gpp-light: a lightened tint of the client accent, so the elements that sit on
+   the dark hub (the "9" and the rule) stay visible even when the brand accent is
+   itself dark. --gpp-edge gives every node a faint outline for definition. */
+.gpp-wheel { display: block; width: 100%; max-width: 620px; height: auto; margin: 0 auto;
+  --gpp-light: color-mix(in srgb, var(--brand-accent) 42%, white);
+  --gpp-edge: color-mix(in srgb, var(--brand-accent-dark) 55%, transparent); }
 .gpp-ring { fill: none; stroke: #d7dbe0; stroke-width: 2; stroke-dasharray: 2 9; stroke-linecap: round; }
 .gpp-hub-bg { fill: var(--brand-accent-dark); }
-.gpp-hub-num { fill: var(--brand-accent); font-size: 86px; font-weight: 800; }
+.gpp-hub-num { fill: var(--gpp-light); font-size: 84px; font-weight: 800; }
 .gpp-hub-title { fill: #fff; font-size: 16px; font-weight: 700; letter-spacing: .3px; }
-.gpp-hub-rule { stroke: var(--brand-accent); stroke-width: 2; }
-.gpp-hub-sub { fill: rgba(255,255,255,.72); font-size: 10.5px; letter-spacing: .4px; }
+.gpp-hub-rule { stroke: var(--gpp-light); stroke-width: 2; }
+.gpp-hub-sub { fill: rgba(255,255,255,.78); font-size: 10.5px; letter-spacing: .4px; }
 .gpp-wheel-node { cursor: pointer; }
-.gpp-wheel-node .node-bg { fill: var(--brand-accent); transition: fill .15s; }
+.gpp-wheel-node .node-bg { fill: var(--brand-accent); stroke: var(--gpp-edge); stroke-width: 1.5; transition: fill .15s; }
 .gpp-wheel-node:hover .node-bg, .gpp-wheel-node:focus .node-bg { fill: var(--brand-accent-dark); }
 .gpp-wheel-node:focus { outline: none; }
-.gpp-wheel-node:focus .node-bg { stroke: var(--brand-accent-dark); stroke-width: 3; }
+.gpp-wheel-node:focus .node-bg { stroke: var(--gpp-light); stroke-width: 3; }
 .gpp-wheel-node .node-letter { fill: #fff; font-size: 26px; font-weight: 800; }
 .gpp-wheel-node .node-i-bg { fill: #fff; stroke: var(--brand-accent-dark); stroke-width: 1.5; }
 .gpp-wheel-node .node-i { fill: var(--brand-accent-dark); font-size: 12px; font-weight: 700; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
-.gpp-node-label { fill: #374151; font-size: 14px; font-weight: 600; }
+.gpp-node-label { fill: #374151; font-size: 17px; font-weight: 700; }
 .gpp-list { display: none; flex-direction: column; gap: 8px; margin: 12px 0; }
 @media (max-width: 720px) { .gpp-wheel-wrap { display: none; } .gpp-list { display: flex; } }
 .gpp-item-btn { width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
@@ -10572,7 +10576,7 @@ function _wrapGppLabel(s) {
 // Build the "9 principles" wheel as a scalable SVG (brand-coloured via CSS vars).
 // Each node is clickable and opens the info popup for that principle.
 function buildGppWheelSvg() {
-  const CX = 450, CY = 345, RING = 205, NR = 33, LR = 288;
+  const CX = 470, CY = 345, RING = 205, NR = 33, LR = 292;
   let nodes = "", labels = "";
   GPP_PRINCIPLES.forEach(function (p, k) {
     const ang = (-90 + 40 * k) * Math.PI / 180;
@@ -10593,13 +10597,13 @@ function buildGppWheelSvg() {
       "</g>";
   });
   const hub =
-    '<circle class="gpp-hub-bg" cx="' + CX + '" cy="' + CY + '" r="118"></circle>' +
-    '<text class="gpp-hub-num" x="' + CX + '" y="' + (CY - 22) + '" text-anchor="middle" dominant-baseline="central">9</text>' +
-    '<text class="gpp-hub-title" x="' + CX + '" y="' + (CY + 30) + '" text-anchor="middle">General Principles</text>' +
-    '<text class="gpp-hub-title" x="' + CX + '" y="' + (CY + 48) + '" text-anchor="middle">of Prevention</text>' +
-    '<line class="gpp-hub-rule" x1="' + (CX - 40) + '" y1="' + (CY + 59) + '" x2="' + (CX + 40) + '" y2="' + (CY + 59) + '"></line>' +
-    '<text class="gpp-hub-sub" x="' + CX + '" y="' + (CY + 74) + '" text-anchor="middle">Schedule 1, MHSWR 1999</text>';
-  return '<svg class="gpp-wheel" viewBox="0 0 900 690" role="img" aria-label="The nine General Principles of Prevention arranged as a wheel">' +
+    '<circle class="gpp-hub-bg" cx="' + CX + '" cy="' + CY + '" r="120"></circle>' +
+    '<text class="gpp-hub-num" x="' + CX + '" y="' + (CY - 32) + '" text-anchor="middle" dominant-baseline="central">9</text>' +
+    '<text class="gpp-hub-title" x="' + CX + '" y="' + (CY + 24) + '" text-anchor="middle">General Principles</text>' +
+    '<text class="gpp-hub-title" x="' + CX + '" y="' + (CY + 46) + '" text-anchor="middle">of Prevention</text>' +
+    '<line class="gpp-hub-rule" x1="' + (CX - 42) + '" y1="' + (CY + 61) + '" x2="' + (CX + 42) + '" y2="' + (CY + 61) + '"></line>' +
+    '<text class="gpp-hub-sub" x="' + CX + '" y="' + (CY + 79) + '" text-anchor="middle">Schedule 1, MHSWR 1999</text>';
+  return '<svg class="gpp-wheel" viewBox="0 0 940 700" role="img" aria-label="The nine General Principles of Prevention arranged as a wheel">' +
     '<circle class="gpp-ring" cx="' + CX + '" cy="' + CY + '" r="' + RING + '"></circle>' +
     labels + hub + nodes + "</svg>";
 }
@@ -10639,8 +10643,7 @@ function renderGppScreen() {
   // 2) The nine principles — an engaging wheel (wider screens) with an info popup
   //    per principle, plus a clickable list fallback on narrow screens. Both open
   //    the same popup (plain-English meaning + a real-world example).
-  html += '<div class="gpp-wheel-wrap">' + buildGppWheelSvg() +
-    '<p class="gpp-wheel-hint note-text">Select any principle for a plain-English explanation and a real-world example.</p></div>';
+  html += '<div class="gpp-wheel-wrap">' + buildGppWheelSvg() + '</div>';
   html += '<div class="gpp-list">';
   GPP_PRINCIPLES.forEach(function (p) {
     html += '<button type="button" class="gpp-item gpp-item-btn" onclick="openGppInfo(\'' + p.letter + '\')">' +
