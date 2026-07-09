@@ -11923,11 +11923,12 @@ function printRiskRegisterPDF() {
     doc.text(project, margin, nextY);
     nextY += 6;
   }
-  // Band counts
+  // Band counts (the register PDF prints every row, so count over `risks`)
   (function () {
-    const red = filteredRisks.filter(r => ragOf(r.residualRisk) === 'Red').length;
-    const amb = filteredRisks.filter(r => ragOf(r.residualRisk) === 'Amber').length;
-    const grn = filteredRisks.filter(r => ragOf(r.residualRisk) === 'Green').length;
+    const rows = risks || [];
+    const red = rows.filter(r => ragOf(r.residualRisk) === 'Red').length;
+    const amb = rows.filter(r => ragOf(r.residualRisk) === 'Amber').length;
+    const grn = rows.filter(r => ragOf(r.residualRisk) === 'Green').length;
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(55, 65, 81);
     doc.text('Residual bands:  ' + red + ' Red   ' + amb + ' Amber   ' + grn + ' Green' + (red ? '    — ' + red + ' still Red, priority to drive further' : '    — no residual Red'), margin, nextY);
     nextY += 6;
