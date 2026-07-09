@@ -1004,7 +1004,46 @@ body {
 .gpp-cell:hover { background: #eef2ff; }
 
 /* GPP static screen */
-.gpp-list { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; }
+/* The wheel is the hero on wider screens; the clickable list is the fallback on
+   narrow screens. Exactly one is shown. */
+.gpp-wheel-wrap { display: block; margin: 8px 0 6px; }
+.gpp-wheel { display: block; width: 100%; max-width: 600px; height: auto; margin: 0 auto; }
+.gpp-wheel-hint { text-align: center; margin: 2px auto 0; }
+.gpp-ring { fill: none; stroke: #d7dbe0; stroke-width: 2; stroke-dasharray: 2 9; stroke-linecap: round; }
+.gpp-hub-bg { fill: var(--brand-accent-dark); }
+.gpp-hub-num { fill: var(--brand-accent); font-size: 86px; font-weight: 800; }
+.gpp-hub-title { fill: #fff; font-size: 16px; font-weight: 700; letter-spacing: .3px; }
+.gpp-hub-rule { stroke: var(--brand-accent); stroke-width: 2; }
+.gpp-hub-sub { fill: rgba(255,255,255,.72); font-size: 10.5px; letter-spacing: .4px; }
+.gpp-wheel-node { cursor: pointer; }
+.gpp-wheel-node .node-bg { fill: var(--brand-accent); transition: fill .15s; }
+.gpp-wheel-node:hover .node-bg, .gpp-wheel-node:focus .node-bg { fill: var(--brand-accent-dark); }
+.gpp-wheel-node:focus { outline: none; }
+.gpp-wheel-node:focus .node-bg { stroke: var(--brand-accent-dark); stroke-width: 3; }
+.gpp-wheel-node .node-letter { fill: #fff; font-size: 26px; font-weight: 800; }
+.gpp-wheel-node .node-i-bg { fill: #fff; stroke: var(--brand-accent-dark); stroke-width: 1.5; }
+.gpp-wheel-node .node-i { fill: var(--brand-accent-dark); font-size: 12px; font-weight: 700; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
+.gpp-node-label { fill: #374151; font-size: 14px; font-weight: 600; }
+.gpp-list { display: none; flex-direction: column; gap: 8px; margin: 12px 0; }
+@media (max-width: 720px) { .gpp-wheel-wrap { display: none; } .gpp-list { display: flex; } }
+.gpp-item-btn { width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
+.gpp-item-btn:hover { border-color: var(--brand-accent); background: #f7fbfb; }
+.gpp-item-i { margin-left: auto; align-self: center; flex: 0 0 auto; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--brand-accent); color: var(--brand-accent-dark); font-style: italic; font-weight: 700; font-family: Georgia, serif; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+/* Principle info popup (meaning + real-world example) */
+#gppInfoOverlay { display: none; position: fixed; inset: 0; background: rgba(17,24,39,.55); z-index: 5000; align-items: center; justify-content: center; padding: 5vh 16px; }
+#gppInfoOverlay.is-open { display: flex; }
+.gpp-info { position: relative; background: #fff; width: 100%; max-width: 560px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.3); overflow: hidden; max-height: 90vh; overflow-y: auto; }
+.gpp-info-close { position: absolute; top: 12px; right: 14px; border: none; background: rgba(255,255,255,.3); color: #fff; font-size: 24px; line-height: 1; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; z-index: 2; }
+.gpp-info-close:hover { background: rgba(255,255,255,.5); }
+.gpp-info-head { display: flex; align-items: center; gap: 14px; padding: 20px 56px 20px 22px; background: var(--brand-accent); }
+.gpp-info-letter { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; background: rgba(255,255,255,.92); color: var(--brand-accent-dark); font-weight: 800; font-size: 24px; display: flex; align-items: center; justify-content: center; }
+.gpp-info-head h3 { margin: 0; color: #fff; font-size: 19px; }
+.gpp-info-section { padding: 16px 22px 2px; }
+.gpp-info-section p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #333; }
+.gpp-info-label { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: #6e6e73; }
+.gpp-info-example { margin: 12px 18px 20px; padding: 12px 14px; background: #f7f9fc; border-left: 3px solid var(--brand-accent); border-radius: 10px; }
+.gpp-info-example p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #333; }
+.gpp-info-example .gpp-info-label { color: var(--brand-accent-dark); }
 .gpp-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid #e6e6e6; border-radius: 10px; background: #fbfbfd; }
 .gpp-letter { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-accent); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .gpp-body strong { display: block; font-size: 13.5px; color: #1f2937; }
@@ -10503,6 +10542,93 @@ else renderStageLegend();
 
 function _escHtml(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) { return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]; }); }
 
+// Real-world examples for each principle (adapted from hapo.eu), shown in the
+// info popup on the Risk Evaluation wheel. Plain workplace scenarios, UK spelling.
+const GPP_EXAMPLES = {
+  a: "In a food factory operators had to climb a step-ladder to reach a control mounted at height. When the line was reorganised the control was repositioned at eye level — the need to work at height, and the fall risk with it, disappeared completely.",
+  b: "A risk that genuinely cannot be avoided — such as periodic access to clean rooflights — is formally assessed so its residual severity is understood and the right controls (permanent access, edge protection) are specified rather than left to chance.",
+  c: "In a metalworking shop several workers reported frequent cuts handling machined parts. Investigation traced the sharp burrs to a machine set-up fault; correcting the process removed the hazard at its source rather than relying on gloves.",
+  d: "In a distribution centre the heaviest cartons were stored on the lowest shelves. After an ergonomic review they were moved to between knee and shoulder height, cutting stooping and manual-handling strain.",
+  e: "Adopting a newer, safer method — for example specifying an off-site prefabricated plant module so it is assembled at ground level instead of through extended work at height — takes advantage of technology that reduces exposure.",
+  f: "An industrial cleaning firm replaced a strongly irritant chemical with a product that gave the same performance but presented far fewer health risks — substituting the dangerous for the less dangerous.",
+  g: "An employer runs a single, coherent annual prevention plan covering safety training, site audits, ergonomic actions, equipment investment and monitoring of health-and-safety indicators, rather than one-off fixes.",
+  h: "In a maintenance workshop a fixed dust-extraction (LEV) system protects everyone working in the area at once — a collective measure that is more reliable than issuing each worker an individual mask.",
+  i: "A transport company puts every new starter through an induction covering safe movements and posture, road risk and emergency procedures, so people are properly instructed before they are exposed."
+};
+
+// Wrap a short title into at most two balanced lines for the SVG wheel labels.
+function _wrapGppLabel(s) {
+  if (s.length <= 14) return [s];
+  const w = s.split(" ");
+  if (w.length === 1) return [s];
+  let best = null;
+  for (let i = 1; i < w.length; i++) {
+    const a = w.slice(0, i).join(" "), b = w.slice(i).join(" "), sc = Math.max(a.length, b.length);
+    if (best === null || sc < best.sc) best = { a: a, b: b, sc: sc };
+  }
+  return [best.a, best.b];
+}
+
+// Build the "9 principles" wheel as a scalable SVG (brand-coloured via CSS vars).
+// Each node is clickable and opens the info popup for that principle.
+function buildGppWheelSvg() {
+  const CX = 450, CY = 345, RING = 205, NR = 33, LR = 288;
+  let nodes = "", labels = "";
+  GPP_PRINCIPLES.forEach(function (p, k) {
+    const ang = (-90 + 40 * k) * Math.PI / 180;
+    const nx = CX + RING * Math.cos(ang), ny = CY + RING * Math.sin(ang);
+    const lx = CX + LR * Math.cos(ang), ly = CY + LR * Math.sin(ang);
+    const anchor = Math.abs(nx - CX) < 45 ? "middle" : (nx < CX ? "end" : "start");
+    const lines = _wrapGppLabel(p.title);
+    const y0 = ly - (lines.length - 1) * 8.5;
+    labels += '<text class="gpp-node-label" x="' + lx.toFixed(1) + '" y="' + y0.toFixed(1) + '" text-anchor="' + anchor + '">' +
+      lines.map(function (ln, i) { return '<tspan x="' + lx.toFixed(1) + '" dy="' + (i === 0 ? 0 : 17) + '">' + _escHtml(ln) + "</tspan>"; }).join("") + "</text>";
+    const ix = nx + NR * 0.72, iy = ny + NR * 0.72;
+    nodes += '<g class="gpp-wheel-node" data-letter="' + p.letter + '" tabindex="0" role="button" aria-label="' + _escHtml(p.title) + ', see example">' +
+      "<title>" + _escHtml(p.title) + "</title>" +
+      '<circle class="node-bg" cx="' + nx.toFixed(1) + '" cy="' + ny.toFixed(1) + '" r="' + NR + '"></circle>' +
+      '<text class="node-letter" x="' + nx.toFixed(1) + '" y="' + ny.toFixed(1) + '" text-anchor="middle" dominant-baseline="central">' + p.letter + "</text>" +
+      '<circle class="node-i-bg" cx="' + ix.toFixed(1) + '" cy="' + iy.toFixed(1) + '" r="10"></circle>' +
+      '<text class="node-i" x="' + ix.toFixed(1) + '" y="' + iy.toFixed(1) + '" text-anchor="middle" dominant-baseline="central">i</text>' +
+      "</g>";
+  });
+  const hub =
+    '<circle class="gpp-hub-bg" cx="' + CX + '" cy="' + CY + '" r="118"></circle>' +
+    '<text class="gpp-hub-num" x="' + CX + '" y="' + (CY - 22) + '" text-anchor="middle" dominant-baseline="central">9</text>' +
+    '<text class="gpp-hub-title" x="' + CX + '" y="' + (CY + 30) + '" text-anchor="middle">General Principles</text>' +
+    '<text class="gpp-hub-title" x="' + CX + '" y="' + (CY + 48) + '" text-anchor="middle">of Prevention</text>' +
+    '<line class="gpp-hub-rule" x1="' + (CX - 40) + '" y1="' + (CY + 59) + '" x2="' + (CX + 40) + '" y2="' + (CY + 59) + '"></line>' +
+    '<text class="gpp-hub-sub" x="' + CX + '" y="' + (CY + 74) + '" text-anchor="middle">Schedule 1, MHSWR 1999</text>';
+  return '<svg class="gpp-wheel" viewBox="0 0 900 690" role="img" aria-label="The nine General Principles of Prevention arranged as a wheel">' +
+    '<circle class="gpp-ring" cx="' + CX + '" cy="' + CY + '" r="' + RING + '"></circle>' +
+    labels + hub + nodes + "</svg>";
+}
+
+// Info popup — plain-English meaning + a real-world example for one principle.
+function _buildGppInfo() {
+  if (document.getElementById("gppInfoOverlay")) return;
+  const ov = document.createElement("div");
+  ov.id = "gppInfoOverlay";
+  ov.innerHTML = '<div class="gpp-info" role="dialog" aria-modal="true">' +
+    '<button type="button" class="gpp-info-close" onclick="closeGppInfo()" aria-label="Close">&times;</button>' +
+    '<div id="gpp-info-body"></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener("click", function (e) { if (e.target === ov) closeGppInfo(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ov.classList.contains("is-open")) closeGppInfo(); });
+}
+function openGppInfo(letter) {
+  _buildGppInfo();
+  const p = gppByLetter(letter);
+  if (!p) return;
+  const ex = GPP_EXAMPLES[p.letter] || "";
+  document.getElementById("gpp-info-body").innerHTML =
+    '<div class="gpp-info-head"><span class="gpp-info-letter">' + p.letter + "</span><h3>" + _escHtml(p.title) + "</h3></div>" +
+    '<div class="gpp-info-section"><div class="gpp-info-label">What it means</div><p>' + _escHtml(p.text) + "</p></div>" +
+    (ex ? '<div class="gpp-info-example"><div class="gpp-info-label">Real-world example</div><p>' + _escHtml(ex) + "</p></div>" : "");
+  document.getElementById("gppInfoOverlay").classList.add("is-open");
+}
+function closeGppInfo() { const ov = document.getElementById("gppInfoOverlay"); if (ov) ov.classList.remove("is-open"); }
+
 // Render the static GPP evaluation screen from the single source of truth.
 function renderGppScreen() {
   const el = document.getElementById("gpp-screen-content");
@@ -10510,11 +10636,17 @@ function renderGppScreen() {
   // 1) Why we apply the GPP — the rationale
   let html = '<h3 class="gpp-subhead">Why we apply the General Principles of Prevention</h3>';
   html += '<div class="gpp-rationale">' + _escHtml(GPP_RATIONALE) + '</div>';
-  // 2) The nine principles
+  // 2) The nine principles — an engaging wheel (wider screens) with an info popup
+  //    per principle, plus a clickable list fallback on narrow screens. Both open
+  //    the same popup (plain-English meaning + a real-world example).
+  html += '<div class="gpp-wheel-wrap">' + buildGppWheelSvg() +
+    '<p class="gpp-wheel-hint note-text">Select any principle for a plain-English explanation and a real-world example.</p></div>';
   html += '<div class="gpp-list">';
   GPP_PRINCIPLES.forEach(function (p) {
-    html += '<div class="gpp-item"><div class="gpp-letter">' + p.letter + '</div>' +
-      '<div class="gpp-body"><strong>' + _escHtml(p.title) + '</strong><span>' + _escHtml(p.text) + '</span></div></div>';
+    html += '<button type="button" class="gpp-item gpp-item-btn" onclick="openGppInfo(\'' + p.letter + '\')">' +
+      '<div class="gpp-letter">' + p.letter + '</div>' +
+      '<div class="gpp-body"><strong>' + _escHtml(p.title) + '</strong><span>' + _escHtml(p.text) + '</span></div>' +
+      '<span class="gpp-item-i" aria-hidden="true">i</span></button>';
   });
   html += '</div>';
   html += '<div class="gpp-eric"><b>Eliminate-first design hierarchy (ERIC PD):</b> ' +
@@ -10531,6 +10663,12 @@ function renderGppScreen() {
     '</div>';
   }).join("") + '</div>';
   el.innerHTML = html;
+  // Wire the wheel nodes to the info popup (click + keyboard).
+  el.querySelectorAll(".gpp-wheel-node").forEach(function (n) {
+    const letter = n.getAttribute("data-letter");
+    n.addEventListener("click", function () { openGppInfo(letter); });
+    n.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openGppInfo(letter); } });
+  });
 }
 // Populate the detail-panel GPP select (letter — title) from the source of truth.
 function populateDetailGpp() {
