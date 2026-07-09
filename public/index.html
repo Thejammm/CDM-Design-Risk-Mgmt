@@ -1027,7 +1027,7 @@ body {
 .gpp-wheel-node .node-letter { fill: #fff; font-size: 26px; font-weight: 800; }
 .gpp-wheel-node .node-i-bg { fill: #fff; stroke: var(--brand-accent-dark); stroke-width: 1.5; }
 .gpp-wheel-node .node-i { fill: var(--brand-accent-dark); font-size: 12px; font-weight: 700; font-style: italic; font-family: Georgia, 'Times New Roman', serif; }
-.gpp-node-label { fill: #374151; font-size: 17px; font-weight: 700; }
+.gpp-node-label { fill: #374151; font-size: 20px; font-weight: 700; }
 .gpp-list { display: none; flex-direction: column; gap: 8px; margin: 12px 0; }
 @media (max-width: 720px) { .gpp-wheel-wrap { display: none; } .gpp-list { display: flex; } }
 .gpp-item-btn { width: 100%; text-align: left; font-family: inherit; cursor: pointer; }
@@ -10576,7 +10576,7 @@ function _wrapGppLabel(s) {
 // Build the "9 principles" wheel as a scalable SVG (brand-coloured via CSS vars).
 // Each node is clickable and opens the info popup for that principle.
 function buildGppWheelSvg() {
-  const CX = 470, CY = 345, RING = 205, NR = 33, LR = 292;
+  const CX = 490, CY = 345, RING = 205, NR = 33, LR = 292;
   let nodes = "", labels = "";
   GPP_PRINCIPLES.forEach(function (p, k) {
     const ang = (-90 + 40 * k) * Math.PI / 180;
@@ -10603,7 +10603,7 @@ function buildGppWheelSvg() {
     '<text class="gpp-hub-title" x="' + CX + '" y="' + (CY + 46) + '" text-anchor="middle">of Prevention</text>' +
     '<line class="gpp-hub-rule" x1="' + (CX - 42) + '" y1="' + (CY + 61) + '" x2="' + (CX + 42) + '" y2="' + (CY + 61) + '"></line>' +
     '<text class="gpp-hub-sub" x="' + CX + '" y="' + (CY + 79) + '" text-anchor="middle">Schedule 1, MHSWR 1999</text>';
-  return '<svg class="gpp-wheel" viewBox="0 0 940 700" role="img" aria-label="The nine General Principles of Prevention arranged as a wheel">' +
+  return '<svg class="gpp-wheel" viewBox="0 0 980 700" role="img" aria-label="The nine General Principles of Prevention arranged as a wheel">' +
     '<circle class="gpp-ring" cx="' + CX + '" cy="' + CY + '" r="' + RING + '"></circle>' +
     labels + hub + nodes + "</svg>";
 }
