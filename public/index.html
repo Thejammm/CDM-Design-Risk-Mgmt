@@ -1050,7 +1050,7 @@ body {
 /* Principle info popup (meaning + real-world example) */
 #gppInfoOverlay { display: none; position: fixed; inset: 0; background: rgba(17,24,39,.55); z-index: 5000; align-items: center; justify-content: center; padding: 5vh 16px; }
 #gppInfoOverlay.is-open { display: flex; }
-.gpp-info { position: relative; background: #fff; width: 100%; max-width: 560px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.3); overflow: hidden; max-height: 90vh; overflow-y: auto; }
+.gpp-info { position: relative; background: #fff; width: 100%; max-width: 720px; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.3); overflow: hidden; max-height: 90vh; overflow-y: auto; }
 .gpp-info-close { position: absolute; top: 12px; right: 14px; border: none; background: rgba(255,255,255,.3); color: #fff; font-size: 24px; line-height: 1; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; z-index: 2; }
 .gpp-info-close:hover { background: rgba(255,255,255,.5); }
 .gpp-info-head { display: flex; align-items: center; gap: 14px; padding: 20px 56px 20px 22px; background: var(--brand-accent); }
@@ -1062,6 +1062,13 @@ body {
 .gpp-info-example { margin: 12px 18px 20px; padding: 12px 14px; background: #f7f9fc; border-left: 3px solid var(--brand-accent); border-radius: 10px; }
 .gpp-info-example p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.55; color: #333; }
 .gpp-info-example .gpp-info-label { color: var(--brand-accent-dark); }
+/* Two-column worked examples (Architectural / M&E) */
+.gpp-ex-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; padding: 14px 22px 22px; }
+@media (max-width: 600px) { .gpp-ex-cols { grid-template-columns: 1fr; } }
+.gpp-ex-col .gpp-info-label { color: var(--brand-accent-dark); display: block; margin-bottom: 5px; }
+.gpp-ex-list { margin: 0; padding-left: 18px; }
+.gpp-ex-list li { font-size: 12.5px; line-height: 1.5; color: #333; margin-bottom: 6px; }
+.gpp-ex-list li::marker { color: var(--brand-accent); }
 .gpp-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; border: 1px solid #e6e6e6; border-radius: 10px; background: #fbfbfd; }
 .gpp-letter { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: var(--brand-accent); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
 .gpp-body strong { display: block; font-size: 13.5px; color: #1f2937; }
@@ -10441,7 +10448,7 @@ const DTM_LABEL = "DTM — Further investigation / Design Team Meeting required"
 function isDtm(v) { const s = String(v || "").toLowerCase().trim(); return s === "dtm" || s === "dtm required"; }
 // Why we apply the General Principles of Prevention — the rationale, shown on the
 // Risk Evaluation screen and the PDF methodology page.
-const GPP_RATIONALE = "Under CDM 2015 designers must take account of the general principles of prevention. We apply them as an eliminate-first hierarchy: work down the list in order, avoiding and designing the hazard out before reducing, isolating or controlling it, giving collective protection priority over individual measures, and treating information and instruction as the last resort. The principle recorded against each risk names the highest level of that hierarchy the design achieves — so the register shows how far a hazard has actually been designed out, not merely how it will be managed on site.";
+const GPP_RATIONALE = "Under CDM 2015 designers must take account of the general principles of prevention. We apply them as an eliminate-first hierarchy: work down the list in order, avoiding and designing the hazard out before reducing, isolating or controlling it, giving collective protection priority over individual measures, and treating information and instruction as the last resort. The principle recorded against each risk names the highest level of that hierarchy the design achieves, so the register shows how far a hazard has actually been designed out, not merely how it will be managed on site.";
 // Why the residual rating is Red / Amber / Green — a judgement of how significant the
 // risk still is AFTER the design response, not a likelihood x severity score.
 const RAG_RATIONALE = "The rating is a residual judgement: how significant the risk still is after the design response, not a likelihood times severity score. It reflects how far the hazard has been designed out and how much reliance remains on downstream control.";
@@ -10563,15 +10570,161 @@ function _escHtml(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, func
 // Real-world examples for each principle (adapted from hapo.eu), shown in the
 // info popup on the Risk Evaluation wheel. Plain workplace scenarios, UK spelling.
 const GPP_EXAMPLES = {
-  a: "The risk of contact with overhead power lines is designed out by moving the building footprint clear of the lines — or having them diverted or buried — at the design stage. The hazard is removed, not left for the contractor to manage. Designing pumping or inspection chambers open to the atmosphere so no confined space ever exists works the same way.",
-  b: "A hazard that cannot be avoided — say a plant room or roof that will need recurring maintenance — is assessed and recorded in the design risk register and reviewed at each design stage, so the significant residual risks are understood and communicated to the contractor and future maintainers rather than assumed away.",
-  c: "Respirable silica is tackled at source by specifying pre-cut, pre-formed or standard-dimension masonry so that cutting and drilling on site — where the dust is created — is largely designed out. Where cutting is unavoidable, on-tool water suppression or extraction captures the dust at the point of creation.",
-  d: "Maintainable plant, valves and controls are positioned and detailed for a natural working posture — adequate headroom, access and reach — and component weights kept within manual-handling limits, so the task fits the person instead of forcing cramped or over-reaching work.",
-  e: "Safer current methods are specified in place of older ones — for example a remote CCTV survey of a drain or sewer instead of person-entry into a confined space, or off-site modular assembly instead of extended work at height.",
-  f: "The less hazardous option is specified for the same performance: water-based rather than solvent-based coatings, mechanical rather than chemical fixings, low-temperature asphalt, or building blocks under 20 kg in place of heavy ones.",
-  g: "Health and safety is coordinated across the whole design team and the building's whole life, not solved discipline by discipline — the fire strategy, services routing and maintenance-access strategy are resolved together so one designer's fix doesn't create a hazard in another's package.",
-  h: "Permanent, collective protection that guards everyone at once and needs no action by the worker — a parapet or built-in edge protection to a roof or working platform — is designed in ahead of relying on individual harnesses and lanyards.",
-  i: "Where a significant risk cannot be removed, it is clearly communicated — flagged on the drawings, recorded in the residual-risk register and carried into the Health and Safety File — so the contractor and those who later clean, maintain or demolish the structure are properly informed."
+  a: {
+    objective: "Eliminate hazards completely through design wherever reasonably practicable.",
+    arch: [
+      "Design a building so all routine maintenance plant is located at ground level rather than on the roof, eliminating work at height.",
+      "Specify inward-opening windows, or windows that can be cleaned safely from inside the building, removing the need for external access equipment.",
+      "Eliminate fragile rooflights by designing continuous solid roof construction with separate daylight solutions.",
+      "Design permanent parapets around accessible roofs rather than relying on temporary edge protection during maintenance.",
+      "Position rainwater outlets so they can be accessed safely without stepping onto fragile roofing materials.",
+      "Remove the need for confined space entry by locating inspection chambers externally where possible."
+    ],
+    mande: [
+      "Locate air handling units within accessible plant rooms instead of rooftops.",
+      "Specify remotely mounted valves and controls so routine adjustments are carried out from safe locations.",
+      "Eliminate manual meter reading by specifying automatic metering systems.",
+      "Design cable routes to avoid requiring operatives to enter ceiling voids for routine maintenance.",
+      "Specify maintenance-free LED lighting with long design lives, reducing maintenance frequency.",
+      "Design pipework layouts to avoid confined space access for maintenance."
+    ]
+  },
+  b: {
+    objective: "Where hazards remain, assess them and minimise their impact through informed design.",
+    arch: [
+      "Assess risks associated with a glazed atrium and specify laminated safety glass to reduce the consequences of breakage.",
+      "Evaluate pedestrian and vehicle interaction around building entrances and redesign circulation routes.",
+      "Assess manual handling risks associated with facade panels and specify smaller modular units.",
+      "Review risks associated with large roof spans and provide permanent maintenance walkways.",
+      "Assess access requirements for facade cleaning and incorporate permanent BMU (Building Maintenance Unit) systems where appropriate."
+    ],
+    mande: [
+      "Assess maintenance access around switchboards and provide adequate working clearances.",
+      "Evaluate manual handling risks for pumps and specify lifting beams or split-case pumps.",
+      "Assess heat exposure around boilers and redesign plant layouts to improve safe access.",
+      "Review electrical fault risks and specify arc fault mitigation where appropriate.",
+      "Assess maintenance frequencies when selecting plant to reduce lifecycle exposure."
+    ]
+  },
+  c: {
+    objective: "Control the hazard where it originates rather than relying on later controls.",
+    arch: [
+      "Design permanent roof edge protection instead of requiring temporary guardrails.",
+      "Incorporate non-slip finishes into external walkways.",
+      "Design staircases with compliant dimensions, handrails and landings to reduce falls.",
+      "Eliminate trip hazards through flush thresholds.",
+      "Design drainage gradients to prevent standing water and slips."
+    ],
+    mande: [
+      "Install local isolation valves adjacent to equipment.",
+      "Locate electrical isolation switches next to the plant being maintained.",
+      "Design ventilation systems that remove contaminants directly at source.",
+      "Install pressure relief devices at pressure vessels.",
+      "Design pipework supports that minimise vibration and fatigue failures."
+    ]
+  },
+  d: {
+    objective: "Design with human capabilities, ergonomics and accessibility in mind.",
+    arch: [
+      "Design plant rooms with sufficient headroom and circulation space.",
+      "Position access hatches to allow safe entry without awkward postures.",
+      "Design accessible facilities for disabled users in accordance with inclusive design principles.",
+      "Specify door hardware that can be easily operated.",
+      "Provide adequate natural lighting to reduce visual strain."
+    ],
+    mande: [
+      "Position controls between comfortable working heights.",
+      "Install heavy equipment on raised plinths to reduce bending.",
+      "Allow sufficient clearance around plant for maintenance.",
+      "Design replacement routes that allow equipment removal without structural alterations.",
+      "Provide adequate lighting within plant rooms."
+    ]
+  },
+  e: {
+    objective: "Take advantage of improved technology that enhances safety.",
+    arch: [
+      "Specify modern non-fragile roof systems instead of older fragile materials.",
+      "Use BIM to identify maintenance access issues during design.",
+      "Specify modular construction to reduce on-site working at height.",
+      "Adopt prefabricated bathroom pods to reduce site-based activities.",
+      "Specify advanced fire-resistant materials where appropriate."
+    ],
+    mande: [
+      "Specify intelligent BMS systems allowing remote monitoring.",
+      "Use prefabricated service modules manufactured off-site.",
+      "Install condition monitoring sensors to reduce unnecessary inspections.",
+      "Specify variable speed drives that reduce equipment wear.",
+      "Use modern low-energy LED lighting systems requiring minimal maintenance."
+    ]
+  },
+  f: {
+    objective: "Substitute hazardous materials, methods or equipment with safer alternatives.",
+    arch: [
+      "Specify water-based paints instead of solvent-based coatings.",
+      "Replace asbestos-containing materials with modern alternatives during refurbishment.",
+      "Use non-slip flooring instead of polished stone in wet areas.",
+      "Specify laminated safety glass instead of annealed glass.",
+      "Use lightweight cladding systems to reduce installation risks."
+    ],
+    mande: [
+      "Specify low-GWP refrigerants where appropriate and safe.",
+      "Replace hazardous insulation materials with safer alternatives.",
+      "Use press-fit pipe systems instead of hot works involving soldering where suitable.",
+      "Specify low surface temperature heating systems to reduce burn risks.",
+      "Replace mercury-containing lighting with LED technology."
+    ]
+  },
+  g: {
+    objective: "Ensure safety is considered throughout the project and building lifecycle.",
+    arch: [
+      "Coordinate roof layouts so maintenance routes remain clear.",
+      "Integrate the fire strategy, access strategy and maintenance strategy into the overall design.",
+      "Coordinate structural and architectural elements to eliminate unnecessary maintenance hazards.",
+      "Design buildings with future refurbishment in mind.",
+      "Maintain a clear design risk register throughout the project."
+    ],
+    mande: [
+      "Coordinate service layouts to maintain safe maintenance access.",
+      "Ensure plant replacement strategies are incorporated into the initial design.",
+      "Coordinate isolation procedures across building systems.",
+      "Standardise plant arrangements throughout the building.",
+      "Design maintenance zones that prevent conflicting activities."
+    ]
+  },
+  h: {
+    objective: "Prefer controls that protect everyone rather than relying on individuals.",
+    arch: [
+      "Design permanent roof guardrails instead of relying on harnesses.",
+      "Specify fixed access stairs instead of portable ladders.",
+      "Install permanent edge protection around service risers.",
+      "Design maintenance walkways with guardrails.",
+      "Incorporate permanent window cleaning systems."
+    ],
+    mande: [
+      "Install fixed access platforms around plant.",
+      "Design permanent lifting beams for heavy equipment removal.",
+      "Provide lockable local isolators rather than relying solely on procedural controls.",
+      "Install acoustic enclosures around noisy plant.",
+      "Provide permanent guarding around moving mechanical equipment."
+    ]
+  },
+  i: {
+    objective: "Ensure any remaining residual risks are clearly communicated to those constructing, operating and maintaining the building.",
+    arch: [
+      "Record residual design risks within the Design Risk Register.",
+      "Highlight fragile roof areas that cannot reasonably be eliminated.",
+      "Include maintenance access requirements within the Health and Safety File.",
+      "Clearly identify specialist facade maintenance procedures.",
+      "Provide information on safe replacement methods for architectural features."
+    ],
+    mande: [
+      "Include residual electrical hazards within operation and maintenance manuals.",
+      "Identify plant requiring specialist lifting equipment for replacement.",
+      "Record confined space hazards associated with underground services.",
+      "Clearly identify isolation procedures within building documentation.",
+      "Provide maintenance schedules and safe access requirements within the Health and Safety File."
+    ]
+  }
 };
 
 // Each principle mapped to the reg 9 step it delivers (Eliminate / Evaluate /
@@ -10663,18 +10816,32 @@ function openGppInfo(letter) {
   _buildGppInfo();
   const p = gppByLetter(letter);
   if (!p) return;
-  const ex = GPP_EXAMPLES[p.letter] || "";
+  const ex = GPP_EXAMPLES[p.letter] || {};
   const meta = GPP_META[p.letter] || {};
   const sc = GPP_STAGE_COLOUR[meta.stage] || { bg: "#e5e7eb", fg: "#374151" };
-  const role = meta.design ? "Design-led — the designer can act on this" : "Mainly a contractor / employer measure";
+  const role = meta.design ? "Design-led. The designer can act on this." : "Mainly a contractor or employer measure.";
   const metaRow = meta.stage
     ? '<div class="gpp-info-meta"><span class="gpp-stage-chip" style="background:' + sc.bg + ';color:' + sc.fg + ';">Reg 9: ' + meta.stage + '</span><span class="gpp-info-role">' + role + '</span></div>'
     : "";
+  const objective = ex.objective
+    ? '<div class="gpp-info-section"><div class="gpp-info-label">Objective</div><p>' + _escHtml(ex.objective) + '</p></div>'
+    : '';
+  const list = function (arr) {
+    return (arr && arr.length)
+      ? '<ul class="gpp-ex-list">' + arr.map(function (x) { return '<li>' + _escHtml(x) + '</li>'; }).join('') + '</ul>'
+      : '<p class="note-text" style="margin:4px 0 0;">None recorded.</p>';
+  };
+  const examples = (ex.arch || ex.mande)
+    ? '<div class="gpp-ex-cols">' +
+        '<div class="gpp-ex-col"><div class="gpp-info-label">Architectural examples</div>' + list(ex.arch) + '</div>' +
+        '<div class="gpp-ex-col"><div class="gpp-info-label">M&amp;E examples</div>' + list(ex.mande) + '</div>' +
+      '</div>'
+    : '';
   document.getElementById("gpp-info-body").innerHTML =
     '<div class="gpp-info-head"><span class="gpp-info-letter">' + p.letter + "</span><h3>" + _escHtml(p.title) + "</h3></div>" +
-    metaRow +
-    '<div class="gpp-info-section"><div class="gpp-info-label">What it means</div><p>' + _escHtml(p.text) + "</p></div>" +
-    (ex ? '<div class="gpp-info-example"><div class="gpp-info-label">Real-world example</div><p>' + _escHtml(ex) + "</p></div>" : "");
+    metaRow + objective + examples;
+  const _card = document.querySelector("#gppInfoOverlay .gpp-info");
+  if (_card) _card.scrollTop = 0;
   document.getElementById("gppInfoOverlay").classList.add("is-open");
 }
 function closeGppInfo() { const ov = document.getElementById("gppInfoOverlay"); if (ov) ov.classList.remove("is-open"); }
@@ -10690,7 +10857,7 @@ function renderGppScreen() {
   //    per principle, plus a clickable list fallback on narrow screens. Both open
   //    the same popup (plain-English meaning + a real-world example).
   html += '<div class="gpp-wheel-wrap">' + buildGppWheelSvg() +
-    '<div class="gpp-wheel-key"><span class="wk solid"></span> Design can eliminate or reduce it &nbsp;&nbsp;&middot;&nbsp;&nbsp; <span class="wk outline"></span> Mainly a contractor / employer control</div></div>';
+    '<div class="gpp-wheel-key"><span class="wk solid"></span> Design can eliminate or reduce it &nbsp;&nbsp;&middot;&nbsp;&nbsp; <span class="wk outline"></span> Mainly a contractor or employer control</div></div>';
   html += '<div class="gpp-list">';
   GPP_PRINCIPLES.forEach(function (p) {
     html += '<button type="button" class="gpp-item gpp-item-btn" onclick="openGppInfo(\'' + p.letter + '\')">' +
