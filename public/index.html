@@ -423,6 +423,23 @@ body {
   background: #f0f8f9;
 }
 
+/* Greyed-out prompt text shown in empty Project-Information cells. It is CSS
+   pseudo-content only, so it is never saved, exported or printed. */
+.risk-meta td[contenteditable="true"]:empty::before {
+  content: attr(data-ph);
+  color: #9aa0a6;
+  font-style: italic;
+}
+/* Highlight the "Date Issued" field so it isn't left blank (it is captured on the PDF). */
+.risk-meta td.pi-date-label {
+  font-weight: 700;
+  color: var(--brand-accent);
+}
+.risk-meta td.pi-date-highlight {
+  background: #fff8e1;
+  box-shadow: inset 0 0 0 2px #f7c948;
+}
+
 /* Editable Project-Information label (e.g. "Lead Designer") — a subtle dotted
    underline hints it can be renamed; the custom text is saved with the project. */
 .editable-label {
@@ -2113,35 +2130,35 @@ body {
         <table class="risk-meta">
           <tr>
             <td class="req-label">Client:<span class="req-star">*</span></td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" data-ph="The CDM client"></td>
             <td class="req-label">Produced by:<span class="req-star">*</span></td>
-            <td contenteditable="true">XX XX (PD)</td>
+            <td contenteditable="true" data-ph="e.g. Fineline Architectural Design Ltd"></td>
             <td class="req-label">Prepared by:<span class="req-star">*</span></td>
-            <td contenteditable="true">XX XX (PD)</td>
+            <td contenteditable="true" data-ph="Your name"></td>
           </tr>
           <tr>
             <td class="req-label">Project:<span class="req-star">*</span></td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" data-ph="Project name / property address if retrofit"></td>
             <td class="req-label">Principal Designer<span class="req-star">*</span></td>
-            <td contenteditable="true"></td>
-            <td>Date Issued:</td>
-            <td contenteditable="true" id="pi-date" title="Click to pick a date"></td>
+            <td contenteditable="true" data-ph="CDM Principal Designer"></td>
+            <td class="pi-date-label">Date Issued:</td>
+            <td contenteditable="true" id="pi-date" class="pi-date-highlight" title="Click to pick a date" data-ph="Click to pick a date"></td>
           </tr>
           <tr>
             <td class="req-label">Location:<span class="req-star">*</span></td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" data-ph="Leave blank if retrofit"></td>
             <td><span id="leadDesignerLabel" class="editable-label" contenteditable="true" title="Editable label — change to another role or designer name">Lead Designer</span></td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" data-ph="Retrofit designer if a retrofit project"></td>
             <td>Checked By:</td>
-            <td contenteditable="true">TBC</td>
+            <td contenteditable="true" data-ph="Approver"></td>
           </tr>
           <tr>
             <td class="req-label">Project No:<span class="req-star">*</span></td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" data-ph="FAD job number"></td>
             <td>Internal-Ref:</td>
-            <td contenteditable="true"></td>
+            <td contenteditable="true" data-ph="Retrofit job &amp; folder number, if applicable"></td>
             <td>Date Checked:</td>
-            <td contenteditable="true" id="pi-date-checked" title="Click to pick a date"></td>
+            <td contenteditable="true" id="pi-date-checked" title="Click to pick a date" data-ph="Click to pick a date"></td>
           </tr>
           <tr class="risk-meta">
   <td style="background:var(--brand-accent); color:#fff; font-weight:700; text-align:center;">
@@ -9383,6 +9400,11 @@ function loadSnippetIntoPanel(snippetId) {
   Object.keys(fieldLocks).forEach(field => {
     snippetDraft[field] = fieldLocks[field];   // lock wins over generic snippet text
   });
+  // Default Designer to the logged-in user if the snippet + locks left it blank.
+  if (!snippetDraft.designer) {
+    const dn = loginDesignerName();
+    if (dn) snippetDraft.designer = dn;
+  }
   updateDetailPanel();
   // If the user has hidden the editing panel, that choice wins — don't force it open
   // and don't scroll to it. Only bring it into view when it's actually visible.
@@ -10202,6 +10224,7 @@ function exportCharts() {
   const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
   const client       = metaCells[0]?.innerText.trim() || '';
   const project      = metaCells[3]?.innerText.trim() || '';
+  const dateIssued   = metaCells[5]?.innerText.trim() || '';
   const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   const accent = getActiveAccent();
@@ -10401,11 +10424,13 @@ function updateSelectAllState() {
 // colour wherever it appears (Risk Library list + register Stage cell).
 // The four standard lifecycle stages, each with its own distinct colour and a
 // clear definition (shown in the app legend). Every snippet uses exactly one.
+// Stage colours are deliberately kept in the cool/neutral family (blue, grey,
+// purple, slate) so they never clash with the red/amber/green risk-RATING system.
 const STAGE_DEFS = [
-  { name: "Design",                  bg: "#e0e7ff", fg: "#3730a3", note: "The risk is dealt with at the design stage — designed out or reduced through a design decision, survey or coordination before work starts on site." },
-  { name: "Construction",            bg: "#d1e7dd", fg: "#0f5132", note: "The risk arises while the works are being built or installed on site." },
+  { name: "Design",                  bg: "#dbeafe", fg: "#1e40af", note: "The risk is dealt with at the design stage — designed out or reduced through a design decision, survey or coordination before work starts on site." },
+  { name: "Construction",            bg: "#e5e7eb", fg: "#374151", note: "The risk arises while the works are being built or installed on site." },
   { name: "Operation & Maintenance", bg: "#ede9fe", fg: "#5b21b6", note: "The risk arises once the building is in use — during operation, cleaning, inspection, servicing, repair or replacement." },
-  { name: "Demolition",              bg: "#f8d7da", fg: "#842029", note: "The risk arises during strip-out, dismantling or demolition, whether at end of life or during refurbishment." }
+  { name: "Demolition",              bg: "#cbd5e1", fg: "#334155", note: "The risk arises during strip-out, dismantling or demolition, whether at end of life or during refurbishment." }
 ];
 // ── General Principles of Prevention (GPP) — the single source of truth ──
 // The static evaluation screen, the register GPP picker and the report all read
@@ -10534,13 +10559,16 @@ function applyPromptToComments(rowIndex, i) {
   saveStateToStorage();
 }
 
+// Cool/neutral palette (blue, grey, purple, slate) — must stay in sync with
+// STAGE_DEFS above. Chosen so Stage colours never clash with the red/amber/green
+// risk-RATING colours.
 function stageColour(stage) {
   const s = String(stage || "").toLowerCase().trim();
-  if (s === "design")                  return { bg: "#e0e7ff", fg: "#3730a3" };
-  if (s === "construction")            return { bg: "#d1e7dd", fg: "#0f5132" };
+  if (s === "design")                  return { bg: "#dbeafe", fg: "#1e40af" };
+  if (s === "construction")            return { bg: "#e5e7eb", fg: "#374151" };
   if (s === "operation & maintenance") return { bg: "#ede9fe", fg: "#5b21b6" };
-  if (s === "demolition")              return { bg: "#f8d7da", fg: "#842029" };
-  return { bg: "#e5e7eb", fg: "#374151" }; // fallback for any non-standard value
+  if (s === "demolition")              return { bg: "#cbd5e1", fg: "#334155" };
+  return { bg: "#f3f4f6", fg: "#6b7280" }; // fallback for any non-standard value
 }
 function stageChipHtml(stage) {
   const s = String(stage || "").trim();
@@ -11451,6 +11479,16 @@ function refreshLockUI(field) {
   }
 }
 
+// The logged-in user's identity, used to default the Designer field on new rows.
+// Works for ANY role (consultant included). Returns "" when signed out/offline.
+function loginDesignerName() {
+  try {
+    const u = window.AHSAuth && window.AHSAuth.user && window.AHSAuth.user();
+    if (!u) return "";
+    return String(u.name || u.tenantName || u.email || "").trim();
+  } catch (_) { return ""; }
+}
+
 // Apply locked values to a row, but only fill blanks - don't override existing values.
 function applyLocksToRow(rowIndex) {
   if (!risks[rowIndex]) risks[rowIndex] = {};
@@ -11459,6 +11497,12 @@ function applyLocksToRow(rowIndex) {
       risks[rowIndex][field] = fieldLocks[field];
     }
   });
+  // Default the Designer to the logged-in user if still blank (a locked designer
+  // value above still wins). This is what links the register to the login.
+  if (!risks[rowIndex].designer) {
+    const dn = loginDesignerName();
+    if (dn) risks[rowIndex].designer = dn;
+  }
 }
 
 // Wrap each detail-field's label in a header div with a lock checkbox alongside.
@@ -12371,6 +12415,7 @@ function printRiskRegisterPDF() {
   const location          = metaCells[6]?.innerText.trim() || '';
   const leadDesigner      = metaCells[7]?.innerText.trim() || '';
   const projectNo         = metaCells[9]?.innerText.trim() || '';
+  const dateIssued        = metaCells[5]?.innerText.trim() || '';
   const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   const accent = getActiveAccent();
@@ -12425,6 +12470,7 @@ function printRiskRegisterPDF() {
     preparedBy ? `Prepared by: ${preparedBy}` : null,
     principalDesigner ? `Principal Designer: ${principalDesigner}` : null,
     leadDesigner ? `${getLeadDesignerLabel()}: ${leadDesigner}` : null,
+    dateIssued ? `Date Issued: ${dateIssued}` : null,
     `Date Checked: ${dateStr}`
   ].filter(Boolean).join('   |   ');
 
@@ -13004,7 +13050,12 @@ function executeImport() {
     alert('Please map at least one field to an Excel column.');
     return;
   }
-  
+
+  // Drop any pre-existing empty rows first (the register initialises with a few
+  // blank starter rows). Without this the import appends beneath them and leaves
+  // blank rows sitting above the imported data.
+  risks = risks.filter(r => !isRowEmpty(r));
+
   // Convert imported data to risk objects
   let importCount = 0;
   
