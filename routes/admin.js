@@ -26,7 +26,7 @@ router.get('/tenants', async (req, res) => {
     const r = await pool.query(
       `SELECT t.id, t.name, t.created_at,
               (SELECT COUNT(*) FROM users u WHERE u.tenant_id = t.id) AS user_count,
-              (SELECT updated_at FROM app_state s WHERE s.tenant_id = t.id) AS last_state_update
+              (SELECT MAX(updated_at) FROM app_state s WHERE s.tenant_id = t.id) AS last_state_update
          FROM tenants t
          ORDER BY t.created_at DESC`
     );
