@@ -8966,7 +8966,9 @@ function getLeadDesignerLabel() {
 function saveStateToStorage() {
   try {
     const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
-    const metaValues = Array.from(metaCells).map(cell => cell.innerText || "");
+    // Trim so an emptied cell saves as "" (not a stray space/newline), otherwise
+    // the placeholder would not reappear after a reload.
+    const metaValues = Array.from(metaCells).map(cell => (cell.innerText || "").trim());
 
     const payload = {
       risks,
@@ -9013,7 +9015,12 @@ function applyLoadedMetaCells() {
   const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
   metaCells.forEach((cell, idx) => {
     if (idx < loadedMetaCells.length) {
-      cell.innerText = loadedMetaCells[idx];
+      const v = (loadedMetaCells[idx] == null) ? '' : String(loadedMetaCells[idx]);
+      if (v.trim() === '') {
+        cell.textContent = '';   // truly empty so the :empty placeholder shows and stays
+      } else {
+        cell.innerText = v;
+      }
     }
   });
 }
@@ -9024,6 +9031,11 @@ function attachMetaListeners() {
   const metaCells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
   metaCells.forEach(cell => {
     cell.addEventListener("input", () => {
+      // When a cell is cleared, contenteditable can leave a stray <br>; strip it
+      // so the cell is truly :empty and the greyed placeholder reappears at once.
+      if (cell.textContent.trim() === '' && cell.innerHTML !== '') {
+        cell.innerHTML = '';
+      }
       saveStateToStorage();
     });
   });
