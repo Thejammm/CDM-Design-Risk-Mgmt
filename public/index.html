@@ -423,22 +423,16 @@ body {
   background: #f0f8f9;
 }
 
-/* Greyed-out prompt text shown in empty Project-Information cells. It is CSS
-   pseudo-content only, so it is never saved, exported or printed. */
+/* Slightly greyed-out, italic prompt text shown in empty Project-Information
+   cells. CSS pseudo-content only, so it is never saved, exported or printed. */
 .risk-meta td[contenteditable="true"]:empty::before {
   content: attr(data-ph);
-  color: #9aa0a6;
+  color: #b0b4bb;
   font-style: italic;
+  font-weight: 400;
 }
-/* Highlight the "Date Issued" field so it isn't left blank (it is captured on the PDF). */
-.risk-meta td.pi-date-label {
-  font-weight: 700;
-  color: var(--brand-accent);
-}
-.risk-meta td.pi-date-highlight {
-  background: #fff8e1;
-  box-shadow: inset 0 0 0 2px #f7c948;
-}
+/* Required-field asterisks hidden at the client's request. */
+.req-star { display: none; }
 
 /* Editable Project-Information label (e.g. "Lead Designer") — a subtle dotted
    underline hints it can be renamed; the custom text is saved with the project. */
@@ -2141,8 +2135,8 @@ body {
             <td contenteditable="true" data-ph="Project name / property address if retrofit"></td>
             <td class="req-label">Principal Designer<span class="req-star">*</span></td>
             <td contenteditable="true" data-ph="CDM Principal Designer"></td>
-            <td class="pi-date-label">Date Issued:</td>
-            <td contenteditable="true" id="pi-date" class="pi-date-highlight" title="Click to pick a date" data-ph="Click to pick a date"></td>
+            <td>Date Issued:</td>
+            <td contenteditable="true" id="pi-date" title="Click to pick a date" data-ph="Click to pick a date"></td>
           </tr>
           <tr>
             <td class="req-label">Location:<span class="req-star">*</span></td>
