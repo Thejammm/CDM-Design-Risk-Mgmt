@@ -13901,5 +13901,137 @@ function resetReportFilters() {
 })();
 </script>
 
+<style id="skeuo-theme">
+/* =====================================================================
+   SKEUOMORPHISM THEME  —  visual-only override layer (appended last).
+   Adds tactile depth: gradients, bevels, inset/outset shadows, gloss and
+   embossing on the app CHROME. All accent colours use var(--brand-accent)
+   / var(--brand-accent-dark), so the Brand Kit keeps recolouring the whole
+   app per client. It deliberately does NOT set backgrounds with !important
+   and does NOT touch the register's risk-rating cells, Stage colours, RAG
+   bands or snippet stage-chips (those are inline colours) — so nothing
+   functional changes, only the look. Delete this block to revert.
+   ===================================================================== */
+
+/* Soft, tactile "brushed" page surface */
+body {
+  background:
+    radial-gradient(120% 80% at 50% -20%, rgba(255,255,255,.65), rgba(255,255,255,0) 55%),
+    linear-gradient(180deg, #edeef2 0%, #e0e3e9 100%) fixed;
+}
+
+/* Raised, bevelled panels (cards) */
+.section, .modal {
+  background: linear-gradient(180deg, #ffffff 0%, #f2f4f7 100%);
+  border: 1px solid #d3d7df;
+  border-radius: 14px;
+  padding: 14px 16px;
+  box-shadow:
+    0 3px 8px rgba(20,24,40,.13),
+    0 1px 0 rgba(255,255,255,.95) inset,
+    0 -1px 0 rgba(0,0,0,.05) inset;
+}
+.modal { border-radius: 16px; box-shadow: 0 18px 48px rgba(15,20,35,.4), 0 1px 0 rgba(255,255,255,.9) inset; }
+
+/* Sticky controls bar — a raised "toolbar" plate */
+.controls-wrapper {
+  background: linear-gradient(180deg, #ffffff 0%, #eceef3 100%);
+  border-bottom: 1px solid #c7ccd6;
+  box-shadow: 0 3px 6px rgba(20,24,40,.14), 0 1px 0 rgba(255,255,255,.9) inset;
+}
+
+/* Embossed titles */
+.section-title, .section-title span { text-shadow: 0 1px 0 rgba(255,255,255,.95); }
+
+/* Tactile, pressable buttons (chrome). No background !important, so any
+   inline/coloured control keeps its colour. */
+.controls button, .dashboard-controls button, .report-controls button,
+.modal button, .panel-toggle-btn, .snippet-batch-bar button,
+.detail-apply-bar button, .tab-button, button.secondary {
+  background: linear-gradient(180deg, #ffffff 0%, #e7eaf0 100%);
+  border: 1px solid #b7bfcc;
+  border-radius: 10px;
+  color: #1f2937;
+  text-shadow: 0 1px 0 rgba(255,255,255,.85);
+  box-shadow: 0 1px 2px rgba(20,24,40,.2), 0 1px 0 rgba(255,255,255,.9) inset;
+  transition: box-shadow .08s ease, background .08s ease, transform .04s ease, border-color .1s ease;
+}
+.controls button:hover, .dashboard-controls button:hover, .report-controls button:hover,
+.modal button:hover, .panel-toggle-btn:hover, .snippet-batch-bar button:hover,
+.detail-apply-bar button:hover, .tab-button:hover, button.secondary:hover {
+  background: linear-gradient(180deg, #ffffff 0%, #eef1f6 100%);
+  border-color: var(--brand-accent);
+}
+.controls button:active, .dashboard-controls button:active, .report-controls button:active,
+.modal button:active, .panel-toggle-btn:active, .snippet-batch-bar button:active,
+.detail-apply-bar button:active, .tab-button:active, button.secondary:active {
+  background: linear-gradient(180deg, #e6e9ef 0%, #f2f4f7 100%);
+  box-shadow: inset 0 2px 4px rgba(20,24,40,.28);
+  transform: translateY(1px);
+}
+
+/* Primary / accent buttons — glossy brand plates (recolour with the Brand Kit) */
+.modal .primary, .snippet-batch-bar button, .snippet-insert-btn,
+.detail-apply-bar button:not(.secondary) {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--brand-accent) 78%, #ffffff) 0%,
+      var(--brand-accent) 50%,
+      var(--brand-accent-dark) 100%);
+  border: 1px solid var(--brand-accent-dark);
+  color: #ffffff;
+  text-shadow: 0 -1px 0 rgba(0,0,0,.28);
+  box-shadow: 0 2px 5px rgba(20,24,40,.3), 0 1px 0 rgba(255,255,255,.4) inset;
+}
+.modal .primary:hover, .snippet-batch-bar button:hover, .snippet-insert-btn:hover,
+.detail-apply-bar button:not(.secondary):hover {
+  filter: brightness(1.05);
+  border-color: var(--brand-accent-dark);
+}
+
+/* Recessed inputs (chrome only — never the register's coloured cells) */
+.detail-field input, .detail-field textarea, .detail-field select,
+.snippet-search, .risk-meta td[contenteditable="true"],
+.modal input, .modal select, .modal textarea, #header-row-select {
+  background: #fcfcfe;
+  border: 1px solid #c3c9d4;
+  border-radius: 8px;
+  box-shadow: inset 0 1px 3px rgba(20,24,40,.15), 0 1px 0 rgba(255,255,255,.7);
+}
+.detail-field input:focus, .detail-field textarea:focus, .detail-field select:focus,
+.snippet-search:focus, .modal input:focus, .modal select:focus, .modal textarea:focus {
+  box-shadow: inset 0 1px 3px rgba(20,24,40,.15), 0 0 0 3px color-mix(in srgb, var(--brand-accent) 30%, transparent);
+  border-color: var(--brand-accent);
+  outline: none;
+}
+
+/* Tabs: active tab looks physically raised in the brand colour */
+.tab-button.active {
+  background: linear-gradient(180deg, var(--brand-accent) 0%, var(--brand-accent-dark) 100%);
+  color: #ffffff;
+  border-color: var(--brand-accent-dark);
+  text-shadow: 0 -1px 0 rgba(0,0,0,.28);
+  box-shadow: 0 2px 5px rgba(20,24,40,.28), 0 1px 0 rgba(255,255,255,.3) inset;
+}
+
+/* The register sits in a recessed "well" inside its panel */
+.table-container, .table-scroll {
+  border-radius: 10px;
+  box-shadow: inset 0 1px 5px rgba(20,24,40,.14);
+}
+
+/* Snippet library radio pills — tactile chips */
+.snippet-lib-radio {
+  box-shadow: 0 1px 2px rgba(20,24,40,.14), 0 1px 0 rgba(255,255,255,.85) inset;
+}
+
+/* Snippet list rows — subtle raised cards */
+.snippet-item {
+  background: linear-gradient(180deg, #ffffff 0%, #f5f6f9 100%);
+  border: 1px solid #dfe3ea;
+  box-shadow: 0 1px 2px rgba(20,24,40,.08), 0 1px 0 rgba(255,255,255,.9) inset;
+}
+</style>
+
 </body>
 </html>
