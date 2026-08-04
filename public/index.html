@@ -2112,6 +2112,7 @@ body {
           </button>
           <button onclick="exportRiskRegisterExcel()"> Export to Excel</button>
           <button type="button" class="secondary" onclick="openImportModal()"> Import from Excel</button>
+          <button type="button" class="secondary" onclick="openDesignerModal()">👤 Set designer</button>
           <button type="button" class="secondary" onclick="openBrandModal()">🎨 Brand Setup</button>
         </div>
       </div>
@@ -2646,6 +2647,10 @@ body {
       <div class="section">
         <div class="section-title"><span>Risk Evaluation — General Principles of Prevention</span></div>
         <p class="note-text" style="margin:0 0 4px;">This is the design risk evaluation methodology used across every project: the General Principles of Prevention. It is not a likelihood &times; severity score. Each risk in the register is characterised by the single principle that best describes the design response.</p>
+        <label class="eval-pdf-toggle" style="display:inline-flex; align-items:center; gap:8px; margin:6px 0 12px; font-size:12px; font-weight:600; color:#374151; cursor:pointer;">
+          <input type="checkbox" id="eval-pdf-toggle" onchange="toggleEvalPdf(this.checked)">
+          Include this evaluation methodology page in PDF exports
+        </label>
         <div id="gpp-screen-content"></div>
       </div>
     </div>
@@ -2746,6 +2751,34 @@ body {
         <button type="button" class="secondary" onclick="resetBrand()" style="margin-right:auto;">Reset to AHS Defaults</button>
         <button type="button" class="secondary" onclick="closeBrandModal()">Cancel</button>
         <button type="button" class="primary" onclick="saveBrandFromModal()">Save Brand</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Designer selection Modal (shown on open unless a designer is set or "multiple designers" mode is on) -->
+<div id="designer-modal" class="modal-backdrop" style="display:none;">
+  <div class="modal-content" style="max-width: 480px;">
+    <div class="modal-header">
+      <h2>Who is the designer?</h2>
+      <button type="button" class="close-btn" onclick="skipDesignerModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="note-text" style="margin-bottom: 14px;">
+        Enter your design company. It becomes the default "Designer" on new risk rows and sets the "Produced by" field. You can change it any time with the "Set designer" button.
+      </div>
+      <div class="brand-field">
+        <label for="designer-modal-input">Design company (Designer)</label>
+        <input type="text" id="designer-modal-input" placeholder="e.g. Fineline Architectural Design Ltd" autocomplete="off"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();saveDesignerModal();}">
+      </div>
+      <label style="display:flex; align-items:flex-start; gap:8px; margin-top:14px; font-size:12px; color:#374151; cursor:pointer;">
+        <input type="checkbox" id="designer-modal-multi" style="margin-top:2px;">
+        <span>I produce registers for multiple designers — don't ask again and don't auto-set the Designer.</span>
+      </label>
+      <div style="display:flex; gap:10px; margin-top:22px; justify-content:flex-end; align-items:center;">
+        <button type="button" class="secondary" onclick="skipDesignerModal()">Skip</button>
+        <button type="button" class="primary" onclick="saveDesignerModal()">Save</button>
       </div>
     </div>
   </div>
@@ -9406,9 +9439,10 @@ function loadSnippetIntoPanel(snippetId) {
   Object.keys(fieldLocks).forEach(field => {
     snippetDraft[field] = fieldLocks[field];   // lock wins over generic snippet text
   });
-  // Default Designer to the logged-in user if the snippet + locks left it blank.
+  // Default Designer from the configured designer / "Produced by" if the snippet
+  // + locks left it blank.
   if (!snippetDraft.designer) {
-    const dn = loginDesignerName();
+    const dn = defaultDesignerName();
     if (dn) snippetDraft.designer = dn;
   }
   updateDetailPanel();
@@ -11485,14 +11519,83 @@ function refreshLockUI(field) {
   }
 }
 
-// The logged-in user's identity, used to default the Designer field on new rows.
-// Works for ANY role (consultant included). Returns "" when signed out/offline.
-function loginDesignerName() {
+// ── Designer selection (bespoke per client) ──────────────────────────────────
+// The design company is stored in the brand config (so it syncs per client). The
+// register "Designer" reads from the "Produced by" cell if set, otherwise the
+// configured designer. "Multiple designers" mode turns off both the on-open
+// prompt and the auto-fill, so each row's Designer is typed manually.
+function configuredDesigner() {
+  try { return String(loadBrand().designer || "").trim(); } catch (_) { return ""; }
+}
+function designerAutoOff() {
+  try { return !!loadBrand().designerPromptOff; } catch (_) { return false; }
+}
+function defaultDesignerName() {
+  if (designerAutoOff()) return "";
   try {
-    const u = window.AHSAuth && window.AHSAuth.user && window.AHSAuth.user();
-    if (!u) return "";
-    return String(u.name || u.tenantName || u.email || "").trim();
-  } catch (_) { return ""; }
+    const produced = document.querySelectorAll('.risk-meta td[contenteditable="true"]')[1];
+    const pv = produced ? produced.textContent.trim() : "";
+    if (pv) return pv;   // Designer reads from the "Produced by" cell
+  } catch (_) {}
+  return configuredDesigner();
+}
+// Keep the "Produced by" cell aligned with the configured designer.
+function syncDesignerToProducedBy(force) {
+  const d = configuredDesigner();
+  if (!d || designerAutoOff()) return;
+  const cells = document.querySelectorAll('.risk-meta td[contenteditable="true"]');
+  const produced = cells[1];
+  if (produced && (force || produced.textContent.trim() === "")) {
+    produced.textContent = d;
+    try { saveStateToStorage(); } catch (_) {}
+  }
+}
+// Whether the GPP evaluation methodology page is appended to PDF exports.
+function includeEvalPdf() {
+  try { return loadBrand().includeEvalPdf !== false; } catch (_) { return true; }
+}
+function toggleEvalPdf(on) {
+  const b = loadBrand();
+  b.includeEvalPdf = !!on;
+  saveBrand(b);
+}
+function initEvalPdfToggle() {
+  const cb = document.getElementById('eval-pdf-toggle');
+  if (cb) cb.checked = includeEvalPdf();
+}
+
+// On-open designer modal
+function openDesignerModal() {
+  const ov = document.getElementById('designer-modal');
+  if (!ov) return;
+  const b = loadBrand();
+  const input = document.getElementById('designer-modal-input');
+  const multi = document.getElementById('designer-modal-multi');
+  if (input) input.value = b.designer || '';
+  if (multi) multi.checked = !!b.designerPromptOff;
+  ov.style.display = 'flex';
+  setTimeout(function () { try { input && input.focus(); } catch (_) {} }, 60);
+}
+function closeDesignerModal() {
+  const ov = document.getElementById('designer-modal');
+  if (ov) ov.style.display = 'none';
+}
+function saveDesignerModal() {
+  const b = loadBrand();
+  const input = document.getElementById('designer-modal-input');
+  const multi = document.getElementById('designer-modal-multi');
+  b.designer = input ? (input.value || '').trim() : '';
+  b.designerPromptOff = multi ? !!multi.checked : false;
+  saveBrand(b);                     // wrapped saveBrand also syncs the brand to the server
+  syncDesignerToProducedBy(true);   // set "Produced by" to the chosen designer
+  renderRisks();                    // new rows will pick up the default Designer
+  closeDesignerModal();
+}
+function skipDesignerModal() { closeDesignerModal(); }
+// On app open, prompt for the designer once — unless it is set or turned off.
+function maybeShowDesignerModal() {
+  const b = loadBrand();
+  if (!b.designerPromptOff && !String(b.designer || '').trim()) openDesignerModal();
 }
 
 // Apply locked values to a row, but only fill blanks - don't override existing values.
@@ -11503,10 +11606,10 @@ function applyLocksToRow(rowIndex) {
       risks[rowIndex][field] = fieldLocks[field];
     }
   });
-  // Default the Designer to the logged-in user if still blank (a locked designer
-  // value above still wins). This is what links the register to the login.
+  // Default the Designer from the configured design company / "Produced by" if
+  // still blank (a locked designer value above still wins).
   if (!risks[rowIndex].designer) {
-    const dn = loginDesignerName();
+    const dn = defaultDesignerName();
     if (dn) risks[rowIndex].designer = dn;
   }
 }
@@ -11562,7 +11665,10 @@ const BRAND_KEY_BASE = "cdmRiskRegister.brand_v1";
 const BRAND_KEY = BRAND_KEY_BASE + "::" + INSTANCE_ID;
 const DEFAULT_BRAND = {
   logoDataUri: null,
-  accent: "#51a6a9"
+  accent: "#51a6a9",
+  designer: "",              // the design company (asked on open; also fills "Produced by")
+  designerPromptOff: false,  // "multiple designers" mode: no on-open prompt, no auto-Designer
+  includeEvalPdf: true       // append the GPP evaluation methodology page to PDF exports
 };
 
 function darkenHex(hex, pct) {
@@ -11677,7 +11783,8 @@ function saveBrandFromModal() {
   const previewImg = document.getElementById('brand-logo-preview-img');
 
   const finalize = (logoDataUri) => {
-    const brand = { logoDataUri, accent };
+    // Merge onto the existing brand so the designer / eval-PDF settings survive.
+    const brand = Object.assign(loadBrand(), { logoDataUri, accent });
     saveBrand(brand);
     applyBrand(brand);
     closeBrandModal();
@@ -11697,7 +11804,13 @@ function saveBrandFromModal() {
 
 function resetBrand() {
   if (!confirm('Reset to AHS defaults? This clears the client logo, name and accent colour.')) return;
-  saveBrand(Object.assign({}, DEFAULT_BRAND));
+  // Reset the visual brand only — keep the designer / eval-PDF settings.
+  const prev = loadBrand();
+  saveBrand(Object.assign({}, DEFAULT_BRAND, {
+    designer: prev.designer || '',
+    designerPromptOff: !!prev.designerPromptOff,
+    includeEvalPdf: prev.includeEvalPdf !== false
+  }));
   applyBrand(DEFAULT_BRAND);
   closeBrandModal();
 }
@@ -12637,7 +12750,7 @@ function printRiskRegisterPDF() {
     }
   });
 
-  addGppMethodologyPage(doc, accentRgb); // methodology appendix on every report
+  if (includeEvalPdf()) addGppMethodologyPage(doc, accentRgb); // methodology appendix (toggle on the Risk Evaluation tab)
   doc.save(buildPdfFilename('DRA', revision));
 }
 function printNarrativeReport() {
@@ -12792,7 +12905,7 @@ function printNarrativeReport() {
     doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 8, { align: 'right' });
   }
 
-  addGppMethodologyPage(doc, accentRgb); // methodology appendix
+  if (includeEvalPdf()) addGppMethodologyPage(doc, accentRgb); // methodology appendix (toggle on the Risk Evaluation tab)
   doc.save(buildPdfFilename('Project_RAG_status', revision));
 }
 
@@ -13907,6 +14020,10 @@ function resetReportFilters() {
       sessionStorage.removeItem('ahsHydrated');
     }
     _wrapSaves();
+    // Runs after hydration settles (a reload above returns before reaching here).
+    try { initEvalPdfToggle(); } catch(_){}
+    try { syncDesignerToProducedBy(); } catch(_){}
+    try { maybeShowDesignerModal(); } catch(_){}
   }
   if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', _init);
   else _init();
