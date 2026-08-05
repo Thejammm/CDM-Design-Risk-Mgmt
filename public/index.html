@@ -434,6 +434,11 @@ body {
 /* Required-field asterisks hidden at the client's request. */
 .req-star { display: none; }
 
+/* Green "Add positive design influence" prompt shown on the Designer Comments
+   field when a risk is eliminated by design (GPP = a). */
+#detail-designerComments.dc-positive-prompt::placeholder { color: #15803d; font-style: italic; opacity: 1; }
+td.dc-positive-cell:empty::before { content: attr(data-ph); color: #15803d; font-style: italic; }
+
 /* Editable Project-Information label (e.g. "Lead Designer") — a subtle dotted
    underline hints it can be renamed; the custom text is saved with the project. */
 .editable-label {
@@ -8954,6 +8959,48 @@ const riskFields = [
 let risks = [{}, {}, {}];
 let selectedRowIndex = null;
 
+// ── Eliminated-by-design (GPP = "a") behaviour ───────────────────────────────
+// When a risk's GPP is set to "a" (Avoid the risk — eliminated by design), the
+// downstream columns Eliminated → H&S File are not applicable, so they are
+// blanked (their values stashed). Designer Comments is emptied too and prompts
+// for a positive design influence. Changing the GPP away from "a" brings the
+// stashed values back (unless the user has since typed something).
+const GPP_A_CLEAR_FIELDS = ["designerComments", "riskEliminated", "residualRisk", "owner", "clientPCI", "actionRequired", "finalStatus", "dateRegistered", "dateResolved", "hsFile"];
+function _isGppA(v) { return String(v || "").toLowerCase().trim() === "a"; }
+function applyGppEliminationEffect(rowIndex, oldGpp, newGpp) {
+  const r = risks[rowIndex];
+  if (!r) return;
+  const wasA = _isGppA(oldGpp);
+  const isA  = _isGppA(newGpp);
+  if (isA && !wasA) {
+    const stash = {};
+    GPP_A_CLEAR_FIELDS.forEach(function (f) { stash[f] = r[f] || ""; r[f] = ""; });
+    r._gppAStash = stash;
+  } else if (!isA && wasA) {
+    const stash = r._gppAStash || {};
+    GPP_A_CLEAR_FIELDS.forEach(function (f) {
+      if (String(r[f] || "").trim() === "" && String(stash[f] || "").trim() !== "") r[f] = stash[f];
+    });
+    delete r._gppAStash;
+  }
+}
+// Green "Add positive design influence" prompt on the Editing Panel comments box
+// when the selected risk is eliminated by design (GPP = a).
+function updateDesignerCommentsPrompt() {
+  const dc = document.getElementById("detail-designerComments");
+  if (!dc) return;
+  let gpp = "";
+  if (panelMode === "snippet" && snippetDraft) gpp = snippetDraft.gpp;
+  else if (selectedRowIndex != null && risks[selectedRowIndex]) gpp = risks[selectedRowIndex].gpp;
+  if (_isGppA(gpp)) {
+    dc.placeholder = "Add positive design influence";
+    dc.classList.add("dc-positive-prompt");
+  } else {
+    dc.placeholder = "";
+    dc.classList.remove("dc-positive-prompt");
+  }
+}
+
 // The Editing Panel shows either a register row ("row") or a focused snippet
 // staged for editing ("snippet"). In snippet mode, edits go to snippetDraft and
 // are only written to the register when the user clicks "Apply to selected row".
@@ -9232,6 +9279,11 @@ function renderRisks() {
           td.style.color = c.fg;
           td.style.fontWeight = "600";
         }
+        // Green "positive design influence" prompt when the risk is eliminated by design.
+        if (field === "designerComments" && _isGppA(risk.gpp)) {
+          td.setAttribute("data-ph", "Add positive design influence");
+          td.classList.add("dc-positive-cell");
+        }
         td.addEventListener("input", onCellEdit);
       }
 
@@ -9409,6 +9461,7 @@ function updateDetailPanel() {
     });
     updateDetailTitle();
     updateApplyDraftBar();
+    updateDesignerCommentsPrompt();
     renderReductionPanel(null);
     return;
   }
@@ -9424,6 +9477,7 @@ function updateDetailPanel() {
     });
     updateDetailTitle();
     updateApplyDraftBar();
+    updateDesignerCommentsPrompt();
     renderReductionPanel(null);
     return;
   }
@@ -9443,6 +9497,7 @@ function updateDetailPanel() {
 
   updateDetailTitle();
   updateApplyDraftBar();
+  updateDesignerCommentsPrompt();
   renderReductionPanel(selectedRowIndex);
 }
 
@@ -9559,6 +9614,19 @@ function attachDetailListeners() {
       }
 
       if (selectedRowIndex === null || !risks[selectedRowIndex]) return;
+
+      // GPP change may blank/restore the elimination columns — handle centrally
+      // and re-render the whole row + panel since several fields can change.
+      if (field === "gpp") {
+        applyGppEliminationEffect(selectedRowIndex, risks[selectedRowIndex].gpp, value);
+        risks[selectedRowIndex].gpp = value;
+        renderRisks();
+        updateDetailPanel();
+        highlightSelectedRow();
+        saveStateToStorage();
+        return;
+      }
+
       risks[selectedRowIndex][field] = value;
 
       const selector = `td[data-row-index="${selectedRowIndex}"][data-field="${field}"]`;
@@ -11026,6 +11094,7 @@ function _setGpp(letter) {
   if (_gppPickRow == null || !risks[_gppPickRow]) { closeGppPicker(); return; }
   const row = risks[_gppPickRow];
   const changedRow = _gppPickRow;
+  applyGppEliminationEffect(changedRow, row.gpp, letter);   // blank/restore elimination columns
   row.gpp = letter;
   closeGppPicker();
   renderRisks();
