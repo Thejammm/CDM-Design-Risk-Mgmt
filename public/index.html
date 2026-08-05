@@ -9071,6 +9071,23 @@ function attachMetaListeners() {
       }
       saveStateToStorage();
     });
+    // Compass-style: pressing SPACE in an EMPTY cell accepts its greyed
+    // placeholder as the entered text (one keystroke to fill), e.g. the
+    // Principal Designer field's "Client to assign".
+    cell.addEventListener("keydown", (e) => {
+      if (!(e.key === ' ' || e.key === 'Spacebar' || e.code === 'Space')) return;
+      if (cell.textContent.trim() !== '') return;   // only when the cell is empty
+      const ph = cell.getAttribute('data-ph') || '';
+      if (!ph) return;
+      e.preventDefault();
+      cell.textContent = ph;
+      cell.dispatchEvent(new Event('input', { bubbles: true }));   // save + sync
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(cell); range.collapse(false);
+        const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      } catch (_) {}
+    });
   });
 }
 
