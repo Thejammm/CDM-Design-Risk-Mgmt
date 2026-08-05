@@ -13614,8 +13614,11 @@ function resetReportFilters() {
       if(!tid) return [];
       try {
         const r = await _api('/api/state/projects?tenantId=' + encodeURIComponent(tid));
-        // Hide the reserved per-client brand bucket from the project list.
-        return (r.projects || []).filter(function(p){ return p !== BRAND_PROJECT; });
+        // The API returns [{ project, updatedAt }] — pull out the project NAMES and
+        // hide the reserved per-client brand bucket. (Tolerates plain strings too.)
+        return (r.projects || [])
+          .map(function(p){ return (p && typeof p === 'object') ? p.project : p; })
+          .filter(function(name){ return name && name !== BRAND_PROJECT; });
       }
       catch(e){ return []; }
     }
