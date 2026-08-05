@@ -922,6 +922,21 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
   display: block;
   margin-bottom: 2px;
 }
+/* Title row: snippet name on the left, its ref number in a raised pill on the right. */
+.snippet-title-row { display: flex; align-items: flex-start; gap: 8px; }
+.snippet-title-row strong { flex: 1 1 auto; margin-bottom: 0; }
+.snippet-ref-pill {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 700;
+  color: #374151;
+  background: linear-gradient(180deg, #ffffff 0%, #eceff3 100%);
+  border: 1px solid #c7ccd6;
+  border-radius: 999px;
+  padding: 1px 9px;
+  box-shadow: 0 1px 2px rgba(20,24,40,.18), 0 1px 0 rgba(255,255,255,.9) inset;
+}
 
 /* Stage colour chip — shown in the Risk Library list and reused anywhere a
    Stage is displayed, so a stage is identifiable at a glance by its colour. */
@@ -2114,6 +2129,9 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
           <button type="button" onclick="clearAllRisks()" class="clear-all-btn">
             Clear all rows
           </button>
+          <button type="button" onclick="checkDuplicateRefs()">
+            🔎 Check duplicate refs
+          </button>
           <button type="button" onclick="toggleTable()" id="toggle-table-btn">
             Hide risk table
           </button>
@@ -2229,7 +2247,7 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
             <thead>
             <tr>
               <th title="Name of the designer and their discipline">Designer</th>
-              <th title="Originator Risk Reference and Revision number">Risk Ref.</th>
+              <th title="Internal Risk Reference and Revision number">Internal Risk Ref.</th>
               <th title="Building Element or Activity">Element/Activity</th>
               <th title="When does the risk effect the project/build">Stage</th>
               <th title="General Principle of Prevention (a–i) — see the Risk Evaluation tab">GPP</th>
@@ -2281,7 +2299,7 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
 
           <div class="detail-panel-grid">
             <div class="detail-field">
-              <label for="detail-ref">Risk Ref / Rev</label>
+              <label for="detail-ref">Internal Risk Ref / Rev</label>
               <input id="detail-ref" disabled>
             </div>
             <div class="detail-field">
@@ -2607,7 +2625,7 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
     <label>Include Columns:</label>
     <div class="checkbox-group">
       <label><input type="checkbox" class="report-column" value="designer" checked> Designer</label>
-      <label><input type="checkbox" class="report-column" value="ref" checked> Risk Ref</label>
+      <label><input type="checkbox" class="report-column" value="ref" checked> Internal Risk Ref</label>
       <label><input type="checkbox" class="report-column" value="element" checked> Element/Activity</label>
       <label><input type="checkbox" class="report-column" value="stageRequired"> Stage</label>
       <label><input type="checkbox" class="report-column" value="gpp" checked> GPP</label>
@@ -9201,7 +9219,7 @@ const detailFieldMap = {
 
 const fieldLabels = {
   designer: "Designer",
-  ref: "Originator Risk Ref. / Revision",
+  ref: "Internal Risk Ref. / Revision",
   element: "Element/Activity",
   stageRequired: "Stage",
   gpp: "GPP",
@@ -9744,6 +9762,28 @@ function addRisk() {
   applyLocksToRow(risks.length - 1);
   renderRisks();
   saveStateToStorage();
+}
+
+// Check the register for duplicate Internal Risk Refs and pop up the result.
+// Comparison is case-insensitive on the FULL ref, so suffixes like "1a"/"1b"
+// (and blanks) are treated as distinct — only identical refs are flagged.
+function checkDuplicateRefs() {
+  const groups = {};
+  risks.forEach((r, i) => {
+    const ref = (r && r.ref != null ? String(r.ref) : "").trim();
+    if (!ref) return;
+    const key = ref.toLowerCase();
+    if (!groups[key]) groups[key] = { ref: ref, rows: [] };
+    groups[key].rows.push(i + 1);
+  });
+  const dups = Object.keys(groups).map(k => groups[k]).filter(g => g.rows.length > 1);
+  if (!dups.length) {
+    alert("No duplicate Internal Risk Refs found.");
+    return;
+  }
+  const lines = dups.map(g => '  • "' + g.ref + '"  →  rows ' + g.rows.join(", ")).join("\n");
+  alert("Duplicate Internal Risk Refs found:\n\n" + lines +
+        "\n\nEach reference must be unique. Suffixes (a, b, …) count as different, so \"1a\" and \"1b\" are fine.");
 }
 
 // Remove every row from the risk register table only. Project Information and
@@ -11363,7 +11403,9 @@ function renderSnippetList() {
     // pre-truncated teaser); fall back to summary if a snippet has no hazard.
     const listText = (snippet.fields && snippet.fields.hazard) || snippet.summary || "";
     const stageChip = stageChipHtml(snippet.fields && snippet.fields.stageRequired);
-    btn.innerHTML = `<strong>${snippet.name}</strong>${stageChip}<span>${listText}</span>`;
+    const ref = (snippet.fields && snippet.fields.ref) || "";
+    const refPill = ref ? `<span class="snippet-ref-pill">${ref}</span>` : "";
+    btn.innerHTML = `<span class="snippet-title-row"><strong>${snippet.name}</strong>${refPill}</span>${stageChip}<span>${listText}</span>`;
     btn.addEventListener("click", () => {
       selectedSnippetId = snippet.id;
       loadSnippetIntoPanel(snippet.id);   // stage it in the Editing Panel for editing/locking
@@ -12163,7 +12205,7 @@ function buildNarrativeRiskItem(risk, selectedColumns, idx) {
 
   const columnMapping = {
     'designer': { label: 'Designer', value: risk.designer },
-    'ref': { label: 'Risk Reference', value: risk.ref },
+    'ref': { label: 'Internal Risk Reference', value: risk.ref },
     'element': { label: 'Element/Activity', value: risk.element },
     'stageRequired': { label: 'Stage', value: risk.stageRequired },
     'gpp': { label: 'GPP', value: risk.gpp ? gppFull(risk.gpp) : '' },
@@ -12451,7 +12493,7 @@ async function exportRiskRegisterExcel() {
   // Header row
   // ============================================================
   const headers = [
-    'Designer', 'Risk Ref', 'Element/Activity', 'Stage', 'GPP',
+    'Designer', 'Internal Risk Ref', 'Element/Activity', 'Stage', 'GPP',
     'Hazard/Associated Risk', 'Person at Risk', 'Initial Risk',
     'Designers Comments', 'Eliminated', 'Residual Risk',
     'Owner', 'Design Validation', 'Further action required?',
@@ -12776,7 +12818,7 @@ function printRiskRegisterPDF() {
   // the only forced wrap point; autoTable otherwise wraps on spaces (never
   // mid-word, and jsPDF does not hyphenate).
   const headLabels = [
-    'Designer', 'Risk Ref', 'Element/Activity', 'Stage', 'GPP',
+    'Designer', 'Internal Risk Ref', 'Element/Activity', 'Stage', 'GPP',
     'Hazard/Associated Risk', 'Person at Risk', 'Initial Risk',
     'Designers Comments', 'Eliminated', 'Residual Risk', 'Owner',
     'Design Validation', 'Further action required?', 'Status',
