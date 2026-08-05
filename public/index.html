@@ -2120,6 +2120,9 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
       <button class="tab-button" data-tab="tab-dtm" onclick="showTab('tab-dtm')">
         DTM Log
       </button>
+      <button class="tab-button" data-tab="tab-dtm-archive" onclick="showTab('tab-dtm-archive')">
+        DTM Archive
+      </button>
     </div>
 
     <!-- REGISTER TAB -->
@@ -2722,6 +2725,19 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
       #tab-dtm .dtm-actions-table td { padding:3px 6px; }
       #tab-dtm .dtm-actions-table input, #tab-dtm .dtm-actions-table select { width:100%; padding:5px 6px; border:1px solid #cfd6e3; border-radius:5px; font-size:12px; box-sizing:border-box; }
       #tab-dtm .dtm-row-del { background:none; border:none; color:#b91c1c; cursor:pointer; font-size:13px; }
+      #tab-dtm .dtm-archive-btn { font-size:11px; background:#e0e7ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:6px; padding:3px 9px; cursor:pointer; }
+      /* DTM Archive tab — read-only cards reuse the entry look */
+      #tab-dtm-archive .dtm-empty { padding:12px; color:#6b7280; font-size:12px; }
+      #tab-dtm-archive .dtm-entry { border:1px solid #d7dbe3; border-radius:10px; padding:14px; margin:12px 0; background:#fbfcfe; }
+      #tab-dtm-archive .dtm-entry-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; gap:10px; }
+      #tab-dtm-archive .dtm-stamp { font-size:11px; color:#6b7280; font-weight:600; }
+      #tab-dtm-archive .dtm-restore-btn { font-size:11px; background:#d1fae5; color:#065f46; border:1px solid #6ee7b7; border-radius:6px; padding:3px 9px; cursor:pointer; }
+      #tab-dtm-archive .dtm-entry-del { font-size:11px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; border-radius:6px; padding:3px 9px; cursor:pointer; }
+      #tab-dtm-archive .dtm-archived-meta { font-size:12px; color:#374151; margin-bottom:6px; }
+      #tab-dtm-archive .dtm-archived-min { font-size:12px; color:#1f2937; background:#fff; border:1px solid #eef1f5; border-radius:6px; padding:8px; margin-bottom:8px; }
+      #tab-dtm-archive .dtm-actions-table { width:100%; border-collapse:collapse; }
+      #tab-dtm-archive .dtm-actions-table th { text-align:left; font-size:10px; color:#6b7280; padding:4px 6px; border-bottom:1px solid #e5e7eb; }
+      #tab-dtm-archive .dtm-actions-table td { padding:4px 6px; font-size:12px; color:#1f2937; border-bottom:1px solid #f3f4f6; }
     </style>
     <div id="tab-dtm" class="tab-panel">
       <div class="section">
@@ -2736,6 +2752,15 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
         </div>
 
         <div id="dtm-entries"></div>
+      </div>
+    </div>
+
+    <!-- DTM ARCHIVE TAB -->
+    <div id="tab-dtm-archive" class="tab-panel">
+      <div class="section">
+        <div class="section-title"><span>DTM Archive — completed entries</span></div>
+        <p class="note-text" style="margin:0 0 10px;">DTM entries you have archived once their actions were completed and reflected on the register. They are read-only here; <strong>Restore</strong> puts an entry back into the active DTM Log, and <strong>Delete</strong> removes it permanently. Archived entries are still included in the DTM report (PDF).</p>
+        <div id="dtm-archive-list"></div>
       </div>
     </div>
 
@@ -10032,6 +10057,9 @@ function showTab(tabId) {
   if (tabId === 'tab-dtm') {
     renderDtm();
   }
+  if (tabId === 'tab-dtm-archive') {
+    renderDtmArchive();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -10090,11 +10118,60 @@ function dtmRerate(i, value) {
 
 function renderDtmEntries() {
   const el = document.getElementById('dtm-entries'); if (!el) return;
-  if (!dtmMeetings.length) {
-    el.innerHTML = '<div class="dtm-empty">No DTM entries yet. Click “New DTM entry” to start minuting a meeting.</div>';
+  const active = dtmMeetings.filter(function (m) { return !m.archived; });
+  if (!active.length) {
+    el.innerHTML = '<div class="dtm-empty">No active DTM entries. Click “New DTM entry” to start minuting a meeting.</div>';
     return;
   }
-  el.innerHTML = dtmMeetings.map(dtmEntryHtml).join('');
+  el.innerHTML = active.map(dtmEntryHtml).join('');
+}
+
+// Archived entries: read-only cards with Restore + Delete.
+function renderDtmArchive() {
+  const el = document.getElementById('dtm-archive-list'); if (!el) return;
+  const archived = dtmMeetings.filter(function (m) { return m.archived; });
+  if (!archived.length) {
+    el.innerHTML = '<div class="dtm-empty">Nothing archived yet. Use “Archive” on a completed DTM entry to move it here.</div>';
+    return;
+  }
+  el.innerHTML = archived.map(dtmArchivedEntryHtml).join('');
+}
+
+function dtmArchivedEntryHtml(m) {
+  const meta = [m.date ? ('Date: ' + m.date) : null, m.chair ? ('Chair: ' + m.chair) : null, m.attendees ? ('Attendees: ' + m.attendees) : null].filter(Boolean).map(_escHtml).join('  &nbsp;|&nbsp;  ');
+  const acts = (m.actions || []).filter(function (a) { return (a.action || a.owner || a.due || '').toString().trim(); });
+  let actHtml = '';
+  if (acts.length) {
+    actHtml = '<table class="dtm-actions-table dtm-archived-table"><thead><tr><th style="width:40%">Action</th><th>Owner</th><th>Due</th><th>Status</th></tr></thead><tbody>' +
+      acts.map(function (a) {
+        return '<tr><td>' + _escHtml(a.action || '') + '</td><td>' + _escHtml(a.owner || '') + '</td><td>' + _escHtml(a.due || '') + '</td><td>' + _escHtml(a.status || 'Open') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
+  return '<div class="dtm-entry dtm-entry-archived">' +
+      '<div class="dtm-entry-top">' +
+        '<span class="dtm-stamp">Logged: ' + _escHtml(m.ts || '') + (m.archivedTs ? ' &nbsp;·&nbsp; Archived: ' + _escHtml(m.archivedTs) : '') + '</span>' +
+        '<span>' +
+          '<button type="button" class="dtm-restore-btn" onclick="restoreDtmMeeting(\'' + m.id + '\')">Restore</button> ' +
+          '<button type="button" class="dtm-entry-del" onclick="deleteDtmMeeting(\'' + m.id + '\')">Delete</button>' +
+        '</span>' +
+      '</div>' +
+      (meta ? '<div class="dtm-archived-meta">' + meta + '</div>' : '') +
+      ((m.minutes || '').trim() ? '<div class="dtm-archived-min">' + _escHtml(m.minutes.trim()).replace(/\n/g, '<br>') + '</div>' : '') +
+      actHtml +
+    '</div>';
+}
+
+function archiveDtmMeeting(id) {
+  const m = _dtmFind(id); if (!m) return;
+  m.archived = true; m.archivedTs = dtmNowStamp().stamp;
+  saveStateToStorage();
+  renderDtmEntries(); renderDtmArchive();
+}
+function restoreDtmMeeting(id) {
+  const m = _dtmFind(id); if (!m) return;
+  m.archived = false; delete m.archivedTs;
+  saveStateToStorage();
+  renderDtmEntries(); renderDtmArchive();
 }
 
 function _dtmStatusOpts(cur) {
@@ -10121,7 +10198,10 @@ function dtmEntryHtml(m) {
   return '<div class="dtm-entry">' +
       '<div class="dtm-entry-top">' +
         '<span class="dtm-stamp">Logged: ' + _escHtml(m.ts || '') + '</span>' +
-        '<button type="button" class="dtm-entry-del" onclick="deleteDtmMeeting(\'' + m.id + '\')">Delete entry</button>' +
+        '<span>' +
+          '<button type="button" class="dtm-archive-btn" title="Move to the DTM Archive" onclick="archiveDtmMeeting(\'' + m.id + '\')">Archive</button> ' +
+          '<button type="button" class="dtm-entry-del" onclick="deleteDtmMeeting(\'' + m.id + '\')">Delete entry</button>' +
+        '</span>' +
       '</div>' +
       '<div class="dtm-fields">' +
         _dtmField(m, 'date', 'Meeting date', 'date') +
@@ -10147,7 +10227,7 @@ function deleteDtmMeeting(id) {
   if (!confirm('Delete this DTM entry and its actions? This cannot be undone.')) return;
   dtmMeetings = dtmMeetings.filter(function (m) { return m.id !== id; });
   saveStateToStorage();
-  renderDtmEntries();
+  renderDtmEntries(); renderDtmArchive();
 }
 function setDtmField(id, key, val) { const m = _dtmFind(id); if (m) { m[key] = val; saveStateToStorage(); } }
 function addDtmAction(id) { const m = _dtmFind(id); if (!m) return; (m.actions = m.actions || []).push({ id: dtmUid(), action: '', owner: '', due: '', status: 'Open' }); saveStateToStorage(); renderDtmEntries(); }
@@ -10196,14 +10276,14 @@ function printDtmReport() {
     doc.text('None outstanding.', margin, y + 6); y += 12;
   }
 
-  // Meeting entries
-  dtmMeetings.forEach(function (m, idx) {
+  // Meeting entries — active first, then archived (both included in the record).
+  function drawDtmEntry(m, title, extraStamp) {
     if (y > pageH - 45) { doc.addPage(); y = margin + 4; }
     doc.setFillColor(245, 247, 250); doc.rect(margin, y, availW, 8, 'F');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(31, 41, 55);
-    doc.text('DTM entry ' + (idx + 1), margin + 2, y + 5.5);
+    doc.text(title, margin + 2, y + 5.5);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(110, 110, 110);
-    doc.text('Logged: ' + (m.ts || ''), pageW - margin - 2, y + 5.5, { align: 'right' });
+    doc.text('Logged: ' + (m.ts || '') + (extraStamp ? '    ' + extraStamp : ''), pageW - margin - 2, y + 5.5, { align: 'right' });
     y += 11;
 
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
@@ -10230,7 +10310,25 @@ function printDtmReport() {
       });
       y = doc.lastAutoTable.finalY + 9;
     } else { y += 3; }
-  });
+  }
+  function drawDtmSectionHeading(text, rgb) {
+    if (y > pageH - 30) { doc.addPage(); y = margin + 4; }
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+    doc.text(text, margin, y); y += 6;
+  }
+
+  const activeEntries = dtmMeetings.filter(function (m) { return !m.archived; });
+  const archivedEntries = dtmMeetings.filter(function (m) { return m.archived; });
+
+  if (activeEntries.length) {
+    drawDtmSectionHeading('Active DTM entries (' + activeEntries.length + ')', accentRgb);
+    activeEntries.forEach(function (m, i) { drawDtmEntry(m, 'DTM entry ' + (i + 1)); });
+  }
+  if (archivedEntries.length) {
+    y += 2;
+    drawDtmSectionHeading('Archived DTM entries (' + archivedEntries.length + ')', [107, 114, 128]);
+    archivedEntries.forEach(function (m, i) { drawDtmEntry(m, 'Archived entry ' + (i + 1), 'Archived: ' + (m.archivedTs || '')); });
+  }
   if (!dtmMeetings.length) {
     doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(120, 120, 120);
     doc.text('No DTM entries have been recorded yet.', margin, y + 4);
