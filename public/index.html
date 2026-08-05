@@ -13396,6 +13396,8 @@ function resetReportFilters() {
   .proj-act[disabled] { opacity: .55; cursor: not-allowed; }
   .proj-edit-input { flex: 1 1 auto; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--brand-accent, #51a6a9); border-radius: 8px; font-size: 13.5px; font-family: inherit; outline: none; }
   .proj-confirm-msg { flex: 1 1 auto; display: flex; align-items: center; font-size: 12.5px; font-weight: 600; color: #b91c1c; padding: 0 4px; }
+  .proj-client-head { font-size: 11px; font-weight: 800; color: var(--brand-accent-dark, #408a8d); text-transform: uppercase; letter-spacing: .05em; margin: 10px 2px 2px; }
+  .proj-client-head:first-child { margin-top: 0; }
   .auth-modal {
     background: #fff;
     border-radius: 14px;
@@ -13557,10 +13559,21 @@ function resetReportFilters() {
     const DEFAULT_PROJECT = 'Default Project';
     let _project = null;
     try { _project = localStorage.getItem('ahsActiveProject') || null; } catch(_){}
+    // A consultant has no tenant of their own; when they open a client's project
+    // this holds the client (tenant) they are currently working on.
+    let _consultantTenant = null;
+    try { _consultantTenant = localStorage.getItem('ahsConsultantTenant') || null; } catch(_){}
     function project(){ return _project || DEFAULT_PROJECT; }
     function setProject(p){
       _project = (p || '').toString().trim() || DEFAULT_PROJECT;
       try { localStorage.setItem('ahsActiveProject', _project); } catch(_){}
+    }
+    function setConsultantTenant(tid){
+      _consultantTenant = (tid || '').toString().trim() || null;
+      try {
+        if(_consultantTenant) localStorage.setItem('ahsConsultantTenant', _consultantTenant);
+        else localStorage.removeItem('ahsConsultantTenant');
+      } catch(_){}
     }
     async function _api(path, opts){
       opts = opts || {};
@@ -13587,7 +13600,12 @@ function resetReportFilters() {
     async function logout(){ try { await _api('/api/auth/logout', { method: 'POST' }); } catch(e){} _user = null; }
     function user(){ return _user; }
     function isSignedIn(){ return !!_user; }
-    function tenantId(){ return _user ? (_user.tenantId || null) : null; }
+    function tenantId(){
+      if(!_user) return null;
+      // Consultants act on the client (tenant) they've opened; clients on their own.
+      if(_user.role === 'consultant') return _consultantTenant || null;
+      return _user.tenantId || null;
+    }
     async function loadFromServer(){
       if(!_user) return null;
       const tid = tenantId();
@@ -13643,21 +13661,30 @@ function resetReportFilters() {
       }
       catch(e){ return null; }
     }
-    async function deleteProject(name){
+    // Consultant-only: every project across all clients, labelled with its client.
+    async function listAllProjects(){
+      if(!_user || _user.role !== 'consultant') return [];
+      try {
+        const r = await _api('/api/admin/projects');
+        return (r.projects || []).filter(function(p){ return p && p.project; });
+      }
+      catch(e){ return []; }
+    }
+    async function deleteProject(name, tenantOverride){
       if(!_user) return false;
-      const tid = tenantId();
+      const tid = tenantOverride || tenantId();
       if(!tid) return false;
       await _api('/api/state?tenantId=' + encodeURIComponent(tid) + '&project=' + encodeURIComponent(name), { method: 'DELETE' });
       return true;
     }
-    async function renameProject(oldName, newName){
+    async function renameProject(oldName, newName, tenantOverride){
       if(!_user) return false;
-      const tid = tenantId();
+      const tid = tenantOverride || tenantId();
       if(!tid) return false;
       await _api('/api/state/rename', { method: 'POST', body: JSON.stringify({ tenantId: tid, project: oldName, newProject: newName }) });
       return true;
     }
-    return { refresh: refresh, login: login, logout: logout, user: user, isSignedIn: isSignedIn, tenantId: tenantId, project: project, setProject: setProject, loadFromServer: loadFromServer, saveToServer: saveToServer, listProjects: listProjects, deleteProject: deleteProject, renameProject: renameProject, saveBrandToServer: saveBrandToServer, loadBrandFromServer: loadBrandFromServer };
+    return { refresh: refresh, login: login, logout: logout, user: user, isSignedIn: isSignedIn, tenantId: tenantId, setConsultantTenant: setConsultantTenant, project: project, setProject: setProject, loadFromServer: loadFromServer, saveToServer: saveToServer, listProjects: listProjects, listAllProjects: listAllProjects, deleteProject: deleteProject, renameProject: renameProject, saveBrandToServer: saveBrandToServer, loadBrandFromServer: loadBrandFromServer };
   })();
   window.AHSAuth = Auth;
 
@@ -13756,11 +13783,23 @@ function resetReportFilters() {
   const projErr        = document.getElementById('projError');
   const projNewForm    = document.getElementById('projNewForm');
   const projNewInput   = document.getElementById('projNewInput');
-  function _switchToProject(name){
-    const target = (name || '').toString().trim();
-    if(!target) return;
-    if(target === Auth.project()){ closeProjectSwitcher(); return; }
-    Auth.setProject(target);
+  // A project "row" is { project, tenantId, tenantName }. For a client, tenantId
+  // is null (their own tenant is implied). For a consultant, each row carries the
+  // client (tenant) the project belongs to.
+  function _isConsultant(){ return !!(Auth.user() && Auth.user().role === 'consultant'); }
+  function _isCurrentRow(r){
+    if(r.project !== Auth.project()) return false;
+    if(_isConsultant()) return (r.tenantId || null) === (Auth.tenantId() || null);
+    return true;
+  }
+  function _switchToProject(r){
+    // Accept a row object, or a bare name string (from the "start a project" box).
+    const name = (typeof r === 'string') ? r.trim() : (r && r.project);
+    if(!name) return;
+    const tid = (r && typeof r === 'object') ? (r.tenantId || null) : null;
+    if(_isCurrentRow({ project: name, tenantId: tid })){ closeProjectSwitcher(); return; }
+    if(_isConsultant() && tid){ Auth.setConsultantTenant(tid); }
+    Auth.setProject(name);
     // Clear the hydrate guard so _init pulls this project's saved state fresh.
     try { sessionStorage.removeItem('ahsHydrated'); } catch(_){}
     window.location.reload();
@@ -13768,68 +13807,89 @@ function resetReportFilters() {
   async function renderProjectList(){
     if(!projListEl) return;
     projListEl.textContent = 'Loading…';
-    let projects = [];
-    try { projects = await Auth.listProjects(); } catch(_){ projects = []; }
-    const current = Auth.project();
-    // Always show the current project even if the server list hasn't caught up.
-    if(current && projects.indexOf(current) === -1) projects = [current].concat(projects);
+    const consultant = _isConsultant();
+    let rows = [];
+    try {
+      if(consultant){
+        rows = (await Auth.listAllProjects()).map(function(x){
+          return { project: x.project, tenantId: x.tenantId, tenantName: x.tenantName || x.tenantId };
+        });
+      } else {
+        rows = (await Auth.listProjects()).map(function(name){ return { project: name, tenantId: null, tenantName: null }; });
+        const current = Auth.project();
+        if(current && !rows.some(function(r){ return r.project === current; })){
+          rows = [{ project: current, tenantId: null, tenantName: null }].concat(rows);
+        }
+      }
+    } catch(_){ rows = []; }
     projListEl.innerHTML = '';
-    if(!projects.length){
-      projListEl.innerHTML = '<div class="proj-empty">No saved projects yet. Type a name below to start one.</div>';
+    if(!rows.length){
+      projListEl.innerHTML = '<div class="proj-empty">' + (consultant
+        ? 'No client projects have been saved yet.'
+        : 'No saved projects yet. Type a name below to start one.') + '</div>';
       return;
     }
-    projects.forEach(function(p){
-      projListEl.appendChild(_buildProjRow(p, current));
+    let lastClient = null;
+    rows.forEach(function(r){
+      if(consultant && r.tenantName !== lastClient){
+        lastClient = r.tenantName;
+        const hd = document.createElement('div');
+        hd.className = 'proj-client-head';
+        hd.textContent = r.tenantName || '(no client)';
+        projListEl.appendChild(hd);
+      }
+      projListEl.appendChild(_buildProjRow(r));
     });
   }
-  function _buildProjRow(p, current){
+  function _buildProjRow(r){
     const row = document.createElement('div');
     row.className = 'proj-row';
+    const isCurrent = _isCurrentRow(r);
 
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'proj-item' + (p === current ? ' current' : '');
+    btn.className = 'proj-item' + (isCurrent ? ' current' : '');
     const label = document.createElement('span');
-    label.textContent = '📁 ' + p;
+    label.textContent = '📁 ' + r.project;
     btn.appendChild(label);
-    if(p === current){
+    if(isCurrent){
       const tag = document.createElement('span');
       tag.className = 'proj-current-tag';
       tag.textContent = 'current';
       btn.appendChild(tag);
     }
-    btn.addEventListener('click', function(){ _switchToProject(p); });
+    btn.addEventListener('click', function(){ _switchToProject(r); });
 
     const acts = document.createElement('div');
     acts.className = 'proj-actions';
     const renameBtn = document.createElement('button');
     renameBtn.type = 'button'; renameBtn.className = 'proj-act'; renameBtn.title = 'Rename project'; renameBtn.textContent = '✏️';
-    renameBtn.addEventListener('click', function(e){ e.stopPropagation(); _beginRename(p, row, current); });
+    renameBtn.addEventListener('click', function(e){ e.stopPropagation(); _beginRename(r, row); });
     const delBtn = document.createElement('button');
     delBtn.type = 'button'; delBtn.className = 'proj-act'; delBtn.title = 'Delete project'; delBtn.textContent = '🗑️';
-    delBtn.addEventListener('click', function(e){ e.stopPropagation(); _beginDelete(p, row, current); });
+    delBtn.addEventListener('click', function(e){ e.stopPropagation(); _beginDelete(r, row); });
     acts.appendChild(renameBtn); acts.appendChild(delBtn);
 
     row.appendChild(btn); row.appendChild(acts);
     return row;
   }
-  function _beginRename(p, row, current){
+  function _beginRename(r, row){
     row.innerHTML = '';
     const input = document.createElement('input');
-    input.type = 'text'; input.className = 'proj-edit-input'; input.value = p;
+    input.type = 'text'; input.className = 'proj-edit-input'; input.value = r.project;
     const save = document.createElement('button'); save.type = 'button'; save.className = 'proj-act primary'; save.textContent = 'Save';
     const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'proj-act'; cancel.textContent = 'Cancel';
     const doSave = async function(){
       const nn = (input.value || '').trim();
-      if(!nn || nn === p){ renderProjectList(); return; }
+      if(!nn || nn === r.project){ renderProjectList(); return; }
       save.disabled = true;
       try {
-        await Auth.renameProject(p, nn);
-        if(p === current){ Auth.setProject(nn); try { sessionStorage.removeItem('ahsHydrated'); } catch(_){}; window.location.reload(); return; }
+        await Auth.renameProject(r.project, nn, r.tenantId || undefined);
+        if(_isCurrentRow(r)){ Auth.setProject(nn); try { sessionStorage.removeItem('ahsHydrated'); } catch(_){}; window.location.reload(); return; }
         renderProjectList();
       } catch(e){
         save.disabled = false;
-        _projActError((e.body && e.body.error === 'project_exists') ? 'A project with that name already exists.' : ('Could not rename: ' + (e.message || 'error')));
+        _projActError((e.body && e.body.error === 'project_exists') ? 'A project with that name already exists for this client.' : ('Could not rename: ' + (e.message || 'error')));
       }
     };
     save.addEventListener('click', doSave);
@@ -13838,20 +13898,19 @@ function resetReportFilters() {
     row.appendChild(input); row.appendChild(save); row.appendChild(cancel);
     setTimeout(function(){ try { input.focus(); input.select(); } catch(_){} }, 30);
   }
-  function _beginDelete(p, row, current){
+  function _beginDelete(r, row){
     row.innerHTML = '';
-    const msg = document.createElement('span'); msg.className = 'proj-confirm-msg'; msg.textContent = 'Delete "' + p + '" and all its data?';
+    const msg = document.createElement('span'); msg.className = 'proj-confirm-msg';
+    msg.textContent = 'Delete "' + r.project + '"' + (r.tenantName ? ' (' + r.tenantName + ')' : '') + ' and all its data?';
     const del = document.createElement('button'); del.type = 'button'; del.className = 'proj-act danger'; del.textContent = 'Delete';
     const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'proj-act'; cancel.textContent = 'Cancel';
     del.addEventListener('click', async function(){
       del.disabled = true;
       try {
-        await Auth.deleteProject(p);
-        if(p === current){
-          let remaining = [];
-          try { remaining = await Auth.listProjects(); } catch(_){}
-          remaining = remaining.filter(function(x){ return x !== p; });
-          Auth.setProject(remaining[0] || 'Default Project');
+        const wasCurrent = _isCurrentRow(r);
+        await Auth.deleteProject(r.project, r.tenantId || undefined);
+        if(wasCurrent){
+          Auth.setProject('Default Project');
           try { sessionStorage.removeItem('ahsHydrated'); } catch(_){}
           window.location.reload();
           return;

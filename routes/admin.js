@@ -200,4 +200,29 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
+// GET /api/admin/projects — every saved project across ALL tenants, labelled
+// with its client, so the consultant can browse and open any of them.
+router.get('/projects', async (req, res) => {
+  try {
+    const r = await pool.query(
+      `SELECT s.tenant_id, t.name AS tenant_name, s.project, s.updated_at
+         FROM app_state s
+         LEFT JOIN tenants t ON t.id = s.tenant_id
+        WHERE s.project <> '__ahs_client_brand__'
+        ORDER BY LOWER(COALESCE(t.name, s.tenant_id)) ASC, s.updated_at DESC`
+    );
+    res.json({
+      projects: r.rows.map(x => ({
+        tenantId:   x.tenant_id,
+        tenantName: x.tenant_name || x.tenant_id,
+        project:    x.project,
+        updatedAt:  x.updated_at
+      }))
+    });
+  } catch(err){
+    console.error('GET /api/admin/projects error:', err);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 module.exports = router;
