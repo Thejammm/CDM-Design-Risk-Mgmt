@@ -11262,22 +11262,15 @@ function batchInsertSelectedSnippets() {
   const ordered = getActiveSnippets().filter(s => batchSelectedIds.has(s.id));
   if (ordered.length === 0) return;
 
-  const lastIdx = risks.length - 1;
-  const lastEmpty = lastIdx >= 0 && isRowEmpty(risks[lastIdx]);
-  let firstIndex = null;
+  // Drop any empty rows first (including the blank starter rows a fresh register
+  // opens with) so the inserted items don't land beneath leftover blank lines.
+  risks = risks.filter(r => !isRowEmpty(r));
 
-  ordered.forEach((snippet, i) => {
-    let idx;
+  const firstIndex = risks.length;                // first inserted row lands here
+  ordered.forEach((snippet) => {
     const withPrompts = { ...snippet.fields, controlPrompts: (snippet.designPrompts || []).slice() };
-    if (i === 0 && lastEmpty) {
-      idx = lastIdx;
-      risks[idx] = withPrompts;                  // fill the trailing empty row
-    } else {
-      risks.push(withPrompts);                    // append new rows below
-      idx = risks.length - 1;
-    }
-    applyLocksToRow(idx);
-    if (firstIndex === null) firstIndex = idx;
+    risks.push(withPrompts);
+    applyLocksToRow(risks.length - 1);
   });
 
   renderRisks();
