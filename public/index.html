@@ -2726,6 +2726,16 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
       #tab-dtm .dtm-actions-table input, #tab-dtm .dtm-actions-table select { width:100%; padding:5px 6px; border:1px solid #cfd6e3; border-radius:5px; font-size:12px; box-sizing:border-box; }
       #tab-dtm .dtm-row-del { background:none; border:none; color:#b91c1c; cursor:pointer; font-size:13px; }
       #tab-dtm .dtm-archive-btn { font-size:11px; background:#e0e7ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:6px; padding:3px 9px; cursor:pointer; }
+      #tab-dtm .dtm-risk-card { border:1px solid #c7d2e0; border-left:4px solid #2563eb; border-radius:10px; padding:14px; margin:14px 0; background:#f8fafc; }
+      #tab-dtm .dtm-risk-head { display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; }
+      #tab-dtm .dtm-risk-title { font-size:14px; font-weight:700; color:#1f2937; }
+      #tab-dtm .dtm-risk-ref { display:inline-block; background:#2563eb; color:#fff; border-radius:6px; padding:1px 8px; font-size:12px; margin-right:4px; }
+      #tab-dtm .dtm-risk-rerate { font-size:11px; color:#374151; }
+      #tab-dtm .dtm-risk-rerate select { padding:4px 6px; border:1px solid #cfd6e3; border-radius:5px; font-size:11px; }
+      #tab-dtm .dtm-risk-haz { font-size:12px; color:#6b7280; margin:6px 0 4px; }
+      #tab-dtm .dtm-risk-entries .dtm-entry { background:#fff; }
+      #tab-dtm .dtm-noentry { font-size:12px; color:#6b7280; font-style:italic; padding:8px 0; }
+      #tab-dtm .dtm-add-entry { margin-top:6px; font-size:12px; background:#e0e7ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:6px; padding:6px 12px; cursor:pointer; }
       /* DTM Archive tab — read-only cards reuse the entry look */
       #tab-dtm-archive .dtm-empty { padding:12px; color:#6b7280; font-size:12px; }
       #tab-dtm-archive .dtm-entry { border:1px solid #d7dbe3; border-radius:10px; padding:14px; margin:12px 0; background:#fbfcfe; }
@@ -2741,17 +2751,14 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
     </style>
     <div id="tab-dtm" class="tab-panel">
       <div class="section">
-        <div class="section-title"><span>DTM Log — Design Team Meeting minutes</span></div>
-        <p class="note-text" style="margin:0 0 10px;">Minute your Design Team Meetings and their actions here. Every risk currently rated <strong>DTM</strong> on the register is listed below so it can be discussed and re-rated to close it out. This is a working, point-in-time log &mdash; use <strong>DTM report (PDF)</strong> for a timestamped record.</p>
+        <div class="section-title"><span>DTM Log — by risk</span></div>
+        <p class="note-text" style="margin:0 0 10px;">Every risk currently rated <strong>DTM</strong> on the register appears below as its own card. Add DTM entries (minutes) and actions to each risk <strong>separately</strong>, then re-rate its residual to close it out (its record is kept in the DTM Archive). Use <strong>DTM report (PDF)</strong> for a timestamped record.</p>
 
-        <div id="dtm-worklist"></div>
-
-        <div style="margin:14px 0 10px; display:flex; gap:10px; flex-wrap:wrap;">
-          <button type="button" onclick="addDtmMeeting()">&#65291; New DTM entry</button>
+        <div style="margin:0 0 12px;">
           <button type="button" onclick="printDtmReport()">&#128424; DTM report (PDF)</button>
         </div>
 
-        <div id="dtm-entries"></div>
+        <div id="dtm-risk-cards"></div>
       </div>
     </div>
 
@@ -10077,67 +10084,85 @@ function dtmNowStamp() {
 function _dtmFind(id) { return dtmMeetings.find(function (m) { return m.id === id; }); }
 function _dtmProject() { const c = document.querySelectorAll('.risk-meta td[contenteditable="true"]')[3]; return c ? (c.innerText || '').trim() : ''; }
 
-function renderDtm() { renderDtmWorklist(); renderDtmEntries(); }
+function renderDtm() { renderDtmRiskCards(); }
 
-// "Needs a DTM" worklist — every register row whose residual is DTM.
-function renderDtmWorklist() {
-  const el = document.getElementById('dtm-worklist'); if (!el) return;
-  const items = [];
-  risks.forEach(function (r, i) { if (ragOf(r.residualRisk) === 'DTM') items.push({ r: r, i: i }); });
-  if (!items.length) {
-    el.innerHTML = '<div class="dtm-worklist-empty">✓ No risks are currently awaiting a DTM.</div>';
+// Ensure a risk has a stable id so DTM entries link to it reliably even if rows
+// are inserted/reordered. Persisted with the risk (underscore fields are saved).
+function ensureRid(r) { if (!r._rid) r._rid = dtmUid(); return r._rid; }
+
+// Human label for a linked risk (used in the Archive tab and the PDF).
+function _dtmRiskLabel(rid) {
+  if (!rid) return '';
+  const r = risks.find(function (x) { return x._rid === rid; });
+  if (!r) return '';
+  return (r.ref ? r.ref + ' — ' : '') + (r.element || '');
+}
+
+// DTM Log organised BY RISK: every register row rated DTM is its own card, with
+// its own minutes entries and actions, handled independently of the others.
+function renderDtmRiskCards() {
+  const el = document.getElementById('dtm-risk-cards'); if (!el) return;
+  const dtmRisks = []; let assigned = false;
+  risks.forEach(function (r, i) {
+    if (ragOf(r.residualRisk) === 'DTM') { if (!r._rid) { r._rid = dtmUid(); assigned = true; } dtmRisks.push({ r: r, i: i }); }
+  });
+  if (assigned) saveStateToStorage();
+  if (!dtmRisks.length) {
+    el.innerHTML = '<div class="dtm-empty">✓ No risks currently require a DTM. Set a risk’s residual to <strong>DTM</strong> on the register and it will appear here to minute and action.</div>';
     return;
   }
-  let h = '<div class="dtm-worklist"><div class="dtm-worklist-head">Awaiting a DTM (' + items.length + ') — re-rate the residual to close one out</div>';
-  items.forEach(function (o) {
-    h += '<div class="dtm-worklist-row">' +
-      '<span class="dtm-wl-ref">' + _escHtml(o.r.ref || '—') + '</span>' +
-      '<span class="dtm-wl-el">' + _escHtml(o.r.element || 'N/A') + '</span>' +
-      '<span class="dtm-wl-haz">' + _escHtml(o.r.hazard || '') + '</span>' +
-      '<span class="dtm-wl-act">Re-rate: <select onchange="dtmRerate(' + o.i + ', this.value)">' +
-        '<option value="">DTM…</option>' +
-        '<option value="High">High</option>' +
-        '<option value="Medium">Medium</option>' +
-        '<option value="Low">Low</option>' +
-      '</select></span>' +
+  el.innerHTML = dtmRisks.map(function (o) { return dtmRiskCardHtml(o.r, o.i); }).join('');
+}
+
+function dtmRiskCardHtml(r, i) {
+  const rid = r._rid;
+  const entries = dtmMeetings.filter(function (m) { return m.riskRid === rid && !m.archived; });
+  const entriesHtml = entries.length
+    ? entries.map(dtmEntryHtml).join('')
+    : '<div class="dtm-noentry">No DTM entries yet for this risk. Add one to minute the discussion and actions.</div>';
+  return '<div class="dtm-risk-card">' +
+      '<div class="dtm-risk-head">' +
+        '<div class="dtm-risk-title"><span class="dtm-risk-ref">' + _escHtml(r.ref || '—') + '</span> ' + _escHtml(r.element || 'N/A') + '</div>' +
+        '<div class="dtm-risk-rerate">Re-rate residual: <select onchange="dtmRerate(' + i + ', this.value)">' +
+          '<option value="">DTM…</option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>' +
+        '</select></div>' +
+      '</div>' +
+      (r.hazard ? '<div class="dtm-risk-haz">' + _escHtml(r.hazard) + '</div>' : '') +
+      '<div class="dtm-risk-entries">' + entriesHtml + '</div>' +
+      '<button type="button" class="dtm-add-entry" onclick="addDtmMeeting(\'' + rid + '\')">＋ Add DTM entry</button>' +
     '</div>';
-  });
-  el.innerHTML = h + '</div>';
 }
 
 // Close a risk out of DTM by giving it a residual rating (reverses applyDtmEffect).
+// Its DTM entries are auto-archived so the record is kept in the DTM Archive.
 function dtmRerate(i, value) {
   if (!value || !risks[i]) return;
-  const old = risks[i].residualRisk || '';
-  risks[i].residualRisk = value;
+  const r = risks[i]; const rid = r._rid;
+  const old = r.residualRisk || '';
+  r.residualRisk = value;
   if (typeof applyDtmEffect === 'function') applyDtmEffect(i, old, value);
+  if (rid) {
+    const t = dtmNowStamp();
+    dtmMeetings.forEach(function (m) { if (m.riskRid === rid && !m.archived) { m.archived = true; m.archivedTs = t.stamp; } });
+  }
   saveStateToStorage();
   if (typeof renderRisks === 'function') renderRisks();
-  renderDtm();
+  renderDtm(); renderDtmArchive();
 }
 
-function renderDtmEntries() {
-  const el = document.getElementById('dtm-entries'); if (!el) return;
-  const active = dtmMeetings.filter(function (m) { return !m.archived; });
-  if (!active.length) {
-    el.innerHTML = '<div class="dtm-empty">No active DTM entries. Click “New DTM entry” to start minuting a meeting.</div>';
-    return;
-  }
-  el.innerHTML = active.map(dtmEntryHtml).join('');
-}
-
-// Archived entries: read-only cards with Restore + Delete.
+// Archived entries: read-only cards with Restore + Delete, labelled with their risk.
 function renderDtmArchive() {
   const el = document.getElementById('dtm-archive-list'); if (!el) return;
   const archived = dtmMeetings.filter(function (m) { return m.archived; });
   if (!archived.length) {
-    el.innerHTML = '<div class="dtm-empty">Nothing archived yet. Use “Archive” on a completed DTM entry to move it here.</div>';
+    el.innerHTML = '<div class="dtm-empty">Nothing archived yet. Re-rating a DTM risk (or using “Archive” on an entry) moves its record here.</div>';
     return;
   }
   el.innerHTML = archived.map(dtmArchivedEntryHtml).join('');
 }
 
 function dtmArchivedEntryHtml(m) {
+  const label = _dtmRiskLabel(m.riskRid);
   const meta = [m.date ? ('Date: ' + m.date) : null, m.chair ? ('Chair: ' + m.chair) : null, m.attendees ? ('Attendees: ' + m.attendees) : null].filter(Boolean).map(_escHtml).join('  &nbsp;|&nbsp;  ');
   const acts = (m.actions || []).filter(function (a) { return (a.action || a.owner || a.due || '').toString().trim(); });
   let actHtml = '';
@@ -10149,7 +10174,7 @@ function dtmArchivedEntryHtml(m) {
   }
   return '<div class="dtm-entry dtm-entry-archived">' +
       '<div class="dtm-entry-top">' +
-        '<span class="dtm-stamp">Logged: ' + _escHtml(m.ts || '') + (m.archivedTs ? ' &nbsp;·&nbsp; Archived: ' + _escHtml(m.archivedTs) : '') + '</span>' +
+        '<span class="dtm-stamp">' + (label ? '<strong>' + _escHtml(label) + '</strong> &nbsp;·&nbsp; ' : '') + 'Logged: ' + _escHtml(m.ts || '') + (m.archivedTs ? ' &nbsp;·&nbsp; Archived: ' + _escHtml(m.archivedTs) : '') + '</span>' +
         '<span>' +
           '<button type="button" class="dtm-restore-btn" onclick="restoreDtmMeeting(\'' + m.id + '\')">Restore</button> ' +
           '<button type="button" class="dtm-entry-del" onclick="deleteDtmMeeting(\'' + m.id + '\')">Delete</button>' +
@@ -10165,13 +10190,13 @@ function archiveDtmMeeting(id) {
   const m = _dtmFind(id); if (!m) return;
   m.archived = true; m.archivedTs = dtmNowStamp().stamp;
   saveStateToStorage();
-  renderDtmEntries(); renderDtmArchive();
+  renderDtm(); renderDtmArchive();
 }
 function restoreDtmMeeting(id) {
   const m = _dtmFind(id); if (!m) return;
   m.archived = false; delete m.archivedTs;
   saveStateToStorage();
-  renderDtmEntries(); renderDtmArchive();
+  renderDtm(); renderDtmArchive();
 }
 
 function _dtmStatusOpts(cur) {
@@ -10205,7 +10230,6 @@ function dtmEntryHtml(m) {
       '</div>' +
       '<div class="dtm-fields">' +
         _dtmField(m, 'date', 'Meeting date', 'date') +
-        _dtmField(m, 'project', 'Project', 'text') +
         _dtmField(m, 'chair', 'Chair', 'text') +
         _dtmField(m, 'attendees', 'Attendees', 'text') +
       '</div>' +
@@ -10217,21 +10241,21 @@ function dtmEntryHtml(m) {
     '</div>';
 }
 
-function addDtmMeeting() {
+function addDtmMeeting(rid) {
   const t = dtmNowStamp();
-  dtmMeetings.push({ id: dtmUid(), ts: t.stamp, date: t.date, project: _dtmProject(), chair: '', attendees: '', minutes: '', actions: [] });
+  dtmMeetings.push({ id: dtmUid(), riskRid: rid || '', ts: t.stamp, date: t.date, chair: '', attendees: '', minutes: '', actions: [] });
   saveStateToStorage();
-  renderDtmEntries();
+  renderDtm();
 }
 function deleteDtmMeeting(id) {
   if (!confirm('Delete this DTM entry and its actions? This cannot be undone.')) return;
   dtmMeetings = dtmMeetings.filter(function (m) { return m.id !== id; });
   saveStateToStorage();
-  renderDtmEntries(); renderDtmArchive();
+  renderDtm(); renderDtmArchive();
 }
 function setDtmField(id, key, val) { const m = _dtmFind(id); if (m) { m[key] = val; saveStateToStorage(); } }
-function addDtmAction(id) { const m = _dtmFind(id); if (!m) return; (m.actions = m.actions || []).push({ id: dtmUid(), action: '', owner: '', due: '', status: 'Open' }); saveStateToStorage(); renderDtmEntries(); }
-function deleteDtmAction(id, aid) { const m = _dtmFind(id); if (!m) return; m.actions = (m.actions || []).filter(function (a) { return a.id !== aid; }); saveStateToStorage(); renderDtmEntries(); }
+function addDtmAction(id) { const m = _dtmFind(id); if (!m) return; (m.actions = m.actions || []).push({ id: dtmUid(), action: '', owner: '', due: '', status: 'Open' }); saveStateToStorage(); renderDtm(); }
+function deleteDtmAction(id, aid) { const m = _dtmFind(id); if (!m) return; m.actions = (m.actions || []).filter(function (a) { return a.id !== aid; }); saveStateToStorage(); renderDtm(); }
 function setDtmAction(id, aid, key, val) { const m = _dtmFind(id); if (!m) return; const a = (m.actions || []).find(function (x) { return x.id === aid; }); if (a) { a[key] = val; saveStateToStorage(); } }
 
 // Timestamped point-in-time PDF of the DTM log.
@@ -10317,19 +10341,28 @@ function printDtmReport() {
     doc.text(text, margin, y); y += 6;
   }
 
-  const activeEntries = dtmMeetings.filter(function (m) { return !m.archived; });
-  const archivedEntries = dtmMeetings.filter(function (m) { return m.archived; });
+  // Active entries grouped under their DTM risk.
+  const dtmRisksForPdf = risks.filter(function (r) { return ragOf(r.residualRisk) === 'DTM' && r._rid; });
+  let anyActive = false;
+  dtmRisksForPdf.forEach(function (r) {
+    const es = dtmMeetings.filter(function (m) { return m.riskRid === r._rid && !m.archived; });
+    if (!es.length) return;
+    anyActive = true;
+    drawDtmSectionHeading((r.ref ? r.ref + ' — ' : '') + (r.element || 'Risk') + '   (residual: DTM)', accentRgb);
+    es.forEach(function (m, i) { drawDtmEntry(m, 'DTM entry ' + (i + 1)); });
+  });
 
-  if (activeEntries.length) {
-    drawDtmSectionHeading('Active DTM entries (' + activeEntries.length + ')', accentRgb);
-    activeEntries.forEach(function (m, i) { drawDtmEntry(m, 'DTM entry ' + (i + 1)); });
-  }
+  // Archived / closed-out entries, each labelled with its risk.
+  const archivedEntries = dtmMeetings.filter(function (m) { return m.archived; });
   if (archivedEntries.length) {
     y += 2;
-    drawDtmSectionHeading('Archived DTM entries (' + archivedEntries.length + ')', [107, 114, 128]);
-    archivedEntries.forEach(function (m, i) { drawDtmEntry(m, 'Archived entry ' + (i + 1), 'Archived: ' + (m.archivedTs || '')); });
+    drawDtmSectionHeading('Archived / closed-out DTM entries (' + archivedEntries.length + ')', [107, 114, 128]);
+    archivedEntries.forEach(function (m, i) {
+      const label = _dtmRiskLabel(m.riskRid);
+      drawDtmEntry(m, 'Archived entry ' + (i + 1) + (label ? '  —  ' + label : ''), 'Archived: ' + (m.archivedTs || ''));
+    });
   }
-  if (!dtmMeetings.length) {
+  if (!anyActive && !archivedEntries.length) {
     doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(120, 120, 120);
     doc.text('No DTM entries have been recorded yet.', margin, y + 4);
   }
