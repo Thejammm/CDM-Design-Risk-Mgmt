@@ -10061,6 +10061,18 @@ function updateDashboard() {
   const ctxTotals = document.getElementById("chartTotals").getContext("2d");
   const data = computeDashboardData();
 
+  // Dashboard bars use the SAME RAG palette as the risk register level cells
+  // (.risk-high/.risk-medium/.risk-low): High = Red, Medium = Amber, Low = Green,
+  // each a pale fill with dark ink for the border and datalabels. DTM and Unrated
+  // keep their existing solid colours (with white datalabels).
+  const RAG_BAR = {
+    High:    { fill: "#f8d7da", edge: "#842029", ink: "#842029" },
+    Medium:  { fill: "#fff3cd", edge: "#664d03", ink: "#664d03" },
+    Low:     { fill: "#d1e7dd", edge: "#0f5132", ink: "#0f5132" },
+    DTM:     { fill: "#2563eb", edge: "#2563eb", ink: "#ffffff" },
+    Unrated: { fill: "#9ca3af", edge: "#9ca3af", ink: "#ffffff" }
+  };
+
   // Update summary statistics
   document.getElementById("stat-total").textContent = data.totalRiskCount;
   document.getElementById("stat-high").textContent = data.highestRiskElement;
@@ -10094,37 +10106,42 @@ function updateDashboard() {
         {
           label: "High",
           data: data.datasetsByElement[0].data,
-          backgroundColor: "#1e3a8a",
-          borderColor: "#1e3a8a",
-          borderWidth: 1.5
+          backgroundColor: RAG_BAR.High.fill,
+          borderColor: RAG_BAR.High.edge,
+          borderWidth: 1.5,
+          _ink: RAG_BAR.High.ink
         },
         {
           label: "Medium",
           data: data.datasetsByElement[1].data,
-          backgroundColor: "#475569",
-          borderColor: "#475569",
-          borderWidth: 1.5
+          backgroundColor: RAG_BAR.Medium.fill,
+          borderColor: RAG_BAR.Medium.edge,
+          borderWidth: 1.5,
+          _ink: RAG_BAR.Medium.ink
         },
         {
           label: "Low",
           data: data.datasetsByElement[2].data,
-          backgroundColor: "#0d9488",
-          borderColor: "#0d9488",
-          borderWidth: 1.5
+          backgroundColor: RAG_BAR.Low.fill,
+          borderColor: RAG_BAR.Low.edge,
+          borderWidth: 1.5,
+          _ink: RAG_BAR.Low.ink
         },
         {
           label: "DTM",
           data: data.datasetsByElement[4].data,
-          backgroundColor: "#2563eb",
-          borderColor: "#2563eb",
-          borderWidth: 1.5
+          backgroundColor: RAG_BAR.DTM.fill,
+          borderColor: RAG_BAR.DTM.edge,
+          borderWidth: 1.5,
+          _ink: RAG_BAR.DTM.ink
         },
         {
           label: "Unrated",
           data: data.datasetsByElement[3].data,
-          backgroundColor: "#9ca3af",
-          borderColor: "#9ca3af",
-          borderWidth: 1.5
+          backgroundColor: RAG_BAR.Unrated.fill,
+          borderColor: RAG_BAR.Unrated.edge,
+          borderWidth: 1.5,
+          _ink: RAG_BAR.Unrated.ink
         }
       ]
     },
@@ -10166,7 +10183,7 @@ function updateDashboard() {
               const cx = (props.x + props.base) / 2;
               const cy = props.y;
               chart.ctx.save();
-              chart.ctx.fillStyle = '#ffffff';
+              chart.ctx.fillStyle = dataset._ink || '#ffffff';
               chart.ctx.font = 'bold 10px sans-serif';
               chart.ctx.textAlign = 'center';
               chart.ctx.textBaseline = 'middle';
@@ -10193,20 +10210,27 @@ function updateDashboard() {
           data.totals.Unrated
         ],
         backgroundColor: [
-          "#1e3a8a",
-          "#475569",
-          "#0d9488",
-          "#2563eb",
-          "#9ca3af"
+          RAG_BAR.High.fill,
+          RAG_BAR.Medium.fill,
+          RAG_BAR.Low.fill,
+          RAG_BAR.DTM.fill,
+          RAG_BAR.Unrated.fill
         ],
         borderColor: [
-          "#1e3a8a",
-          "#475569",
-          "#0d9488",
-          "#2563eb",
-          "#9ca3af"
+          RAG_BAR.High.edge,
+          RAG_BAR.Medium.edge,
+          RAG_BAR.Low.edge,
+          RAG_BAR.DTM.edge,
+          RAG_BAR.Unrated.edge
         ],
-        borderWidth: 1.5
+        borderWidth: 1.5,
+        _ink: [
+          RAG_BAR.High.ink,
+          RAG_BAR.Medium.ink,
+          RAG_BAR.Low.ink,
+          RAG_BAR.DTM.ink,
+          RAG_BAR.Unrated.ink
+        ]
       }]
     },
     options: {
@@ -10250,17 +10274,21 @@ function updateDashboard() {
               chart.ctx.save();
               chart.ctx.textAlign = 'center';
 
+              // Ink matched to THIS bar's RAG colour (dark on the pale
+              // High/Medium/Low fills, white on the solid DTM/Unrated bars).
+              const ink = (dataset._ink && dataset._ink[index]) || '#ffffff';
+
               if (barH >= 28) {
-                // Two lines inside the bar, white text
-                chart.ctx.fillStyle = '#ffffff';
+                // Two lines inside the bar
+                chart.ctx.fillStyle = ink;
                 chart.ctx.font = 'bold 12px sans-serif';
                 chart.ctx.textBaseline = 'middle';
                 chart.ctx.fillText(value, cx, cy - 7);
                 chart.ctx.font = '9px sans-serif';
                 chart.ctx.fillText(percentage + '%', cx, cy + 8);
               } else if (barH >= 14) {
-                // Single line inside, white
-                chart.ctx.fillStyle = '#ffffff';
+                // Single line inside
+                chart.ctx.fillStyle = ink;
                 chart.ctx.font = 'bold 10px sans-serif';
                 chart.ctx.textBaseline = 'middle';
                 chart.ctx.fillText(value + ' (' + percentage + '%)', cx, cy);
