@@ -12130,7 +12130,9 @@ async function exportRiskRegisterExcel() {
   const principalDesigner = metaCells[4]?.innerText.trim() || '';
   const location          = metaCells[6]?.innerText.trim() || '';
   const leadDesigner      = metaCells[7]?.innerText.trim() || '';
+  const checkedBy         = metaCells[8]?.innerText.trim() || '';
   const projectNo         = metaCells[9]?.innerText.trim() || '';
+  const dateIssued        = metaCells[5]?.innerText.trim() || '';
   const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   // ----- Brand colour: hex -> ARGB (ExcelJS expects ARGB) -----
@@ -12257,8 +12259,16 @@ async function exportRiskRegisterExcel() {
     [['Project',      project],           ['Prepared by',         preparedBy]],
     [['Project No',   projectNo],         ['Principal Designer',  principalDesigner]],
     [['Location',     location],          [getLeadDesignerLabel(), leadDesigner]],
-    [['Revision',     revision],          ['Date Checked',        dateStr]]
+    [['Revision',     revision],          ['Date Issued',         dateIssued]],
+    [['Checked By',   checkedBy],         ['Date Checked',        dateStr]]
   ];
+
+  // Positions below the Project-Information grid are derived from its row count so
+  // adding a row never collides with the risk table.
+  const gapRow    = 5 + piRows.length;   // spacer
+  const rrHeadRow = gapRow + 1;          // "RISK REGISTER" heading
+  const headerRow = rrHeadRow + 1;       // column header row
+  const dataStart = headerRow + 1;       // first data row
 
   piRows.forEach((pair, i) => {
     const rowNum = 5 + i;
@@ -12283,22 +12293,22 @@ async function exportRiskRegisterExcel() {
     ws.getRow(rowNum).height = 20;
   });
 
-  // Row 10 — gap
-  ws.getRow(10).height = 6;
+  // Gap row
+  ws.getRow(gapRow).height = 6;
 
   // ============================================================
-  // Row 11 — Risk Register section heading
+  // Risk Register section heading
   // ============================================================
-  ws.mergeCells(11, 1, 11, 18);
-  const rrHead = ws.getCell(11, 1);
+  ws.mergeCells(rrHeadRow, 1, rrHeadRow, 18);
+  const rrHead = ws.getCell(rrHeadRow, 1);
   rrHead.value = 'RISK REGISTER';
   rrHead.font = { name: 'Arial', size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
   rrHead.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: accentArgb } };
   rrHead.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
-  ws.getRow(11).height = 22;
+  ws.getRow(rrHeadRow).height = 22;
 
   // ============================================================
-  // Row 12 — Header row
+  // Header row
   // ============================================================
   const headers = [
     'Designer', 'Risk Ref', 'Element/Activity', 'Stage', 'GPP',
@@ -12315,14 +12325,14 @@ async function exportRiskRegisterExcel() {
     right:  { style: 'thin',   color: { argb: 'FF000000' } }
   };
   headers.forEach((h, i) => {
-    const cell = ws.getCell(12, i + 1);
+    const cell = ws.getCell(headerRow, i + 1);
     cell.value = h;
     cell.font = { name: 'Arial', size: 10, bold: true, color: { argb: 'FFFFFFFF' } };
     cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: accentArgb } };
     cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     cell.border = headerBorder;
   });
-  ws.getRow(12).height = 32;
+  ws.getRow(headerRow).height = 32;
 
   // ============================================================
   // Rows 13+ — Data rows
@@ -12341,7 +12351,7 @@ async function exportRiskRegisterExcel() {
   };
 
   (risks || []).forEach((r, idx) => {
-    const rowNum = 13 + idx;
+    const rowNum = dataStart + idx;
     const cells = [
       r.designer || '',          r.ref || '',               r.element || '',          r.stageRequired || '',    (r.gpp || '').toLowerCase(),
       r.hazard || '',            r.personAtRisk || '',      r.initialRisk || '',
@@ -12402,13 +12412,13 @@ async function exportRiskRegisterExcel() {
   // ============================================================
   // Freeze panes — table header stays visible while scrolling
   // ============================================================
-  ws.views = [{ state: 'frozen', xSplit: 0, ySplit: 12, activeCell: 'A13' }];
+  ws.views = [{ state: 'frozen', xSplit: 0, ySplit: headerRow, activeCell: 'A' + dataStart }];
 
   // ============================================================
   // AutoFilter on the data table (header + data)
   // ============================================================
   if (risks && risks.length > 0) {
-    ws.autoFilter = { from: { row: 12, column: 1 }, to: { row: 12 + risks.length, column: 18 } };
+    ws.autoFilter = { from: { row: headerRow, column: 1 }, to: { row: headerRow + risks.length, column: 18 } };
   }
 
   // ============================================================
