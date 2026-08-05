@@ -13179,13 +13179,17 @@ function printNarrativeReport() {
   })();
 
   // Residual note (this register is a working document, not a final position)
+  // Set the note font BEFORE measuring so the wrap width matches the drawn size
+  // (drawChip above left the font at 7.3pt, which under-wrapped and overflowed).
   const noteText = 'These are residual risks for further reduction as the design develops. This register is a working document, not a final position — High (Red) risks remain outstanding and are reviewed at each design review.';
-  const noteLines = doc.splitTextToSize(noteText, availW - 6);
-  const noteH = noteLines.length * 4.2 + 5;
+  const NOTE_PAD = 5;   // inner padding so text never touches the box edge
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  const noteLines = doc.splitTextToSize(noteText, availW - 2 * NOTE_PAD);
+  const noteH = noteLines.length * 4.2 + 2 * NOTE_PAD;
   doc.setFillColor(255, 248, 230); doc.setDrawColor(255, 225, 166); doc.setLineWidth(0.3);
   doc.roundedRect(margin, y, availW, noteH, 1.5, 1.5, 'FD');
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(102, 77, 3);
-  doc.text(noteLines, margin + 3, y + 4.6);
+  doc.text(noteLines, margin + NOTE_PAD, y + NOTE_PAD + 3);
   y += noteH + 4;
 
   // Reg 9 eliminate-first evidence - one line.
@@ -13241,15 +13245,15 @@ function printNarrativeReport() {
         let cx = contentX;
         if (risk.stageRequired) { const sc = stageColour(risk.stageRequired); cx += drawChip(cx, yTop, risk.stageRequired, hexToRgb(sc.bg), hexToRgb(sc.fg)) + 3; }
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(107, 114, 128);
-        doc.text('Initial', cx, yTop + 3.4); cx += doc.getTextWidth('Initial') + 1.5;
-        cx += drawChip(cx, yTop, init.label, init.bg, init.fg) + 1.8;
-        // Small drawn arrow (Helvetica lacks a Unicode arrow glyph).
-        const ay = yTop + 2.5; cx += 1;
+        doc.text('Initial', cx, yTop + 3.4); cx += doc.getTextWidth('Initial') + 2;
+        cx += drawChip(cx, yTop, init.label, init.bg, init.fg) + 3;
+        // Drawn arrowhead (Helvetica has no Unicode arrow glyph), centred on the chip row.
+        const ay = yTop + CH / 2;
         doc.setFillColor(120, 120, 120);
-        doc.triangle(cx, ay - 1.5, cx, ay + 1.5, cx + 2.6, ay, 'F');
-        cx += 2.6 + 2.2;
+        doc.triangle(cx, ay - 2, cx, ay + 2, cx + 3.4, ay, 'F');
+        cx += 3.4 + 3;
         doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(107, 114, 128);
-        doc.text('Residual', cx, yTop + 3.4); cx += doc.getTextWidth('Residual') + 1.5;
+        doc.text('Residual', cx, yTop + 3.4); cx += doc.getTextWidth('Residual') + 2;
         drawChip(cx, yTop, resd.label, resd.bg, resd.fg);
       }
     });
@@ -13289,7 +13293,8 @@ function printNarrativeReport() {
         fmt = (p.fileType || 'JPEG'); if (fmt === 'JPG') fmt = 'JPEG';
         const iw = p.width, ih = p.height;
         let maxW = Math.min(contentW, 95);
-        let maxH = Math.min(62, pageUsable - baseH - 12); // leave room for label + caption
+        // Leave room for the band strip (11), image label + caption, and footer.
+        let maxH = Math.min(62, pageUsable - baseH - 24);
         if (maxH < 22) maxH = 22;
         let w = maxW, h = w * ih / iw;
         if (h > maxH) { h = maxH; w = h * iw / ih; }
@@ -13335,23 +13340,21 @@ function printNarrativeReport() {
     card.pieces.forEach(function (p) { p.draw(cy); cy += p.h + GAP; });
   }
 
-  // ---- Render bands and their cards ----
+  // ---- Render one risk per page ----
+  // Page 1 is the summary above; every risk then gets its own page, each with a
+  // coloured band strip for RAG context and the full card beneath it.
+  const BAND_H = 11;   // coloured band strip + gap below it
   bands.forEach(function (b) {
     const items = grouped[b.key];
     if (!items.length) return;
-    if (y + 20 > pageH - FOOTER) { doc.addPage(); y = TOP_NEXT; }
-    // Band heading bar (coloured)
-    doc.setFillColor(b.head[0], b.head[1], b.head[2]);
-    doc.roundedRect(margin, y, availW, 8, 1.5, 1.5, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
-    doc.text(b.label + '   (' + items.length + ')    ' + b.note, margin + 3, y + 5.6);
-    y += 11;
-
     items.forEach(function (risk) {
-      const card = buildCard(risk);
-      if (y + card.cardH > pageH - FOOTER) { doc.addPage(); y = TOP_NEXT; }
-      drawCard(card, y);
-      y += card.cardH + 4;
+      doc.addPage(); y = TOP_NEXT;
+      doc.setFillColor(b.head[0], b.head[1], b.head[2]);
+      doc.roundedRect(margin, y, availW, 8, 1.5, 1.5, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
+      doc.text(b.label + '    ' + b.note, margin + 3, y + 5.6);
+      y += BAND_H;
+      drawCard(buildCard(risk), y);
     });
   });
 
@@ -13361,8 +13364,9 @@ function printNarrativeReport() {
     doc.setPage(i);
     drawPdfBrandBorder(doc, accentRgb);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
-    doc.text('Produced by AHS Compliance Consulting — residual risks for further reduction throughout the project', margin, pageH - 8);
-    doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 8, { align: 'right' });
+    // Sit the footer clear of the brand border (border bottom is at pageH - 7).
+    doc.text('Produced by AHS Compliance Consulting — residual risks for further reduction throughout the project', margin, pageH - 12);
+    doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 12, { align: 'right' });
   }
 
   if (includeEvalPdf()) addGppMethodologyPage(doc, accentRgb); // methodology appendix (toggle on the Risk Evaluation tab)
