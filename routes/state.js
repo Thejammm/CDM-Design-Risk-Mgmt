@@ -130,4 +130,59 @@ router.post('/', requireAuth, express.json({ limit: '50mb' }), async (req, res) 
   }
 });
 
+const BRAND_PROJECT = '__ahs_client_brand__';
+
+// DELETE /api/state?project=yyy[&tenantId=xxx] — delete a project and its data.
+router.delete('/', requireAuth, express.json(), async (req, res) => {
+  const tenantId = _resolveTenant(req);
+  if(!tenantId){ return res.status(400).json({ error: 'tenant_required' }); }
+  const project = (req.query?.project ?? req.body?.project ?? '').toString().trim();
+  if(!project){ return res.status(400).json({ error: 'project_required' }); }
+  if(project === BRAND_PROJECT){ return res.status(400).json({ error: 'reserved_project' }); }
+  if(req.user.role === 'client_user' && req.user.tenantId !== tenantId){
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  try {
+    const r = await pool.query(
+      `DELETE FROM app_state WHERE tenant_id = $1 AND project = $2`,
+      [tenantId, project]
+    );
+    res.json({ ok: true, deleted: r.rowCount });
+  } catch(err){
+    console.error('DELETE /api/state error:', err);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
+// POST /api/state/rename  body: { project, newProject, tenantId? } — rename a project.
+router.post('/rename', requireAuth, express.json(), async (req, res) => {
+  const tenantId = _resolveTenant(req);
+  if(!tenantId){ return res.status(400).json({ error: 'tenant_required' }); }
+  const project    = (req.body?.project ?? '').toString().trim();
+  const newProject = (req.body?.newProject ?? '').toString().trim();
+  if(!project || !newProject){ return res.status(400).json({ error: 'project_required' }); }
+  if(project === BRAND_PROJECT || newProject === BRAND_PROJECT){ return res.status(400).json({ error: 'reserved_project' }); }
+  if(project === newProject){ return res.json({ ok: true, project: newProject }); }
+  if(req.user.role === 'client_user' && req.user.tenantId !== tenantId){
+    return res.status(403).json({ error: 'forbidden' });
+  }
+  try {
+    const exists = await pool.query(
+      `SELECT 1 FROM app_state WHERE tenant_id = $1 AND project = $2 LIMIT 1`,
+      [tenantId, newProject]
+    );
+    if(exists.rows.length){ return res.status(409).json({ error: 'project_exists' }); }
+    const r = await pool.query(
+      `UPDATE app_state SET project = $1, updated_at = NOW() WHERE tenant_id = $2 AND project = $3`,
+      [newProject, tenantId, project]
+    );
+    if(r.rowCount === 0){ return res.status(404).json({ error: 'project_not_found' }); }
+    res.json({ ok: true, project: newProject });
+  } catch(err){
+    if(err.code === '23505'){ return res.status(409).json({ error: 'project_exists' }); }
+    console.error('POST /api/state/rename error:', err);
+    res.status(500).json({ error: 'server_error' });
+  }
+});
+
 module.exports = router;

@@ -13381,6 +13381,21 @@ function resetReportFilters() {
   .proj-item.current { border-color: var(--brand-accent, #51a6a9); background: #eef7f7; font-weight: 700; }
   .proj-item .proj-current-tag { font-size: 11px; font-weight: 700; color: var(--brand-accent-dark, #408a8d); }
   .proj-list .proj-empty { font-size: 13px; color: #6b7280; padding: 4px 2px; }
+  .proj-row { display: flex; align-items: stretch; gap: 6px; }
+  .proj-row .proj-item { flex: 1 1 auto; width: auto; }
+  .proj-actions { display: flex; gap: 4px; flex: 0 0 auto; }
+  .proj-act {
+    border: 1.5px solid #d0d5dd; background: #fff; border-radius: 8px;
+    padding: 0 11px; font-size: 13px; font-weight: 600; cursor: pointer;
+    color: #344054; font-family: inherit; line-height: 1;
+  }
+  .proj-act:hover { background: #f2f4f7; border-color: var(--brand-accent, #51a6a9); }
+  .proj-act.primary { background: var(--brand-accent, #51a6a9); border-color: var(--brand-accent, #51a6a9); color: #fff; }
+  .proj-act.danger { border-color: #fca5a5; color: #b91c1c; }
+  .proj-act.danger:hover { background: #fee2e2; }
+  .proj-act[disabled] { opacity: .55; cursor: not-allowed; }
+  .proj-edit-input { flex: 1 1 auto; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--brand-accent, #51a6a9); border-radius: 8px; font-size: 13.5px; font-family: inherit; outline: none; }
+  .proj-confirm-msg { flex: 1 1 auto; display: flex; align-items: center; font-size: 12.5px; font-weight: 600; color: #b91c1c; padding: 0 4px; }
   .auth-modal {
     background: #fff;
     border-radius: 14px;
@@ -13625,7 +13640,21 @@ function resetReportFilters() {
       }
       catch(e){ return null; }
     }
-    return { refresh: refresh, login: login, logout: logout, user: user, isSignedIn: isSignedIn, tenantId: tenantId, project: project, setProject: setProject, loadFromServer: loadFromServer, saveToServer: saveToServer, listProjects: listProjects, saveBrandToServer: saveBrandToServer, loadBrandFromServer: loadBrandFromServer };
+    async function deleteProject(name){
+      if(!_user) return false;
+      const tid = tenantId();
+      if(!tid) return false;
+      await _api('/api/state?tenantId=' + encodeURIComponent(tid) + '&project=' + encodeURIComponent(name), { method: 'DELETE' });
+      return true;
+    }
+    async function renameProject(oldName, newName){
+      if(!_user) return false;
+      const tid = tenantId();
+      if(!tid) return false;
+      await _api('/api/state/rename', { method: 'POST', body: JSON.stringify({ tenantId: tid, project: oldName, newProject: newName }) });
+      return true;
+    }
+    return { refresh: refresh, login: login, logout: logout, user: user, isSignedIn: isSignedIn, tenantId: tenantId, project: project, setProject: setProject, loadFromServer: loadFromServer, saveToServer: saveToServer, listProjects: listProjects, deleteProject: deleteProject, renameProject: renameProject, saveBrandToServer: saveBrandToServer, loadBrandFromServer: loadBrandFromServer };
   })();
   window.AHSAuth = Auth;
 
@@ -13747,21 +13776,94 @@ function resetReportFilters() {
       return;
     }
     projects.forEach(function(p){
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'proj-item' + (p === current ? ' current' : '');
-      const label = document.createElement('span');
-      label.textContent = '📁 ' + p;
-      btn.appendChild(label);
-      if(p === current){
-        const tag = document.createElement('span');
-        tag.className = 'proj-current-tag';
-        tag.textContent = 'current';
-        btn.appendChild(tag);
-      }
-      btn.addEventListener('click', function(){ _switchToProject(p); });
-      projListEl.appendChild(btn);
+      projListEl.appendChild(_buildProjRow(p, current));
     });
+  }
+  function _buildProjRow(p, current){
+    const row = document.createElement('div');
+    row.className = 'proj-row';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'proj-item' + (p === current ? ' current' : '');
+    const label = document.createElement('span');
+    label.textContent = '📁 ' + p;
+    btn.appendChild(label);
+    if(p === current){
+      const tag = document.createElement('span');
+      tag.className = 'proj-current-tag';
+      tag.textContent = 'current';
+      btn.appendChild(tag);
+    }
+    btn.addEventListener('click', function(){ _switchToProject(p); });
+
+    const acts = document.createElement('div');
+    acts.className = 'proj-actions';
+    const renameBtn = document.createElement('button');
+    renameBtn.type = 'button'; renameBtn.className = 'proj-act'; renameBtn.title = 'Rename project'; renameBtn.textContent = '✏️';
+    renameBtn.addEventListener('click', function(e){ e.stopPropagation(); _beginRename(p, row, current); });
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button'; delBtn.className = 'proj-act'; delBtn.title = 'Delete project'; delBtn.textContent = '🗑️';
+    delBtn.addEventListener('click', function(e){ e.stopPropagation(); _beginDelete(p, row, current); });
+    acts.appendChild(renameBtn); acts.appendChild(delBtn);
+
+    row.appendChild(btn); row.appendChild(acts);
+    return row;
+  }
+  function _beginRename(p, row, current){
+    row.innerHTML = '';
+    const input = document.createElement('input');
+    input.type = 'text'; input.className = 'proj-edit-input'; input.value = p;
+    const save = document.createElement('button'); save.type = 'button'; save.className = 'proj-act primary'; save.textContent = 'Save';
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'proj-act'; cancel.textContent = 'Cancel';
+    const doSave = async function(){
+      const nn = (input.value || '').trim();
+      if(!nn || nn === p){ renderProjectList(); return; }
+      save.disabled = true;
+      try {
+        await Auth.renameProject(p, nn);
+        if(p === current){ Auth.setProject(nn); try { sessionStorage.removeItem('ahsHydrated'); } catch(_){}; window.location.reload(); return; }
+        renderProjectList();
+      } catch(e){
+        save.disabled = false;
+        _projActError((e.body && e.body.error === 'project_exists') ? 'A project with that name already exists.' : ('Could not rename: ' + (e.message || 'error')));
+      }
+    };
+    save.addEventListener('click', doSave);
+    input.addEventListener('keydown', function(e){ if(e.key === 'Enter'){ e.preventDefault(); doSave(); } else if(e.key === 'Escape'){ renderProjectList(); } });
+    cancel.addEventListener('click', function(){ renderProjectList(); });
+    row.appendChild(input); row.appendChild(save); row.appendChild(cancel);
+    setTimeout(function(){ try { input.focus(); input.select(); } catch(_){} }, 30);
+  }
+  function _beginDelete(p, row, current){
+    row.innerHTML = '';
+    const msg = document.createElement('span'); msg.className = 'proj-confirm-msg'; msg.textContent = 'Delete "' + p + '" and all its data?';
+    const del = document.createElement('button'); del.type = 'button'; del.className = 'proj-act danger'; del.textContent = 'Delete';
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'proj-act'; cancel.textContent = 'Cancel';
+    del.addEventListener('click', async function(){
+      del.disabled = true;
+      try {
+        await Auth.deleteProject(p);
+        if(p === current){
+          let remaining = [];
+          try { remaining = await Auth.listProjects(); } catch(_){}
+          remaining = remaining.filter(function(x){ return x !== p; });
+          Auth.setProject(remaining[0] || 'Default Project');
+          try { sessionStorage.removeItem('ahsHydrated'); } catch(_){}
+          window.location.reload();
+          return;
+        }
+        renderProjectList();
+      } catch(e){
+        del.disabled = false;
+        _projActError('Could not delete: ' + (e.message || 'error'));
+      }
+    });
+    cancel.addEventListener('click', function(){ renderProjectList(); });
+    row.appendChild(msg); row.appendChild(del); row.appendChild(cancel);
+  }
+  function _projActError(msg){
+    if(projErr){ projErr.textContent = msg; projErr.hidden = false; }
   }
   function openProjectSwitcher(){
     if(!Auth.isSignedIn() || !projOverlay) return;
