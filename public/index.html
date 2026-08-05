@@ -9996,6 +9996,10 @@ function computeDashboardData() {
   const totals = { High: 0, Medium: 0, Low: 0, DTM: 0, Unrated: 0 };
 
   risks.forEach(r => {
+    // Avoided risks (GPP = "a", eliminated by design) carry no residual risk to
+    // plot, so they are omitted from the dashboard chart and totals entirely.
+    if (_isGppA(r.gpp)) return;
+
     // Skip completely empty rows (no element AND no risk levels — these are blank
     // rows the user hasn't started yet).
     const elementRaw = (r.element || "").trim();
@@ -12082,6 +12086,9 @@ function getFilteredRisks() {
     : ['all'];
 
   return risks.filter(risk => {
+    // Avoided risks (GPP = "a") are eliminated by design, so they are omitted
+    // from the Project RAG status report and its band counts entirely.
+    if (_isGppA(risk.gpp)) return false;
     const matchesRisk = riskFilter.includes('all') || riskFilter.includes(risk.initialRisk);
     const matchesStatus = statusFilter.includes('all') || statusFilter.includes(risk.riskEliminated || '');
     return matchesRisk && matchesStatus;
