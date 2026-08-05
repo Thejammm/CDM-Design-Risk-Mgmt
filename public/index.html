@@ -2597,23 +2597,24 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
     <!-- Filters Row -->
     <div class="report-controls">
       <div class="control-group">
-        <label>Filter by Risk Level:</label>
-        <select id="report-filter-risk" multiple>
-          <option value="all" selected>All Levels</option>
-          <option value="High">High</option>
-          <option value="Medium">Medium</option>
-          <option value="Low">Low</option>
-        </select>
+        <label>Filter by Residual RAG band:</label>
+        <div class="checkbox-group">
+          <label><input type="checkbox" class="report-filter-band" value="Red" checked> &#128308; Red (High)</label>
+          <label><input type="checkbox" class="report-filter-band" value="Amber" checked> &#128992; Amber (Medium)</label>
+          <label><input type="checkbox" class="report-filter-band" value="Green" checked> &#128994; Green (Low)</label>
+          <label><input type="checkbox" class="report-filter-band" value="DTM" checked> &#128309; DTM</label>
+          <label><input type="checkbox" class="report-filter-band" value="Unrated" checked> &#9898; Not yet rated</label>
+        </div>
       </div>
 
       <div class="control-group">
         <label>Filter by Eliminated:</label>
-        <select id="report-filter-status" multiple>
-          <option value="all" selected>All</option>
-          <option value="Yes">Yes (eliminated)</option>
-          <option value="No">No (active)</option>
-          <option value="Partially">Partially</option>
-        </select>
+        <div class="checkbox-group">
+          <label><input type="checkbox" class="report-filter-elim" value="Yes" checked> Yes (eliminated)</label>
+          <label><input type="checkbox" class="report-filter-elim" value="No" checked> No (active)</label>
+          <label><input type="checkbox" class="report-filter-elim" value="Partially" checked> Partially</label>
+          <label><input type="checkbox" class="report-filter-elim" value="" checked> Not set</label>
+        </div>
       </div>
 
 <div class="control-group">
@@ -12103,23 +12104,25 @@ function getSelectedColumns() {
 }
 
 function getFilteredRisks() {
-  const riskSelect = document.getElementById('report-filter-risk');
-  const statusSelect = document.getElementById('report-filter-status');
-
-  const riskFilter = riskSelect
-    ? Array.from(riskSelect.selectedOptions).map(o => o.value)
-    : ['all'];
-  const statusFilter = statusSelect
-    ? Array.from(statusSelect.selectedOptions).map(o => o.value)
-    : ['all'];
+  // Residual RAG band checkboxes (Red/Amber/Green/DTM/Unrated) drive the filter,
+  // so ticking a band shows exactly the coloured group the report renders.
+  const bandBoxes = Array.from(document.querySelectorAll('.report-filter-band'));
+  const elimBoxes = Array.from(document.querySelectorAll('.report-filter-elim'));
+  const bandSet = bandBoxes.length ? bandBoxes.filter(b => b.checked).map(b => b.value) : null;
+  const elimSet = elimBoxes.length ? elimBoxes.filter(b => b.checked).map(b => b.value) : null;
 
   return risks.filter(risk => {
     // Avoided risks (GPP = "a") are eliminated by design, so they are omitted
     // from the Project RAG status report and its band counts entirely.
     if (_isGppA(risk.gpp)) return false;
-    const matchesRisk = riskFilter.includes('all') || riskFilter.includes(risk.initialRisk);
-    const matchesStatus = statusFilter.includes('all') || statusFilter.includes(risk.riskEliminated || '');
-    return matchesRisk && matchesStatus;
+    // Skip untouched starter rows (nothing entered on any of the key fields).
+    if (!(risk.element || '').trim() && !(risk.hazard || '').trim() &&
+        !(risk.residualRisk || '').trim() && !(risk.initialRisk || '').trim()) return false;
+
+    const band = ragOf(risk.residualRisk) || 'Unrated';
+    if (bandSet && !bandSet.includes(band)) return false;
+    if (elimSet && !elimSet.includes(risk.riskEliminated || '')) return false;
+    return true;
   });
 }
 // ========================================
@@ -12237,6 +12240,9 @@ function generateNarrativeReport() {
 
 function buildNarrativeRiskItem(risk, selectedColumns, idx) {
   const stillRed = ragOf(risk.residualRisk) === 'Red';
+  // Evidence images are keyed by the risk's real index in the register so they
+  // persist on the risk object (saved + synced) and survive report regeneration.
+  const realIdx = risks.indexOf(risk);
   let html = `<div class="narrative-risk${stillRed ? ' narrative-risk-red' : ''}" data-risk-index="${idx}">`;
 
   // Add title
@@ -12276,14 +12282,20 @@ function buildNarrativeRiskItem(risk, selectedColumns, idx) {
     }
   });
 
-  // Add image upload section
+  // Add image upload section. Prefill from the risk's saved evidence image / ref
+  // so it survives regenerating the report and is loaded back with the project.
+  const savedImg = risk.image
+    ? '<img src="' + risk.image + '" alt="Risk Evidence">' +
+      '<button type="button" class="risk-image-remove" onclick="removeRiskImage(' + realIdx + ')">✕ Remove image</button>'
+    : '';
+  const savedRef = _escHtml(risk.imageRef || '');
   html += `
     <div class="risk-image-container">
       <strong>Risk Evidence Image:</strong>
-      <input type="file" accept="image/*,.heic,.heif,.avif,.jfif,.bmp,.tif,.tiff" onchange="uploadRiskImage(this, ${idx})" class="risk-image-upload">
-      <div id="risk-image-preview-${idx}" class="risk-image-preview"></div>
+      <input type="file" accept="image/*,.heic,.heif,.avif,.jfif,.bmp,.tif,.tiff" onchange="uploadRiskImage(this, ${realIdx})" class="risk-image-upload">
+      <div id="risk-image-preview-${realIdx}" class="risk-image-preview">${savedImg}</div>
       <label class="risk-image-ref-label">Drawing / reference no:
-        <input type="text" class="risk-image-ref" id="risk-image-ref-${idx}" placeholder="e.g. Drawing A-101 Rev C">
+        <input type="text" class="risk-image-ref" id="risk-image-ref-${realIdx}" value="${savedRef}" placeholder="e.g. Drawing A-101 Rev C" oninput="setRiskImageRef(${realIdx}, this.value)">
       </label>
     </div>
   `;
@@ -12292,6 +12304,9 @@ function buildNarrativeRiskItem(risk, selectedColumns, idx) {
   return html;
 }
 
+// idx is the risk's real index in the register. The decoded image is stored on
+// the risk object (risk.image) so it is saved, synced and re-loaded, and always
+// flows into the Project RAG status PDF.
 function uploadRiskImage(input, idx) {
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
@@ -12305,9 +12320,27 @@ function uploadRiskImage(input, idx) {
     // only show a note if the browser genuinely can't decode the format.
     const probe = new Image();
     probe.onload = function () {
+      // Normalise to a bounded JPEG so it embeds reliably in the PDF (jsPDF
+      // handles JPEG/PNG) and keeps the saved/synced state small.
+      let store = dataUrl;
+      try {
+        const maxDim = 1400;
+        const iw = probe.naturalWidth || probe.width;
+        const ih = probe.naturalHeight || probe.height;
+        const scale = Math.min(1, maxDim / Math.max(iw, ih));
+        const cw = Math.max(1, Math.round(iw * scale));
+        const ch = Math.max(1, Math.round(ih * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, cw, ch); // flatten transparency for JPEG
+        ctx.drawImage(probe, 0, 0, cw, ch);
+        store = canvas.toDataURL('image/jpeg', 0.85);
+      } catch (err) { store = dataUrl; }
+      if (risks[idx]) { risks[idx].image = store; saveStateToStorage(); }
       if (previewContainer) {
         previewContainer.innerHTML =
-          '<img src="' + dataUrl + '" alt="Risk Evidence">' +
+          '<img src="' + store + '" alt="Risk Evidence">' +
           '<button type="button" class="risk-image-remove" onclick="removeRiskImage(' + idx + ')">✕ Remove image</button>';
       }
     };
@@ -12327,8 +12360,10 @@ function uploadRiskImage(input, idx) {
   reader.readAsDataURL(file);
 }
 
-// Remove an uploaded evidence image (clears the preview and the file input).
+// Remove an uploaded evidence image (clears the preview, the file input, and the
+// stored image on the risk object).
 function removeRiskImage(idx) {
+  if (risks[idx]) { delete risks[idx].image; saveStateToStorage(); }
   const preview = document.getElementById('risk-image-preview-' + idx);
   if (preview) {
     preview.innerHTML = '';
@@ -12336,6 +12371,11 @@ function removeRiskImage(idx) {
     const input = container && container.querySelector('.risk-image-upload');
     if (input) input.value = '';
   }
+}
+
+// Persist the drawing / reference number typed under an evidence image.
+function setRiskImageRef(idx, value) {
+  if (risks[idx]) { risks[idx].imageRef = value; saveStateToStorage(); }
 }
 // ========================================
 // EXPORT RISK REGISTER TO EXCEL (XLSX)
@@ -13047,11 +13087,58 @@ function printNarrativeReport() {
   const grouped = { Red: [], DTM: [], Amber: [], Green: [], Unrated: [] };
   filteredRisks.forEach(function (r) { grouped[ragOf(r.residualRisk) || 'Unrated'].push(r); });
 
-  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'landscape', compress: true });
+  const selectedColumns = getSelectedColumns();
+  const columnLabels = {
+    designer: 'Designer', ref: 'Internal Risk Reference', element: 'Element/Activity',
+    stageRequired: 'Stage', gpp: 'GPP', hazard: 'Hazard/Associated Risk',
+    personAtRisk: 'Person at Risk', initialRisk: 'Initial Risk', designerComments: 'Designers Comments',
+    riskEliminated: 'Eliminated', residualRisk: 'Residual Risk', owner: 'Owner',
+    clientPCI: 'Design Validation', actionRequired: 'Further action required?', finalStatus: 'Status',
+    dateRegistered: 'Date Registered', dateResolved: 'Date Resolved', hsFile: 'H&S File information required'
+  };
+
+  // Portrait A4 to match the vertical, card-based on-screen RAG status view.
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const margin = 12;
   const availW = pageW - 2 * margin;
+  const FOOTER = 15;                 // reserved bottom strip (footer + border)
+  const TOP_NEXT = margin + 4;       // y for content on continuation pages
+
+  // ---- Small drawing helpers (chips, hanging-indent label:value) ----
+  const CH = 5;                      // chip height (mm)
+  const LINE_H = 3.9;                // body line height at 8.5pt
+  const GAP = 1.6;                   // gap between card pieces
+  const CARD_PAD = 4.5;
+
+  function drawChip(x, yTop, text, bg, fg) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(7.3);
+    const w = doc.getTextWidth(text) + 4;
+    doc.setFillColor(bg[0], bg[1], bg[2]);
+    doc.roundedRect(x, yTop, w, CH, 1.1, 1.1, 'F');
+    doc.setTextColor(fg[0], fg[1], fg[2]);
+    doc.text(text, x + 2, yTop + 3.4);
+    return w;
+  }
+  function ragChipColours(rating) {
+    const band = ragOf(rating);
+    if (band && RAG_COLOURS[band]) return { label: String(rating), bg: hexToRgb(RAG_COLOURS[band].bg), fg: hexToRgb(RAG_COLOURS[band].fg) };
+    return { label: rating ? String(rating) : '—', bg: [229, 231, 235], fg: [107, 114, 128] };
+  }
+  // Greedy word-wrap where the first line may be narrower (to sit after a bold label).
+  function wrapHanging(value, firstW, restW) {
+    const words = String(value).split(/\s+/).filter(Boolean);
+    if (!words.length) return [''];
+    const lines = []; let cur = ''; let w = firstW;
+    for (const word of words) {
+      const test = cur ? cur + ' ' + word : word;
+      if (doc.getTextWidth(test) <= w || !cur) { cur = test; }
+      else { lines.push(cur); cur = word; w = restW; }
+    }
+    lines.push(cur);
+    return lines;
+  }
 
   // Title bar in the brand colour
   doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]);
@@ -13062,11 +13149,7 @@ function printNarrativeReport() {
   doc.text('Revision ' + revision, pageW - margin, 12, { align: 'right' });
 
   let y = 25;
-  // Project name (left) + band counts (right)
-  if (project) { doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]); doc.text(project, margin, y); }
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(55, 65, 81);
-  doc.text(grouped.Red.length + ' Red    ' + grouped.Amber.length + ' Amber    ' + grouped.Green.length + ' Green', pageW - margin, y, { align: 'right' });
-  y += 6;
+  if (project) { doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]); doc.text(project, margin, y); y += 6.5; }
 
   // Meta line
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
@@ -13077,83 +13160,199 @@ function printNarrativeReport() {
     principalDesigner ? 'Principal Designer: ' + principalDesigner : null,
     leadDesigner ? getLeadDesignerLabel() + ': ' + leadDesigner : null,
     checkedBy ? 'Checked by: ' + checkedBy : null,
-    'Date Checked: ' + (dateStr || '\u2014')
+    'Date Checked: ' + (dateStr || '—')
   ].filter(Boolean).join('    |    ');
   const metaWrapped = doc.splitTextToSize(metaLine, availW);
   doc.text(metaWrapped, margin, y);
   y += metaWrapped.length * 4.4 + 2;
 
+  // Band-count chips (visual summary, matching the on-screen band counts)
+  (function () {
+    let cx = margin;
+    [['Red', grouped.Red.length], ['DTM', grouped.DTM.length], ['Amber', grouped.Amber.length], ['Green', grouped.Green.length]].forEach(function (pair) {
+      const band = pair[0], n = pair[1];
+      if (band === 'DTM' && !n) return;
+      const c = RAG_COLOURS[band];
+      cx += drawChip(cx, y, n + ' ' + band, hexToRgb(c.bg), hexToRgb(c.fg)) + 2;
+    });
+    y += CH + 3;
+  })();
+
   // Residual note (this register is a working document, not a final position)
-  const noteText = 'These are residual risks for further reduction as the design develops. This register is a working document, not a final position \u2014 High (Red) risks remain outstanding and are reviewed at each design review.';
+  const noteText = 'These are residual risks for further reduction as the design develops. This register is a working document, not a final position — High (Red) risks remain outstanding and are reviewed at each design review.';
   const noteLines = doc.splitTextToSize(noteText, availW - 6);
   const noteH = noteLines.length * 4.2 + 5;
   doc.setFillColor(255, 248, 230); doc.setDrawColor(255, 225, 166); doc.setLineWidth(0.3);
   doc.roundedRect(margin, y, availW, noteH, 1.5, 1.5, 'FD');
   doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(102, 77, 3);
   doc.text(noteLines, margin + 3, y + 4.6);
-  y += noteH + 5;
+  y += noteH + 4;
 
-  // Reg 9 eliminate-first evidence — one line.
-  (function () {
-    const elim = filteredRisks.filter(function (r) { return (r.riskEliminated || '').toLowerCase() === 'yes'; }).length;
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(15, 81, 50);
-    doc.text('Eliminated by design: ' + elim + ' of ' + filteredRisks.length + ' risks.', margin, y);
-    y += 6;
-  })();
+  // Reg 9 eliminate-first evidence - one line.
+  const elimCount = filteredRisks.filter(function (r) { return (r.riskEliminated || '').toLowerCase() === 'yes'; }).length;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor(15, 81, 50);
+  doc.text('Eliminated by design: ' + elimCount + ' of ' + filteredRisks.length + ' risks.', margin, y);
+  y += 6;
 
-  // Column widths: Ref, Element, Stage fixed; Hazard + Further action share the rest.
-  const wRef = 16, wEl = 46, wStage = 30, wGpp = 50;
-  const flexTotal = availW - (wRef + wEl + wStage + wGpp);
-  const wHaz = Math.round(flexTotal * 0.52);
-  const wAct = availW - (wRef + wEl + wStage + wGpp) - wHaz;
-  const head = [['Ref', 'Element / Activity', 'Stage', 'Hazard / Associated Risk', 'GPP', 'Further action required']];
+  // ---- Build one card (pieces measured, then drawn, so a card never splits) ----
+  const contentX = margin + CARD_PAD;
+  const contentW = availW - 2 * CARD_PAD;
+  const pageUsable = pageH - TOP_NEXT - FOOTER;   // height available for a card on a fresh page
 
+  function buildFieldPiece(label, rawVal) {
+    const value = (rawVal == null || String(rawVal).trim() === '') ? 'N/A' : String(rawVal).trim();
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
+    const lab = label + ': ';
+    const labW = doc.getTextWidth(lab);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5);
+    const lines = wrapHanging(value, contentW - labW - 1, contentW);
+    return {
+      h: lines.length * LINE_H + 1.2,
+      draw: function (yTop) {
+        const base = yTop + 3;
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(55, 65, 81);
+        doc.text(lab, contentX, base);
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(31, 41, 55);
+        lines.forEach(function (ln, i) { doc.text(ln, i === 0 ? contentX + labW : contentX, base + i * LINE_H); });
+      }
+    };
+  }
+
+  function buildCard(risk) {
+    const pieces = [];
+
+    // Title: ref - element
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+    const titleLines = doc.splitTextToSize((risk.ref || 'N/A') + '  —  ' + (risk.element || 'N/A'), contentW);
+    pieces.push({
+      h: titleLines.length * 5 + 1,
+      draw: function (yTop) {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(17, 24, 39);
+        doc.text(titleLines, contentX, yTop + 4.2);
+      }
+    });
+
+    // Chip row: Stage + Initial [chip] -> Residual [chip]
+    const init = ragChipColours(risk.initialRisk);
+    const resd = ragChipColours(risk.residualRisk);
+    pieces.push({
+      h: CH + 2,
+      draw: function (yTop) {
+        let cx = contentX;
+        if (risk.stageRequired) { const sc = stageColour(risk.stageRequired); cx += drawChip(cx, yTop, risk.stageRequired, hexToRgb(sc.bg), hexToRgb(sc.fg)) + 3; }
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(107, 114, 128);
+        doc.text('Initial', cx, yTop + 3.4); cx += doc.getTextWidth('Initial') + 1.5;
+        cx += drawChip(cx, yTop, init.label, init.bg, init.fg) + 1.8;
+        // Small drawn arrow (Helvetica lacks a Unicode arrow glyph).
+        const ay = yTop + 2.5; cx += 1;
+        doc.setFillColor(120, 120, 120);
+        doc.triangle(cx, ay - 1.5, cx, ay + 1.5, cx + 2.6, ay, 'F');
+        cx += 2.6 + 2.2;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5); doc.setTextColor(107, 114, 128);
+        doc.text('Residual', cx, yTop + 3.4); cx += doc.getTextWidth('Residual') + 1.5;
+        drawChip(cx, yTop, resd.label, resd.bg, resd.fg);
+      }
+    });
+
+    // GPP pill (full principle text)
+    if (risk.gpp) {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+      const glines = doc.splitTextToSize('GPP ' + gppFull(risk.gpp), contentW - 4);
+      const gh = glines.length * 3.6 + 2.6;
+      pieces.push({
+        h: gh + 0.6,
+        draw: function (yTop) {
+          doc.setFillColor(238, 242, 255); doc.setDrawColor(224, 231, 255); doc.setLineWidth(0.2);
+          doc.roundedRect(contentX, yTop, contentW, gh, 1.2, 1.2, 'FD');
+          doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(55, 48, 163);
+          doc.text(glines, contentX + 2, yTop + 3.4);
+        }
+      });
+    }
+
+    // Selected columns as label: value lines (mirrors the on-screen card body)
+    selectedColumns.forEach(function (col) {
+      if (!columnLabels[col]) return;
+      const val = col === 'gpp' ? (risk.gpp ? gppFull(risk.gpp) : '') : risk[col];
+      pieces.push(buildFieldPiece(columnLabels[col], val));
+    });
+
+    // Height of everything above the evidence image, used to fit the image on a page.
+    let baseH = CARD_PAD * 2 + (pieces.length - 1) * GAP;
+    pieces.forEach(function (p) { baseH += p.h; });
+
+    // Evidence image (+ drawing ref caption)
+    if (risk.image) {
+      let imgOk = false, dispW = 0, dispH = 0, fmt = 'JPEG';
+      try {
+        const p = doc.getImageProperties(risk.image);
+        fmt = (p.fileType || 'JPEG'); if (fmt === 'JPG') fmt = 'JPEG';
+        const iw = p.width, ih = p.height;
+        let maxW = Math.min(contentW, 95);
+        let maxH = Math.min(62, pageUsable - baseH - 12); // leave room for label + caption
+        if (maxH < 22) maxH = 22;
+        let w = maxW, h = w * ih / iw;
+        if (h > maxH) { h = maxH; w = h * iw / ih; }
+        dispW = w; dispH = h; imgOk = true;
+      } catch (e) { imgOk = false; }
+
+      pieces.push({ h: 4.4, draw: function (yTop) { doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(55, 65, 81); doc.text('Risk Evidence Image', contentX, yTop + 3); } });
+
+      if (imgOk) {
+        pieces.push({
+          h: dispH + 1.5,
+          draw: function (yTop) {
+            try {
+              doc.addImage(risk.image, fmt, contentX, yTop, dispW, dispH, undefined, 'FAST');
+              doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.3);
+              doc.rect(contentX, yTop, dispW, dispH);
+            } catch (err) {
+              doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
+              doc.text('[evidence image could not be embedded]', contentX, yTop + 4);
+            }
+          }
+        });
+      } else {
+        pieces.push({ h: 5, draw: function (yTop) { doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(107, 114, 128); doc.text('[evidence image could not be embedded]', contentX, yTop + 4); } });
+      }
+
+      if (risk.imageRef) {
+        pieces.push({ h: 4.2, draw: function (yTop) { doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128); doc.text('Drawing / reference no: ' + risk.imageRef, contentX, yTop + 3); } });
+      }
+    }
+
+    let cardH = CARD_PAD * 2 + (pieces.length - 1) * GAP;
+    pieces.forEach(function (p) { cardH += p.h; });
+    return { pieces: pieces, cardH: cardH, red: ragOf(risk.residualRisk) === 'Red' };
+  }
+
+  function drawCard(card, yTop) {
+    // Card background + border; red left accent for outstanding (residual Red) risks.
+    doc.setFillColor(255, 255, 255); doc.setDrawColor(224, 228, 235); doc.setLineWidth(0.3);
+    doc.roundedRect(margin, yTop, availW, card.cardH, 2, 2, 'FD');
+    if (card.red) { doc.setFillColor(220, 38, 38); doc.roundedRect(margin, yTop, 2.4, card.cardH, 1, 1, 'F'); }
+    let cy = yTop + CARD_PAD;
+    card.pieces.forEach(function (p) { p.draw(cy); cy += p.h + GAP; });
+  }
+
+  // ---- Render bands and their cards ----
   bands.forEach(function (b) {
     const items = grouped[b.key];
     if (!items.length) return;
-    if (y + 22 > pageH - 14) { doc.addPage(); y = margin + 4; }
-    // Band heading bar (HSE-style coloured band)
+    if (y + 20 > pageH - FOOTER) { doc.addPage(); y = TOP_NEXT; }
+    // Band heading bar (coloured)
     doc.setFillColor(b.head[0], b.head[1], b.head[2]);
     doc.roundedRect(margin, y, availW, 8, 1.5, 1.5, 'F');
     doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(255, 255, 255);
     doc.text(b.label + '   (' + items.length + ')    ' + b.note, margin + 3, y + 5.6);
-    y += 10;
+    y += 11;
 
-    const body = items.map(function (r) {
-      return [
-        r.ref || '',
-        r.element || '',
-        r.stageRequired || '',
-        r.hazard || '',
-        r.gpp ? gppFull(r.gpp) : '',
-        r.actionRequired || ''
-      ];
+    items.forEach(function (risk) {
+      const card = buildCard(risk);
+      if (y + card.cardH > pageH - FOOTER) { doc.addPage(); y = TOP_NEXT; }
+      drawCard(card, y);
+      y += card.cardH + 4;
     });
-
-    doc.autoTable({
-      head: head, body: body, startY: y,
-      margin: { left: margin, right: margin },
-      theme: 'grid',
-      styles: { fontSize: 8.5, cellPadding: 2, valign: 'top', overflow: 'linebreak', lineColor: [210, 214, 222], lineWidth: 0.2, textColor: [31, 41, 55] },
-      headStyles: { fillColor: b.fill, textColor: b.text, fontStyle: 'bold', fontSize: 8.5 },
-      columnStyles: {
-        0: { cellWidth: wRef, fontStyle: 'bold' },
-        1: { cellWidth: wEl },
-        2: { cellWidth: wStage, halign: 'center' },
-        3: { cellWidth: wHaz },
-        4: { cellWidth: wGpp },
-        5: { cellWidth: wAct }
-      },
-      didParseCell: function (data) {
-        if (data.section === 'body' && data.column.index === 2 && data.cell.raw) {
-          const c = stageColour(data.cell.raw);
-          const bg = hexToRgb(c.bg); const fg = hexToRgb(c.fg);
-          if (bg) data.cell.styles.fillColor = bg;
-          if (fg) data.cell.styles.textColor = fg;
-        }
-      }
-    });
-    y = doc.lastAutoTable.finalY + 6;
   });
 
   // Footer + brand border on every page
@@ -13162,7 +13361,7 @@ function printNarrativeReport() {
     doc.setPage(i);
     drawPdfBrandBorder(doc, accentRgb);
     doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
-    doc.text('Produced by AHS Compliance Consulting \u2014 residual risks for further reduction throughout the project', margin, pageH - 8);
+    doc.text('Produced by AHS Compliance Consulting — residual risks for further reduction throughout the project', margin, pageH - 8);
     doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 8, { align: 'right' });
   }
 
@@ -13479,9 +13678,10 @@ function executeImport() {
 </script>
 <script>
 function resetReportFilters() {
-  document.getElementById('report-filter-risk').value = 'all';
-  document.getElementById('report-filter-status').value = 'all';
-  document.getElementById('report-group-by').value = 'none';
+  document.querySelectorAll('.report-filter-band').forEach(cb => { cb.checked = true; });
+  document.querySelectorAll('.report-filter-elim').forEach(cb => { cb.checked = true; });
+  const groupBy = document.getElementById('report-group-by');
+  if (groupBy) groupBy.value = 'none';
 
   document.querySelectorAll('.report-column').forEach(cb => {
     cb.checked = true;
