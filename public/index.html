@@ -10282,6 +10282,7 @@ function exportCharts() {
   const client       = metaCells[0]?.innerText.trim() || '';
   const project      = metaCells[3]?.innerText.trim() || '';
   const dateIssued   = metaCells[5]?.innerText.trim() || '';
+  const checkedBy    = metaCells[8]?.innerText.trim() || '';
   const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
 
   const accent = getActiveAccent();
@@ -10310,6 +10311,7 @@ function exportCharts() {
     client ? `Client: ${client}` : null,
     project ? `Project: ${project}` : null,
     `Revision: ${revision}`,
+    checkedBy ? `Checked by: ${checkedBy}` : null,
     `Date Checked: ${dateStr}`
   ].filter(Boolean).join('   |   ');
   doc.text(metaLine, margin, y);
@@ -12550,6 +12552,7 @@ function printRiskRegisterPDF() {
   const principalDesigner = metaCells[4]?.innerText.trim() || '';
   const location          = metaCells[6]?.innerText.trim() || '';
   const leadDesigner      = metaCells[7]?.innerText.trim() || '';
+  const checkedBy         = metaCells[8]?.innerText.trim() || '';
   const projectNo         = metaCells[9]?.innerText.trim() || '';
   const dateIssued        = metaCells[5]?.innerText.trim() || '';
   const dateStr = (document.querySelectorAll('.risk-meta td[contenteditable="true"]')[11]?.innerText || '').trim();
@@ -12607,6 +12610,7 @@ function printRiskRegisterPDF() {
     principalDesigner ? `Principal Designer: ${principalDesigner}` : null,
     leadDesigner ? `${getLeadDesignerLabel()}: ${leadDesigner}` : null,
     dateIssued ? `Date Issued: ${dateIssued}` : null,
+    checkedBy ? `Checked by: ${checkedBy}` : null,
     `Date Checked: ${dateStr}`
   ].filter(Boolean).join('   |   ');
 
@@ -12790,6 +12794,7 @@ function printNarrativeReport() {
   const principalDesigner = (metaCells[4] && metaCells[4].innerText.trim()) || '';
   const location          = (metaCells[6] && metaCells[6].innerText.trim()) || '';
   const leadDesigner      = (metaCells[7] && metaCells[7].innerText.trim()) || '';
+  const checkedBy         = (metaCells[8] && metaCells[8].innerText.trim()) || '';
   const projectNo         = (metaCells[9] && metaCells[9].innerText.trim()) || '';
   const dateStr           = (metaCells[11] && metaCells[11].innerText.trim()) || '';
 
@@ -12833,6 +12838,7 @@ function printNarrativeReport() {
     projectNo ? 'Project No: ' + projectNo : null,
     principalDesigner ? 'Principal Designer: ' + principalDesigner : null,
     leadDesigner ? getLeadDesignerLabel() + ': ' + leadDesigner : null,
+    checkedBy ? 'Checked by: ' + checkedBy : null,
     'Date Checked: ' + (dateStr || '\u2014')
   ].filter(Boolean).join('    |    ');
   const metaWrapped = doc.splitTextToSize(metaLine, availW);
