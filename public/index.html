@@ -439,6 +439,11 @@ body {
 #detail-designerComments.dc-positive-prompt::placeholder { color: #15803d; font-style: italic; opacity: 1; }
 td.dc-positive-cell:empty::before { content: attr(data-ph); color: #15803d; font-style: italic; }
 
+/* Green outline on the Designer Comments box while the residual is DTM and the
+   comment is still empty (prompts the designer to add a note; clears on entry). */
+#detail-designerComments.dc-dtm-outline { border-color: #16a34a !important; box-shadow: 0 0 0 2px rgba(22,163,74,.45); outline: none; }
+td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
+
 /* Editable Project-Information label (e.g. "Lead Designer") — a subtle dotted
    underline hints it can be renamed; the custom text is saved with the project. */
 .editable-label {
@@ -8984,14 +8989,45 @@ function applyGppEliminationEffect(rowIndex, oldGpp, newGpp) {
     delete r._gppAStash;
   }
 }
-// Green "Add positive design influence" prompt on the Editing Panel comments box
-// when the selected risk is eliminated by design (GPP = a).
+
+// ── DTM residual (further investigation / Design Team Meeting) ────────────────
+// When the residual rating is set to "DTM", the outcome columns Owner → H&S File
+// are pending the meeting, so they are blanked (stashed). Changing the residual
+// away from DTM brings the stashed values back (unless the user has since typed).
+const DTM_CLEAR_FIELDS = ["owner", "clientPCI", "actionRequired", "finalStatus", "dateRegistered", "dateResolved", "hsFile"];
+function _isDtm(v) { return String(v || "").toUpperCase().trim() === "DTM"; }
+function applyDtmEffect(rowIndex, oldResidual, newResidual) {
+  const r = risks[rowIndex];
+  if (!r) return;
+  const wasDtm = _isDtm(oldResidual);
+  const isDtm  = _isDtm(newResidual);
+  if (isDtm && !wasDtm) {
+    const stash = {};
+    DTM_CLEAR_FIELDS.forEach(function (f) { stash[f] = r[f] || ""; r[f] = ""; });
+    r._dtmStash = stash;
+  } else if (!isDtm && wasDtm) {
+    const stash = r._dtmStash || {};
+    DTM_CLEAR_FIELDS.forEach(function (f) {
+      if (String(r[f] || "").trim() === "" && String(stash[f] || "").trim() !== "") r[f] = stash[f];
+    });
+    delete r._dtmStash;
+  }
+}
+
+// Green prompt/outline on the Editing Panel comments box:
+//  - GPP = a  -> green "Add positive design influence" placeholder
+//  - residual = DTM (and comment still empty) -> green outline until text is added
 function updateDesignerCommentsPrompt() {
   const dc = document.getElementById("detail-designerComments");
   if (!dc) return;
-  let gpp = "";
-  if (panelMode === "snippet" && snippetDraft) gpp = snippetDraft.gpp;
-  else if (selectedRowIndex != null && risks[selectedRowIndex]) gpp = risks[selectedRowIndex].gpp;
+  let gpp = "", residual = "", comments = "";
+  if (panelMode === "snippet" && snippetDraft) {
+    gpp = snippetDraft.gpp; residual = snippetDraft.residualRisk; comments = snippetDraft.designerComments;
+  } else if (selectedRowIndex != null && risks[selectedRowIndex]) {
+    const r = risks[selectedRowIndex];
+    gpp = r.gpp; residual = r.residualRisk; comments = r.designerComments;
+  }
+  // GPP = a: green "positive design influence" placeholder
   if (_isGppA(gpp)) {
     dc.placeholder = "Add positive design influence";
     dc.classList.add("dc-positive-prompt");
@@ -8999,6 +9035,9 @@ function updateDesignerCommentsPrompt() {
     dc.placeholder = "";
     dc.classList.remove("dc-positive-prompt");
   }
+  // residual = DTM and comment still empty: green outline until text is added
+  if (_isDtm(residual) && String(comments || "").trim() === "") dc.classList.add("dc-dtm-outline");
+  else dc.classList.remove("dc-dtm-outline");
 }
 
 // The Editing Panel shows either a register row ("row") or a focused snippet
@@ -9284,6 +9323,10 @@ function renderRisks() {
           td.setAttribute("data-ph", "Add positive design influence");
           td.classList.add("dc-positive-cell");
         }
+        // Green outline on the comments cell while residual = DTM and it is empty.
+        if (field === "designerComments" && _isDtm(risk.residualRisk) && String(risk.designerComments || "").trim() === "") {
+          td.classList.add("dc-dtm-outline-cell");
+        }
         td.addEventListener("input", onCellEdit);
       }
 
@@ -9313,6 +9356,12 @@ function onCellEdit(e) {
 
   if (!risks[rowIndex]) risks[rowIndex] = {};
   risks[rowIndex][field] = value;
+
+  // DTM: clear the green outline on the comments cell once text is added.
+  if (field === "designerComments") {
+    td.classList.toggle("dc-dtm-outline-cell", _isDtm(risks[rowIndex].residualRisk) && value === "");
+    if (rowIndex === selectedRowIndex) updateDesignerCommentsPrompt();
+  }
 
   // Live-retint the Stage cell so its colour tracks the typed stage.
   if (field === "stageRequired") {
@@ -9349,6 +9398,19 @@ function onRatingChange(e) {
   const value = select.value.trim();
 
   if (!risks[rowIndex]) risks[rowIndex] = {};
+
+  // Residual = DTM blanks/restores the Owner -> H&S File columns — handle centrally
+  // and re-render the whole row + panel since several fields can change.
+  if (field === "residualRisk") {
+    applyDtmEffect(rowIndex, risks[rowIndex].residualRisk, value);
+    risks[rowIndex].residualRisk = value;
+    renderRisks();
+    if (rowIndex === selectedRowIndex) updateDetailPanel();
+    highlightSelectedRow();
+    saveStateToStorage();
+    return;
+  }
+
   risks[rowIndex][field] = value;
 
   applyRatingClass(td, value);
@@ -9627,6 +9689,17 @@ function attachDetailListeners() {
         return;
       }
 
+      // Residual = DTM blanks/restores the Owner -> H&S File columns.
+      if (field === "residualRisk") {
+        applyDtmEffect(selectedRowIndex, risks[selectedRowIndex].residualRisk, value);
+        risks[selectedRowIndex].residualRisk = value;
+        renderRisks();
+        updateDetailPanel();
+        highlightSelectedRow();
+        saveStateToStorage();
+        return;
+      }
+
       risks[selectedRowIndex][field] = value;
 
       const selector = `td[data-row-index="${selectedRowIndex}"][data-field="${field}"]`;
@@ -9649,6 +9722,11 @@ function attachDetailListeners() {
       }
 
       updateDetailTitle();
+      if (field === "designerComments") {
+        updateDesignerCommentsPrompt(); // clear the panel's DTM outline once text is added
+        const dcCell = document.querySelector(`td[data-row-index="${selectedRowIndex}"][data-field="designerComments"]`);
+        if (dcCell) dcCell.classList.toggle("dc-dtm-outline-cell", _isDtm(risks[selectedRowIndex].residualRisk) && value === "");
+      }
       if (field === "residualRisk" || field === "gpp" || field === "riskEliminated" || field === "initialRisk") {
         renderReductionPanel(selectedRowIndex); // may open/close the RAG gate
       }
