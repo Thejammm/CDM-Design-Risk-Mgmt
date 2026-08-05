@@ -922,11 +922,22 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
   display: block;
   margin-bottom: 2px;
 }
-/* Title row: snippet name on the left, its ref number in a raised pill on the right. */
-.snippet-title-row { display: flex; align-items: flex-start; gap: 8px; }
-.snippet-title-row strong { flex: 1 1 auto; margin-bottom: 0; }
-.snippet-ref-pill {
+/* Title row: snippet name on the left, its ref number in a raised pill on the
+   right. Selectors are scoped under .snippet-item-btn so they beat the generic
+   ".snippet-item-btn span" rule above (which otherwise forces full-width block). */
+.snippet-item-btn .snippet-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  -webkit-line-clamp: none;
+  overflow: visible;
+}
+.snippet-item-btn .snippet-title-row strong { flex: 1 1 auto; margin-bottom: 0; }
+.snippet-item-btn .snippet-ref-pill {
+  display: inline-block;
   flex: 0 0 auto;
+  -webkit-line-clamp: none;
+  overflow: visible;
   white-space: nowrap;
   font-size: 10px;
   font-weight: 700;
