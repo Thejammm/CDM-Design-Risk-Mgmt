@@ -2117,6 +2117,9 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
       <button class="tab-button" data-tab="tab-gpp" onclick="showTab('tab-gpp')">
         Risk Evaluation
       </button>
+      <button class="tab-button" data-tab="tab-dtm" onclick="showTab('tab-dtm')">
+        DTM Log
+      </button>
     </div>
 
     <!-- REGISTER TAB -->
@@ -2692,6 +2695,47 @@ td.dc-dtm-outline-cell { box-shadow: inset 0 0 0 2px #16a34a; }
           Include this evaluation methodology page in PDF exports
         </label>
         <div id="gpp-screen-content"></div>
+      </div>
+    </div>
+
+    <!-- DTM LOG TAB -->
+    <style id="dtm-styles">
+      #tab-dtm .dtm-worklist { border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
+      #tab-dtm .dtm-worklist-head { background:#dbeafe; color:#1e40af; font-weight:700; font-size:12px; padding:7px 10px; }
+      #tab-dtm .dtm-worklist-row { display:grid; grid-template-columns:70px 1.2fr 1.6fr auto; gap:10px; align-items:center; padding:7px 10px; border-top:1px solid #eef1f5; font-size:12px; }
+      #tab-dtm .dtm-wl-ref { font-weight:700; }
+      #tab-dtm .dtm-wl-haz { color:#6b7280; }
+      #tab-dtm .dtm-wl-act select { padding:4px 6px; border:1px solid #cfd6e3; border-radius:5px; font-size:11px; }
+      #tab-dtm .dtm-worklist-empty { padding:12px; color:#0f5132; font-size:12px; }
+      #tab-dtm .dtm-empty { padding:12px; color:#6b7280; font-size:12px; }
+      #tab-dtm .dtm-entry { border:1px solid #d7dbe3; border-radius:10px; padding:14px; margin:12px 0; background:#fff; box-shadow:0 1px 2px rgba(20,24,40,.06); }
+      #tab-dtm .dtm-entry-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+      #tab-dtm .dtm-stamp { font-size:11px; color:#6b7280; font-weight:600; }
+      #tab-dtm .dtm-entry-del { font-size:11px; background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; border-radius:6px; padding:3px 9px; cursor:pointer; }
+      #tab-dtm .dtm-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-bottom:10px; }
+      #tab-dtm .dtm-field { display:flex; flex-direction:column; font-size:11px; font-weight:600; color:#374151; gap:3px; }
+      #tab-dtm .dtm-field input { padding:6px 8px; border:1px solid #cfd6e3; border-radius:6px; font-size:12px; }
+      #tab-dtm .dtm-min-label, #tab-dtm .dtm-actions-head { font-size:11px; font-weight:700; color:#374151; display:block; margin:6px 0 4px; }
+      #tab-dtm .dtm-minutes { width:100%; min-height:80px; padding:8px; border:1px solid #cfd6e3; border-radius:6px; font-size:12px; font-family:inherit; resize:vertical; box-sizing:border-box; }
+      #tab-dtm .dtm-actions-table { width:100%; border-collapse:collapse; margin-top:4px; }
+      #tab-dtm .dtm-actions-table th { text-align:left; font-size:10px; color:#6b7280; padding:4px 6px; border-bottom:1px solid #e5e7eb; }
+      #tab-dtm .dtm-actions-table td { padding:3px 6px; }
+      #tab-dtm .dtm-actions-table input, #tab-dtm .dtm-actions-table select { width:100%; padding:5px 6px; border:1px solid #cfd6e3; border-radius:5px; font-size:12px; box-sizing:border-box; }
+      #tab-dtm .dtm-row-del { background:none; border:none; color:#b91c1c; cursor:pointer; font-size:13px; }
+    </style>
+    <div id="tab-dtm" class="tab-panel">
+      <div class="section">
+        <div class="section-title"><span>DTM Log — Design Team Meeting minutes</span></div>
+        <p class="note-text" style="margin:0 0 10px;">Minute your Design Team Meetings and their actions here. Every risk currently rated <strong>DTM</strong> on the register is listed below so it can be discussed and re-rated to close it out. This is a working, point-in-time log &mdash; use <strong>DTM report (PDF)</strong> for a timestamped record.</p>
+
+        <div id="dtm-worklist"></div>
+
+        <div style="margin:14px 0 10px; display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" onclick="addDtmMeeting()">&#65291; New DTM entry</button>
+          <button type="button" onclick="printDtmReport()">&#128424; DTM report (PDF)</button>
+        </div>
+
+        <div id="dtm-entries"></div>
       </div>
     </div>
 
@@ -8993,6 +9037,8 @@ const riskFields = [
 
 let risks = [{}, {}, {}];
 let selectedRowIndex = null;
+// DTM Log — Design Team Meeting minutes (persisted with the register, syncs to server).
+let dtmMeetings = [];
 
 // ── Eliminated-by-design (GPP = "a") behaviour ───────────────────────────────
 // When a risk's GPP is set to "a" (Avoid the risk — eliminated by design), the
@@ -9122,7 +9168,8 @@ function saveStateToStorage() {
     const payload = {
       risks,
       meta: metaValues,
-      leadDesignerLabel: getLeadDesignerLabel()
+      leadDesignerLabel: getLeadDesignerLabel(),
+      dtmMeetings
     };
 
     localStorage.setItem(effectiveStorageKey(), JSON.stringify(payload));
@@ -9149,6 +9196,9 @@ function loadStateFromStorage() {
     }
     if (typeof parsed.leadDesignerLabel === "string") {
       loadedLeadDesignerLabel = parsed.leadDesignerLabel;
+    }
+    if (Array.isArray(parsed.dtmMeetings)) {
+      dtmMeetings = parsed.dtmMeetings;
     }
   } catch (err) {
     console.warn("Unable to load risk register state", err);
@@ -9979,6 +10029,222 @@ function showTab(tabId) {
   if (tabId === 'tab-dashboard') {
     updateDashboard();
   }
+  if (tabId === 'tab-dtm') {
+    renderDtm();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+//  DTM Log — Design Team Meeting minutes + actions, plus a "needs a DTM" worklist
+//  drawn live from the register. Kept deliberately simple; persists with the
+//  register (offline localStorage + server sync) and prints a timestamped PDF.
+// ─────────────────────────────────────────────────────────────────────────────
+function dtmUid() { try { return crypto.randomUUID(); } catch (e) { return 'dtm-' + Math.random().toString(36).slice(2) + Date.now(); } }
+function dtmNowStamp() {
+  const n = new Date();
+  const pad = x => String(x).padStart(2, '0');
+  const date = n.getFullYear() + '-' + pad(n.getMonth() + 1) + '-' + pad(n.getDate());
+  return { date: date, stamp: date + ' ' + pad(n.getHours()) + ':' + pad(n.getMinutes()) };
+}
+function _dtmFind(id) { return dtmMeetings.find(function (m) { return m.id === id; }); }
+function _dtmProject() { const c = document.querySelectorAll('.risk-meta td[contenteditable="true"]')[3]; return c ? (c.innerText || '').trim() : ''; }
+
+function renderDtm() { renderDtmWorklist(); renderDtmEntries(); }
+
+// "Needs a DTM" worklist — every register row whose residual is DTM.
+function renderDtmWorklist() {
+  const el = document.getElementById('dtm-worklist'); if (!el) return;
+  const items = [];
+  risks.forEach(function (r, i) { if (ragOf(r.residualRisk) === 'DTM') items.push({ r: r, i: i }); });
+  if (!items.length) {
+    el.innerHTML = '<div class="dtm-worklist-empty">✓ No risks are currently awaiting a DTM.</div>';
+    return;
+  }
+  let h = '<div class="dtm-worklist"><div class="dtm-worklist-head">Awaiting a DTM (' + items.length + ') — re-rate the residual to close one out</div>';
+  items.forEach(function (o) {
+    h += '<div class="dtm-worklist-row">' +
+      '<span class="dtm-wl-ref">' + _escHtml(o.r.ref || '—') + '</span>' +
+      '<span class="dtm-wl-el">' + _escHtml(o.r.element || 'N/A') + '</span>' +
+      '<span class="dtm-wl-haz">' + _escHtml(o.r.hazard || '') + '</span>' +
+      '<span class="dtm-wl-act">Re-rate: <select onchange="dtmRerate(' + o.i + ', this.value)">' +
+        '<option value="">DTM…</option>' +
+        '<option value="High">High</option>' +
+        '<option value="Medium">Medium</option>' +
+        '<option value="Low">Low</option>' +
+      '</select></span>' +
+    '</div>';
+  });
+  el.innerHTML = h + '</div>';
+}
+
+// Close a risk out of DTM by giving it a residual rating (reverses applyDtmEffect).
+function dtmRerate(i, value) {
+  if (!value || !risks[i]) return;
+  const old = risks[i].residualRisk || '';
+  risks[i].residualRisk = value;
+  if (typeof applyDtmEffect === 'function') applyDtmEffect(i, old, value);
+  saveStateToStorage();
+  if (typeof renderRisks === 'function') renderRisks();
+  renderDtm();
+}
+
+function renderDtmEntries() {
+  const el = document.getElementById('dtm-entries'); if (!el) return;
+  if (!dtmMeetings.length) {
+    el.innerHTML = '<div class="dtm-empty">No DTM entries yet. Click “New DTM entry” to start minuting a meeting.</div>';
+    return;
+  }
+  el.innerHTML = dtmMeetings.map(dtmEntryHtml).join('');
+}
+
+function _dtmStatusOpts(cur) {
+  return ['Open', 'In progress', 'Done'].map(function (s) {
+    return '<option' + (s === (cur || 'Open') ? ' selected' : '') + '>' + s + '</option>';
+  }).join('');
+}
+function _dtmField(m, key, label, type) {
+  const evt = (type === 'date') ? 'onchange' : 'oninput';
+  return '<label class="dtm-field"><span>' + label + '</span>' +
+    '<input type="' + type + '" value="' + _escHtml(m[key] || '') + '" ' +
+    evt + '="setDtmField(\'' + m.id + '\',\'' + key + '\',this.value)"></label>';
+}
+function dtmEntryHtml(m) {
+  const rows = (m.actions || []).map(function (a) {
+    return '<tr>' +
+      '<td><input type="text" value="' + _escHtml(a.action || '') + '" oninput="setDtmAction(\'' + m.id + '\',\'' + a.id + '\',\'action\',this.value)"></td>' +
+      '<td><input type="text" value="' + _escHtml(a.owner || '') + '" oninput="setDtmAction(\'' + m.id + '\',\'' + a.id + '\',\'owner\',this.value)"></td>' +
+      '<td><input type="date" value="' + _escHtml(a.due || '') + '" onchange="setDtmAction(\'' + m.id + '\',\'' + a.id + '\',\'due\',this.value)"></td>' +
+      '<td><select onchange="setDtmAction(\'' + m.id + '\',\'' + a.id + '\',\'status\',this.value)">' + _dtmStatusOpts(a.status) + '</select></td>' +
+      '<td><button type="button" class="dtm-row-del" title="Remove action" onclick="deleteDtmAction(\'' + m.id + '\',\'' + a.id + '\')">✕</button></td>' +
+    '</tr>';
+  }).join('');
+  return '<div class="dtm-entry">' +
+      '<div class="dtm-entry-top">' +
+        '<span class="dtm-stamp">Logged: ' + _escHtml(m.ts || '') + '</span>' +
+        '<button type="button" class="dtm-entry-del" onclick="deleteDtmMeeting(\'' + m.id + '\')">Delete entry</button>' +
+      '</div>' +
+      '<div class="dtm-fields">' +
+        _dtmField(m, 'date', 'Meeting date', 'date') +
+        _dtmField(m, 'project', 'Project', 'text') +
+        _dtmField(m, 'chair', 'Chair', 'text') +
+        _dtmField(m, 'attendees', 'Attendees', 'text') +
+      '</div>' +
+      '<label class="dtm-min-label">Minutes / notes</label>' +
+      '<textarea class="dtm-minutes" placeholder="Discussion, decisions, key points…" oninput="setDtmField(\'' + m.id + '\',\'minutes\',this.value)">' + _escHtml(m.minutes || '') + '</textarea>' +
+      '<span class="dtm-actions-head">Actions</span>' +
+      '<table class="dtm-actions-table"><thead><tr><th style="width:40%">Action</th><th>Owner</th><th style="width:130px">Due</th><th style="width:120px">Status</th><th style="width:28px"></th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      '<button type="button" class="dtm-add-action secondary" style="margin-top:8px;font-size:11px;" onclick="addDtmAction(\'' + m.id + '\')">＋ Add action</button>' +
+    '</div>';
+}
+
+function addDtmMeeting() {
+  const t = dtmNowStamp();
+  dtmMeetings.push({ id: dtmUid(), ts: t.stamp, date: t.date, project: _dtmProject(), chair: '', attendees: '', minutes: '', actions: [] });
+  saveStateToStorage();
+  renderDtmEntries();
+}
+function deleteDtmMeeting(id) {
+  if (!confirm('Delete this DTM entry and its actions? This cannot be undone.')) return;
+  dtmMeetings = dtmMeetings.filter(function (m) { return m.id !== id; });
+  saveStateToStorage();
+  renderDtmEntries();
+}
+function setDtmField(id, key, val) { const m = _dtmFind(id); if (m) { m[key] = val; saveStateToStorage(); } }
+function addDtmAction(id) { const m = _dtmFind(id); if (!m) return; (m.actions = m.actions || []).push({ id: dtmUid(), action: '', owner: '', due: '', status: 'Open' }); saveStateToStorage(); renderDtmEntries(); }
+function deleteDtmAction(id, aid) { const m = _dtmFind(id); if (!m) return; m.actions = (m.actions || []).filter(function (a) { return a.id !== aid; }); saveStateToStorage(); renderDtmEntries(); }
+function setDtmAction(id, aid, key, val) { const m = _dtmFind(id); if (!m) return; const a = (m.actions || []).find(function (x) { return x.id === aid; }); if (a) { a[key] = val; saveStateToStorage(); } }
+
+// Timestamped point-in-time PDF of the DTM log.
+function printDtmReport() {
+  if (!window.jspdf || !window.jspdf.jsPDF) { alert('PDF library is still loading. Please try again in a moment.'); return; }
+  const jsPDF = window.jspdf.jsPDF;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait', compress: true });
+  const pageW = doc.internal.pageSize.getWidth();
+  const pageH = doc.internal.pageSize.getHeight();
+  const margin = 14, availW = pageW - 2 * margin;
+  const accentRgb = hexToRgb(getActiveAccent());
+  const t = dtmNowStamp();
+  const project = _dtmProject();
+
+  doc.setFillColor(accentRgb[0], accentRgb[1], accentRgb[2]); doc.rect(0, 0, pageW, 18, 'F');
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
+  doc.text('DTM Log', margin, 12);
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+  doc.text('Generated ' + t.stamp, pageW - margin, 12, { align: 'right' });
+
+  let y = 26;
+  if (project) { doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(accentRgb[0], accentRgb[1], accentRgb[2]); doc.text(project, margin, y); y += 7; }
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(90, 90, 90);
+  doc.text('Point-in-time record of Design Team Meetings and their actions.', margin, y); y += 8;
+
+  // Risks awaiting a DTM
+  const awaiting = risks.filter(function (r) { return ragOf(r.residualRisk) === 'DTM'; });
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(30, 64, 175);
+  doc.text('Risks awaiting a DTM (' + awaiting.length + ')', margin, y); y += 2;
+  if (awaiting.length) {
+    doc.autoTable({
+      startY: y + 2, margin: { left: margin, right: margin },
+      head: [['Ref', 'Element / Activity', 'Hazard / Associated Risk']],
+      body: awaiting.map(function (r) { return [r.ref || '', r.element || '', r.hazard || '']; }),
+      theme: 'grid', styles: { fontSize: 8.5, cellPadding: 2, textColor: [31, 41, 55], overflow: 'linebreak' },
+      headStyles: { fillColor: [219, 234, 254], textColor: [30, 64, 175], fontStyle: 'bold' },
+      columnStyles: { 0: { cellWidth: 20, fontStyle: 'bold' }, 1: { cellWidth: 62 } }
+    });
+    y = doc.lastAutoTable.finalY + 8;
+  } else {
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(15, 81, 50);
+    doc.text('None outstanding.', margin, y + 6); y += 12;
+  }
+
+  // Meeting entries
+  dtmMeetings.forEach(function (m, idx) {
+    if (y > pageH - 45) { doc.addPage(); y = margin + 4; }
+    doc.setFillColor(245, 247, 250); doc.rect(margin, y, availW, 8, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(31, 41, 55);
+    doc.text('DTM entry ' + (idx + 1), margin + 2, y + 5.5);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(110, 110, 110);
+    doc.text('Logged: ' + (m.ts || ''), pageW - margin - 2, y + 5.5, { align: 'right' });
+    y += 11;
+
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(55, 65, 81);
+    const hdr = [m.date ? ('Date: ' + m.date) : null, m.chair ? ('Chair: ' + m.chair) : null, m.attendees ? ('Attendees: ' + m.attendees) : null].filter(Boolean).join('    |    ');
+    if (hdr) { const hl = doc.splitTextToSize(hdr, availW); doc.text(hl, margin, y); y += hl.length * 4.4 + 3; }
+
+    if ((m.minutes || '').trim()) {
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(55, 65, 81); doc.text('Minutes', margin, y); y += 4.6;
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(31, 41, 55);
+      const ml = doc.splitTextToSize(m.minutes.trim(), availW);
+      ml.forEach(function (line) { if (y > pageH - 20) { doc.addPage(); y = margin + 4; } doc.text(line, margin, y); y += 4.2; });
+      y += 3;
+    }
+
+    const acts = (m.actions || []).filter(function (a) { return (a.action || a.owner || a.due || '').toString().trim(); });
+    if (acts.length) {
+      doc.autoTable({
+        startY: y, margin: { left: margin, right: margin },
+        head: [['Action', 'Owner', 'Due', 'Status']],
+        body: acts.map(function (a) { return [a.action || '', a.owner || '', a.due || '', a.status || 'Open']; }),
+        theme: 'grid', styles: { fontSize: 8.5, cellPadding: 2, textColor: [31, 41, 55], overflow: 'linebreak' },
+        headStyles: { fillColor: accentRgb, textColor: [255, 255, 255], fontStyle: 'bold' },
+        columnStyles: { 1: { cellWidth: 34 }, 2: { cellWidth: 24 }, 3: { cellWidth: 24 } }
+      });
+      y = doc.lastAutoTable.finalY + 9;
+    } else { y += 3; }
+  });
+  if (!dtmMeetings.length) {
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(9); doc.setTextColor(120, 120, 120);
+    doc.text('No DTM entries have been recorded yet.', margin, y + 4);
+  }
+
+  const totalPages = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    doc.setPage(i);
+    drawPdfBrandBorder(doc, accentRgb);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(107, 114, 128);
+    doc.text('Produced by AHS Compliance Consulting — DTM log (point-in-time record)', margin, pageH - 10);
+    doc.text('Page ' + i + ' of ' + totalPages, pageW - margin, pageH - 10, { align: 'right' });
+  }
+  doc.save(buildPdfFilename('DTM_log', t.date));
 }
 
 // --- 8) Dashboard / Charts ---------------------
