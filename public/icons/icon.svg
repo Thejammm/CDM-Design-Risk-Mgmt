@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+<rect width="512" height="512" fill="#4bbfd6"/>
+<rect x="148" y="92" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="none"/><rect x="220" y="92" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="#1f2937"/><rect x="292" y="92" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="#1f2937"/><rect x="148" y="164" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="none"/><rect x="220" y="164" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="none"/><rect x="292" y="164" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="#1f2937"/><rect x="148" y="236" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="none"/><rect x="220" y="236" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="none"/><rect x="292" y="236" width="72" height="72" stroke="#ffffff" stroke-width="16" fill="none"/>
+<line x1="96" y1="388" x2="416" y2="388" stroke="rgba(255,255,255,.55)" stroke-width="4"/>
+<text x="256" y="462" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="62" font-weight="700" letter-spacing="4" fill="#ffffff">RISK</text>
+</svg>

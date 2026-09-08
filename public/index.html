@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <title>CDM Rolling Risk Register</title>
-  <!-- Favicon: always the fixed AHS footer logo, set at runtime by
-       setAhsFavicon(). Site-wide; does NOT change with the client brand. -->
-  <link rel="icon" id="faviconLink" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2351a6a9'/><text x='32' y='45' font-family='Arial,Helvetica,sans-serif' font-size='40' font-weight='700' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
-  <link rel="apple-touch-icon" id="appleTouchIcon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2351a6a9'/><text x='32' y='45' font-family='Arial,Helvetica,sans-serif' font-size='40' font-weight='700' fill='%23ffffff' text-anchor='middle'>A</text></svg>">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-title" content="Risk Register">
+  <meta name="theme-color" content="#4bbfd6">
   <style>
 :root {
   --brand-accent: #51a6a9;
@@ -12353,12 +12354,7 @@ const DEFAULT_FAVICON = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/s
 // The favicon is ALWAYS the fixed AHS brand logo shown in the page footer
 // (.ahs-mark-logo) — it is site-wide and never changes with the client brand.
 function setAhsFavicon() {
-  const ahs = document.querySelector('.ahs-mark-logo');
-  const uri = (ahs && ahs.getAttribute('src')) ? ahs.getAttribute('src') : DEFAULT_FAVICON;
-  ['faviconLink', 'appleTouchIcon'].forEach(function (id) {
-    const el = document.getElementById(id);
-    if (el) el.href = uri;
-  });
+  // Icons are now static files in icons/ (favicon + apple-touch-icon); nothing to set at runtime.
 }
 // The footer logo is parsed near the end of <body>; set the favicon once it exists.
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', setAhsFavicon);
