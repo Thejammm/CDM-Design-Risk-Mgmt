@@ -11516,6 +11516,16 @@ function buildGppWheelSvg() {
 }
 
 // Info popup — plain-English meaning + a real-world example for one principle.
+// A pop-up closes on a click outside it ONLY when the press AND the release were both
+// outside. Selecting text by dragging past the edge of the box also fires a click on
+// the backdrop, which closed the box under the user's hands and lost what they had typed.
+// Every pop-up uses this guard; never write a bare click-to-close backdrop.
+function _backdropClose(ov, fn){
+  if(!ov) return;
+  ov.addEventListener('mousedown', function(e){ ov._downSelf = (e.target === ov); }, true);
+  ov.addEventListener('mouseup', function(e){ if(e.target !== ov) ov._downSelf = false; }, true);
+  ov.addEventListener('click', function(e){ if(ov._downSelf && e.target === ov) fn(); ov._downSelf = false; });
+}
 function _buildGppInfo() {
   if (document.getElementById("gppInfoOverlay")) return;
   const ov = document.createElement("div");
@@ -11524,7 +11534,7 @@ function _buildGppInfo() {
     '<button type="button" class="gpp-info-close" onclick="closeGppInfo()" aria-label="Close">&times;</button>' +
     '<div id="gpp-info-body"></div></div>';
   document.body.appendChild(ov);
-  ov.addEventListener("click", function (e) { if (e.target === ov) closeGppInfo(); });
+  _backdropClose(ov, closeGppInfo);
   document.addEventListener("keydown", function (e) { if (e.key === "Escape" && ov.classList.contains("is-open")) closeGppInfo(); });
 }
 function openGppInfo(letter) {
@@ -11633,7 +11643,7 @@ function _buildGppPicker() {
     '<div class="gpp-pick-actions"><button type="button" id="gppPickClear">Clear</button>' +
     '<button type="button" id="gppPickCancel">Cancel</button></div></div>';
   document.body.appendChild(ov);
-  ov.addEventListener("click", function (e) { if (e.target === ov) closeGppPicker(); });
+  _backdropClose(ov, closeGppPicker);
   ov.querySelectorAll(".gpp-pick-row").forEach(function (btn) {
     btn.addEventListener("click", function () { _setGpp(btn.getAttribute("data-letter")); });
   });
@@ -11681,7 +11691,7 @@ function _buildControlsFocus() {
   ov.id = "controlsFocusOverlay";
   ov.innerHTML = '<div class="controls-focus" role="dialog" aria-modal="true"><div id="cf-body"></div></div>';
   document.body.appendChild(ov);
-  ov.addEventListener("click", function (e) { if (e.target === ov) closeControlsFocus(); });
+  _backdropClose(ov, closeControlsFocus);
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape" && ov.classList.contains("is-open")) closeControlsFocus();
   });
@@ -14581,7 +14591,7 @@ function resetReportFilters() {
   }
   document.getElementById('authEmail').addEventListener('input', _populateProjectList);
   function closeAuthModal(){ overlay.classList.remove('is-open'); }
-  overlay.addEventListener('click', function(e){ if(e.target === overlay) closeAuthModal(); });
+  _backdropClose(overlay, closeAuthModal);
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && overlay.classList.contains('is-open')) closeAuthModal(); });
   document.getElementById('authCancelBtn').addEventListener('click', closeAuthModal);
   form.addEventListener('submit', async function(e){
@@ -14794,7 +14804,7 @@ function resetReportFilters() {
   }
   function closeProjectSwitcher(){ if(projOverlay) projOverlay.classList.remove('is-open'); }
   if(projFab) projFab.addEventListener('click', openProjectSwitcher);
-  if(projOverlay) projOverlay.addEventListener('click', function(e){ if(e.target === projOverlay) closeProjectSwitcher(); });
+  _backdropClose(projOverlay, closeProjectSwitcher);
   document.getElementById('projCloseBtn') && document.getElementById('projCloseBtn').addEventListener('click', closeProjectSwitcher);
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && projOverlay && projOverlay.classList.contains('is-open')) closeProjectSwitcher(); });
   if(projNewForm) projNewForm.addEventListener('submit', function(e){ e.preventDefault(); _switchToProject(projNewInput ? projNewInput.value : ''); });
@@ -14872,7 +14882,7 @@ function resetReportFilters() {
   function closeAdmin(){ adminOverlay.classList.remove('is-open'); }
   if(adminFab) adminFab.addEventListener('click', openAdmin);
   document.getElementById('adminCloseBtn').addEventListener('click', closeAdmin);
-  adminOverlay.addEventListener('click', function(e){ if(e.target === adminOverlay) closeAdmin(); });
+  _backdropClose(adminOverlay, closeAdmin);
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && adminOverlay.classList.contains('is-open')) closeAdmin(); });
 
   document.getElementById('adminTenantForm').addEventListener('submit', async function(e){
